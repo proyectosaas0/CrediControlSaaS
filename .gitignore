@@ -40,6 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+
+# python
+__pycache__/
+*.pyc
+
 # Artefactos locales de skills (npx skills)
 .agents/
 skills-lock.json
