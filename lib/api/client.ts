@@ -1,5 +1,3 @@
-import { createClient } from '@/lib/supabase/client';
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
 type ApiResponse<T> = {
@@ -10,21 +8,10 @@ type ApiResponse<T> = {
   };
 };
 
-async function getAuthToken(): Promise<string | null> {
-  try {
-    const supabase = createClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    return session?.access_token ?? null;
-  } catch {
-    return null;
-  }
-}
-
 async function request<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = await getAuthToken();
   const url = `${API_BASE_URL}${endpoint}`;
 
   const headers: Record<string, string> = {
@@ -32,13 +19,10 @@ async function request<T = any>(
     ...(options.headers as Record<string, string>),
   };
 
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-
   const response = await fetch(url, {
     ...options,
     headers,
+    credentials: 'include', // Send cookies with request
   });
 
   let result: ApiResponse<T>;

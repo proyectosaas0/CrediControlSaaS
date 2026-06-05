@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { apiClient } from '@/lib/api/client';
-import { createClient } from '@/lib/supabase/client';
-
-vi.mock('@/lib/supabase/client');
 
 describe('apiClient', () => {
   beforeEach(() => {
@@ -14,22 +11,7 @@ describe('apiClient', () => {
     vi.restoreAllMocks();
   });
 
-  it('should include Authorization header with token', async () => {
-    const mockToken = 'test-token-123';
-    const mockSession = {
-      user: { id: 'user-1' },
-      access_token: mockToken,
-    };
-
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getSession: vi.fn().mockResolvedValue({
-          data: { session: mockSession },
-          error: null,
-        })
-      },
-    } as any);
-
+  it('should send cookies with request', async () => {
     (global.fetch as any).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ data: [{ id: '1', name: 'Test' }] }),
@@ -40,24 +22,13 @@ describe('apiClient', () => {
     expect(global.fetch).toHaveBeenCalledWith(
       expect.stringContaining('/test'),
       expect.objectContaining({
-        headers: expect.objectContaining({
-          Authorization: `Bearer ${mockToken}`,
-        }),
+        credentials: 'include', // Cookies sent automatically
       })
     );
     expect(result).toEqual([{ id: '1', name: 'Test' }]);
   });
 
   it('should throw error when response has error field', async () => {
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getSession: vi.fn().mockResolvedValue({
-          data: { session: null },
-          error: null,
-        })
-      },
-    } as any);
-
     (global.fetch as any).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ error: { message: 'API Error' } }),
@@ -67,15 +38,6 @@ describe('apiClient', () => {
   });
 
   it('should throw error when HTTP response is not ok', async () => {
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getSession: vi.fn().mockResolvedValue({
-          data: { session: null },
-          error: null,
-        })
-      },
-    } as any);
-
     (global.fetch as any).mockResolvedValue({
       ok: false,
       status: 500,
@@ -87,15 +49,6 @@ describe('apiClient', () => {
   });
 
   it('should throw error when HTTP response fails with non-JSON response', async () => {
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getSession: vi.fn().mockResolvedValue({
-          data: { session: null },
-          error: null,
-        })
-      },
-    } as any);
-
     (global.fetch as any).mockResolvedValue({
       ok: false,
       status: 500,
@@ -107,15 +60,6 @@ describe('apiClient', () => {
   });
 
   it('should throw error when response is missing data field', async () => {
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getSession: vi.fn().mockResolvedValue({
-          data: { session: null },
-          error: null,
-        })
-      },
-    } as any);
-
     (global.fetch as any).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({}),
@@ -125,15 +69,6 @@ describe('apiClient', () => {
   });
 
   it('should return data when response is successful', async () => {
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getSession: vi.fn().mockResolvedValue({
-          data: { session: null },
-          error: null,
-        })
-      },
-    } as any);
-
     (global.fetch as any).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ data: { id: '1', name: 'Test' } }),
@@ -145,15 +80,6 @@ describe('apiClient', () => {
   });
 
   it('should make POST requests with body', async () => {
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getSession: vi.fn().mockResolvedValue({
-          data: { session: null },
-          error: null,
-        })
-      },
-    } as any);
-
     (global.fetch as any).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ data: { id: '2', name: 'Created' } }),
@@ -173,15 +99,6 @@ describe('apiClient', () => {
   });
 
   it('should make PUT requests with body', async () => {
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getSession: vi.fn().mockResolvedValue({
-          data: { session: null },
-          error: null,
-        })
-      },
-    } as any);
-
     (global.fetch as any).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ data: { id: '1', name: 'Updated' } }),
@@ -201,15 +118,6 @@ describe('apiClient', () => {
   });
 
   it('should make DELETE requests', async () => {
-    vi.mocked(createClient).mockReturnValue({
-      auth: {
-        getSession: vi.fn().mockResolvedValue({
-          data: { session: null },
-          error: null,
-        })
-      },
-    } as any);
-
     (global.fetch as any).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ data: { deleted: true } }),
