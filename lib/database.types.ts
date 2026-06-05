@@ -1,5 +1,5 @@
-// PROVISIONAL: hand-written to match supabase/migrations/0001_schema.sql.
-// Regenerate with `npm run gen:types` once the Supabase project is linked.
+// PROVISIONAL: hand-written to match current Supabase migrations.
+// Regenerate with `npm run gen:types` once the Supabase project is linked with sufficient privileges.
 
 export type Json =
   | string
@@ -260,6 +260,9 @@ export interface Database {
           cobrador_id: string | null;
           lat: number | null;
           lng: number | null;
+          monto_capital: number | null;
+          monto_interes: number | null;
+          saldo_estimado: number | null;
         };
         Insert: {
           id?: string;
@@ -275,6 +278,9 @@ export interface Database {
           cobrador_id?: string | null;
           lat?: number | null;
           lng?: number | null;
+          monto_capital?: number | null;
+          monto_interes?: number | null;
+          saldo_estimado?: number | null;
         };
         Update: {
           id?: string;
@@ -290,6 +296,9 @@ export interface Database {
           cobrador_id?: string | null;
           lat?: number | null;
           lng?: number | null;
+          monto_capital?: number | null;
+          monto_interes?: number | null;
+          saldo_estimado?: number | null;
         };
         Relationships: [
           {
@@ -421,19 +430,286 @@ export interface Database {
           },
         ];
       };
+      tenant_settings: {
+        Row: {
+          organization_id: string;
+          tasa_interes_default: number;
+          mora_tipo: "porcentaje" | "monto_fijo";
+          mora_valor: number;
+          dias_gracia: number;
+          cobrar_sabados_default: boolean;
+          cobrar_domingos_default: boolean;
+          whatsapp_template: string;
+          geolocalizacion_requerida: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          organization_id: string;
+          tasa_interes_default?: number;
+          mora_tipo?: "porcentaje" | "monto_fijo";
+          mora_valor?: number;
+          dias_gracia?: number;
+          cobrar_sabados_default?: boolean;
+          cobrar_domingos_default?: boolean;
+          whatsapp_template?: string;
+          geolocalizacion_requerida?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          organization_id?: string;
+          tasa_interes_default?: number;
+          mora_tipo?: "porcentaje" | "monto_fijo";
+          mora_valor?: number;
+          dias_gracia?: number;
+          cobrar_sabados_default?: boolean;
+          cobrar_domingos_default?: boolean;
+          whatsapp_template?: string;
+          geolocalizacion_requerida?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "tenant_settings_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: true;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      prestamo_saldos: {
+        Row: {
+          prestamo_id: string;
+          organization_id: string;
+          capital_original: number;
+          total_original: number;
+          total_pagado: number;
+          saldo_pendiente: number;
+          mora_pendiente: number;
+          updated_at: string;
+        };
+        Insert: {
+          prestamo_id: string;
+          organization_id: string;
+          capital_original: number;
+          total_original: number;
+          total_pagado?: number;
+          saldo_pendiente: number;
+          mora_pendiente?: number;
+          updated_at?: string;
+        };
+        Update: {
+          prestamo_id?: string;
+          organization_id?: string;
+          capital_original?: number;
+          total_original?: number;
+          total_pagado?: number;
+          saldo_pendiente?: number;
+          mora_pendiente?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "prestamo_saldos_prestamo_id_fkey";
+            columns: ["prestamo_id"];
+            isOneToOne: true;
+            referencedRelation: "prestamos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "prestamo_saldos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pagos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          prestamo_id: string;
+          cronograma_pago_id: string | null;
+          cliente_id: string;
+          cobrador_id: string;
+          registrado_por: string;
+          monto: number;
+          medio_pago: Database["public"]["Enums"]["medio_pago"];
+          tipo: "cuota" | "parcial" | "vencida" | "mora" | "liquidacion";
+          lat: number | null;
+          lng: number | null;
+          nota: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          prestamo_id: string;
+          cronograma_pago_id?: string | null;
+          cliente_id: string;
+          cobrador_id: string;
+          registrado_por: string;
+          monto: number;
+          medio_pago: Database["public"]["Enums"]["medio_pago"];
+          tipo: "cuota" | "parcial" | "vencida" | "mora" | "liquidacion";
+          lat?: number | null;
+          lng?: number | null;
+          nota?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          prestamo_id?: string;
+          cronograma_pago_id?: string | null;
+          cliente_id?: string;
+          cobrador_id?: string;
+          registrado_por?: string;
+          monto?: number;
+          medio_pago?: Database["public"]["Enums"]["medio_pago"];
+          tipo?: "cuota" | "parcial" | "vencida" | "mora" | "liquidacion";
+          lat?: number | null;
+          lng?: number | null;
+          nota?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      visitas_cobro: {
+        Row: {
+          id: string;
+          organization_id: string;
+          cronograma_pago_id: string;
+          prestamo_id: string;
+          cliente_id: string;
+          cobrador_id: string;
+          resultado: "pagado" | "parcial" | "no_encontrado" | "promesa_pago" | "rechazado";
+          lat: number | null;
+          lng: number | null;
+          nota: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          cronograma_pago_id: string;
+          prestamo_id: string;
+          cliente_id: string;
+          cobrador_id: string;
+          resultado: "pagado" | "parcial" | "no_encontrado" | "promesa_pago" | "rechazado";
+          lat?: number | null;
+          lng?: number | null;
+          nota?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          cronograma_pago_id?: string;
+          prestamo_id?: string;
+          cliente_id?: string;
+          cobrador_id?: string;
+          resultado?: "pagado" | "parcial" | "no_encontrado" | "promesa_pago" | "rechazado";
+          lat?: number | null;
+          lng?: number | null;
+          nota?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      audit_logs: {
+        Row: {
+          id: string;
+          organization_id: string | null;
+          actor_id: string | null;
+          actor_rol: string | null;
+          accion: string;
+          entidad: string;
+          entidad_id: string | null;
+          estado_anterior: Json | null;
+          estado_nuevo: Json | null;
+          ip: string | null;
+          user_agent: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id?: string | null;
+          actor_id?: string | null;
+          actor_rol?: string | null;
+          accion: string;
+          entidad: string;
+          entidad_id?: string | null;
+          estado_anterior?: Json | null;
+          estado_nuevo?: Json | null;
+          ip?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string | null;
+          actor_id?: string | null;
+          actor_rol?: string | null;
+          accion?: string;
+          entidad?: string;
+          entidad_id?: string | null;
+          estado_anterior?: Json | null;
+          estado_nuevo?: Json | null;
+          ip?: string | null;
+          user_agent?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      audit_action: {
+        Args: {
+          p_organization_id: string;
+          p_actor_id: string;
+          p_actor_rol: string;
+          p_accion: string;
+          p_entidad: string;
+          p_entidad_id?: string | null;
+          p_estado_anterior?: Json | null;
+          p_estado_nuevo?: Json | null;
+          p_ip?: string | null;
+          p_user_agent?: string | null;
+        };
+        Returns: undefined;
+      };
+      register_payment: {
+        Args: {
+          p_organization_id: string;
+          p_prestamo_id: string;
+          p_cronograma_pago_id: string;
+          p_cliente_id: string;
+          p_cobrador_id: string;
+          p_registrado_por: string;
+          p_monto: number;
+          p_medio_pago: Database["public"]["Enums"]["medio_pago"];
+          p_tipo: string;
+          p_lat?: number | null;
+          p_lng?: number | null;
+          p_nota?: string | null;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       rol: "super_admin" | "admin" | "cobrador";
       estado_suscripcion: "activo" | "trial" | "vencido" | "suspendido";
       modelo_interes: "cuota_fija" | "solo_interes" | "sobre_saldo";
       estado_prestamo: "activo" | "en_mora" | "saldado" | "refinanciado" | "cancelado";
-      estado_cuota: "pendiente" | "pagado" | "parcial" | "vencido";
+      estado_cuota: "pendiente" | "pagado" | "parcial" | "vencido" | "cancelado";
       medio_pago: "efectivo" | "nequi" | "transferencia";
       estado_mora: "activa" | "pagada" | "condonada";
     };
