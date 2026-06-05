@@ -7,6 +7,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { RoleGate } from "@/components/layout/role-gate";
 import { useAuth } from "@/providers/auth-provider";
 import type { AppRole } from "@/lib/auth";
+import { MOCK_ROUTE_ITEMS } from "@/lib/mock/ruta";
 
 export default function DashboardLayout({
   children,
@@ -17,6 +18,10 @@ export default function DashboardLayout({
   const { role, user } = useAuth();
 
   const userName = user?.email?.slice(0, 2).toUpperCase() ?? "U";
+
+  const pendingCount = MOCK_ROUTE_ITEMS.filter(
+    (i) => i.estado === "pendiente" || i.estado === "mora" || i.estado === "parcial",
+  ).length;
 
   return (
     <div className="flex h-full">
@@ -38,7 +43,7 @@ export default function DashboardLayout({
         </main>
 
         <RoleGate allowed={["cobrador"]} role={role}>
-          <MobileNav />
+          <MobileNav pendingCount={pendingCount} />
         </RoleGate>
       </div>
     </div>
