@@ -46,7 +46,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const { actor, response } = await requireApiActor(["admin", "cobrador", "super_admin"]);
   if (response) return response;
-  if (!actor!.organizationId) return apiError("FORBIDDEN", "Usuario sin organizacion", 403);
+  const organizationId = actor!.organizationId;
+  if (!organizationId) return apiError("FORBIDDEN", "Usuario sin organizacion", 403);
 
   const parsed = await parseJson(request, registerPaymentSchema);
   if (parsed.response) return parsed.response;
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
           .from("cronograma_pagos")
           .select("id, organization_id, prestamo_id, cobrador_id")
           .eq("id", input.cronogramaPagoId)
-          .eq("organization_id", actor!.organizationId)
+          .eq("organization_id", organizationId)
           .maybeSingle();
         if (cuotaError) throw cuotaError;
         if (!cuota) return { error: apiError("NOT_FOUND", "Cuota no encontrada", 404) };
@@ -71,7 +72,7 @@ export async function POST(request: Request) {
           .from("prestamos")
           .select("cliente_id")
           .eq("id", cuota.prestamo_id)
-          .eq("organization_id", actor!.organizationId)
+          .eq("organization_id", organizationId)
           .maybeSingle();
         if (prestamoError) throw prestamoError;
         if (!prestamo) return { error: apiError("NOT_FOUND", "Prestamo no encontrado", 404) };
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
           p_medio_pago: input.medioPago,
           p_monto: input.monto,
           p_nota: input.nota ?? null,
-          p_organization_id: actor!.organizationId,
+          p_organization_id: organizationId,
           p_prestamo_id: cuota.prestamo_id,
           p_registrado_por: actor!.userId,
           p_tipo: input.tipo,
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
         if (error) throw error;
         return { pagoId };
       },
-      { userId: actor!.userId, organizationId: actor!.organizationId }
+      { userId: actor!.userId, organizationId }
     );
 
     if (result.error) return result.error;
