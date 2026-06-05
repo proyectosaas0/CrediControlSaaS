@@ -9,10 +9,11 @@ export function addSecurityHeaders(response: NextResponse) {
     "Permissions-Policy",
     "geolocation=(self), camera=(), microphone=()"
   );
-  // Remove unsafe-inline and unsafe-eval for production security
+  // CSP for Next.js: Allow inline scripts/styles for Turbopack HMR in dev
+  // In production, consider using nonces for stricter security
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self'; style-src 'self'"
+    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
   );
 
   return response;
