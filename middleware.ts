@@ -1,10 +1,34 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
+import { addSecurityHeaders, getCorsHeaders } from "@/lib/api/security";
 
 const PUBLIC_PREFIXES = ["/login", "/register", "/verify", "/_next", "/favicon.ico", "/api"];
 
 export async function middleware(request: NextRequest) {
+  // Handle CORS preflight requests
+  if (request.method === "OPTIONS") {
+    const origin = request.headers.get("origin") || undefined;
+    const corsHeaders = getCorsHeaders(origin);
+    const response = new NextResponse(null, {
+      status: 204,
+    });
+    Object.entries(corsHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
+  }
+
   const { response, user } = await updateSession(request);
+
+  // Add security headers
+  addSecurityHeaders(response);
+
+  // Add CORS headers to all responses
+  const origin = request.headers.get("origin") || undefined;
+  const corsHeaders = getCorsHeaders(origin);
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    if (value) response.headers.set(key, value);
+  });
 
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PREFIXES.some((p) => path.startsWith(p));
