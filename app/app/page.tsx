@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useAuth } from "@/providers/auth-provider";
 import { OnboardingTutorial } from "@/components/auth/onboarding-tutorial";
 import { CobradorDashboard } from "@/components/domain/cobrador-dashboard";
 import { Card } from "@/components/ui/card";
 import { formatCop } from "@/lib/domain/money";
 import { MOCK_DAILY_SUMMARY } from "@/lib/mock/ruta";
-import { TrendingUp, Users, AlertTriangle, Wallet } from "lucide-react";
+import { MOCK_PRESTAMOS, MOCK_CLIENTES, MOCK_COBRADORES } from "@/lib/mock/admin";
+import { buttonClasses } from "@/components/ui/button";
+import { TrendingUp, Users, AlertTriangle, Wallet, ArrowRight } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, role } = useAuth();
@@ -27,6 +30,17 @@ export default function DashboardPage() {
   }
 
   const summary = MOCK_DAILY_SUMMARY;
+
+  const prestamosActivos = MOCK_PRESTAMOS.filter(
+    (p) => p.estado === "activo",
+  ).length;
+  const enMora = MOCK_PRESTAMOS.filter(
+    (p) => p.estado === "en_mora",
+  ).length;
+  const cobradoresActivos = MOCK_COBRADORES.filter((c) => c.activo).length;
+  const clientesActivos = MOCK_CLIENTES.filter((c) => c.activo).length;
+
+  const recentPrestamos = MOCK_PRESTAMOS.slice(0, 3);
 
   return (
     <div className="space-y-5">
@@ -59,8 +73,10 @@ export default function DashboardPage() {
               <TrendingUp className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Prestamos</p>
-              <p className="text-lg font-bold text-foreground">42</p>
+              <p className="text-xs text-muted-foreground">Prestamos activos</p>
+              <p className="text-lg font-bold text-foreground">
+                {prestamosActivos}
+              </p>
             </div>
           </div>
         </Card>
@@ -71,7 +87,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">En mora</p>
-              <p className="text-lg font-bold text-foreground">8</p>
+              <p className="text-lg font-bold text-foreground">{enMora}</p>
             </div>
           </div>
         </Card>
@@ -82,15 +98,66 @@ export default function DashboardPage() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground">Cobradores</p>
-              <p className="text-lg font-bold text-foreground">3</p>
+              <p className="text-lg font-bold text-foreground">
+                {cobradoresActivos}
+              </p>
             </div>
           </div>
         </Card>
       </div>
 
-      <p className="text-center text-sm text-muted-foreground">
-        Dashboard admin completo — Fase 3
-      </p>
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/app/clientes" className={buttonClasses("outline", "sm") + " w-full"}>
+          {clientesActivos} clientes
+        </Link>
+        <Link href="/app/prestamos" className={buttonClasses("outline", "sm") + " w-full"}>
+          {MOCK_PRESTAMOS.length} prestamos
+        </Link>
+      </div>
+
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-foreground">
+            Ultimos prestamos
+          </h2>
+          <Link
+            href="/app/prestamos"
+            className="flex items-center gap-1 text-sm text-primary hover:underline"
+          >
+            Ver todos
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="space-y-3">
+          {recentPrestamos.map((p) => (
+            <Link key={p.id} href={`/app/prestamos/${p.id}`}>
+              <Card padding="md" className="mb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {p.clienteNombre}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatCop(p.capital)} · {p.modeloInteres.replace("_", " ")}
+                    </p>
+                  </div>
+                  <p
+                    className={`text-xs font-medium ${
+                      p.estado === "en_mora"
+                        ? "text-danger"
+                        : p.estado === "saldado"
+                          ? "text-success"
+                          : "text-primary"
+                    }`}
+                  >
+                    {p.estado.replace("_", " ")}
+                  </p>
+                </div>
+              </Card>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
