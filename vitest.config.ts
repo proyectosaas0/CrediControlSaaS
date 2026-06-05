@@ -1,18 +1,18 @@
 import { defineConfig } from "vitest/config";
-import { fileURLToPath } from "node:url";
+import path from "path";
 
 export default defineConfig({
-  resolve: {
-    alias: {
-      "@": fileURLToPath(new URL(".", import.meta.url)),
-    },
-  },
   test: {
     environment: "node",
-    env: { ...process.env },
-    setupFiles: ["dotenv/config"],
+    globals: true,
+    setupFiles: ["dotenv/config", "./tests/setup.ts"],
     testTimeout: 20000,
     hookTimeout: 20000,
     fileParallelism: false,
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./"),
+    },
   },
 });
