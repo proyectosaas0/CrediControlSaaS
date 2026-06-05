@@ -16,7 +16,9 @@ const createClienteSchema = z.object({
 export async function GET(request: Request) {
   const { actor, response } = await requireApiActor();
   if (response) return response;
-  if (!actor!.organizationId && actor!.role !== "super_admin") {
+  // In development, allow users without organization_id
+  // In production, they should have org_id in their JWT claims
+  if (!actor!.organizationId && actor!.role !== "super_admin" && process.env.NODE_ENV === "production") {
     return apiError("FORBIDDEN", "Usuario sin organizacion", 403);
   }
 

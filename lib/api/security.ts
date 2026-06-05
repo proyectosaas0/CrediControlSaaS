@@ -10,11 +10,15 @@ export function addSecurityHeaders(response: NextResponse) {
     "geolocation=(self), camera=(), microphone=()"
   );
   // CSP for Next.js: Allow inline scripts/styles for Turbopack HMR in dev
+  // Allow Supabase for auth and API calls
   // In production, consider using nonces for stricter security
-  response.headers.set(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'"
-  );
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+    "style-src 'self' 'unsafe-inline'",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+  ].join("; ");
+  response.headers.set("Content-Security-Policy", csp);
 
   return response;
 }
