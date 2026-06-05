@@ -11,31 +11,29 @@ export async function getUser(): Promise<User | null> {
   return user;
 }
 
-function claim<T = string>(user: User | null, key: string): T | null {
-  // Los claims viven en el access token; supabase-js los expone en app_metadata
-  // tras decodificar, pero la fuente fiable es el JWT. Para server-side leemos
-  // del user (app_metadata) que refleja los claims personalizados.
-  const value = (user?.app_metadata as Record<string, unknown> | undefined)?.[key];
-  return (value ?? null) as T | null;
+// El Custom Access Token Hook inyecta `rol` y `organization_id` como claims de
+// PRIMER NIVEL del JWT (no en app_metadata). getClaims() verifica el token y los
+// expone; leerlos de user.app_metadata daría null.
+async function readClaims(): Promise<Record<string, unknown> | null> {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  return (data?.claims as Record<string, unknown> | undefined) ?? null;
 }
 
 export async function getRole(): Promise<AppRole | null> {
-  const user = await getUser();
-  return claim<AppRole>(user, "rol");
+  const claims = await readClaims();
+  return (claims?.rol as AppRole | undefined) ?? null;
 }
 
 export async function getOrgId(): Promise<string | null> {
-  const user = await getUser();
-  return claim<string>(user, "organization_id");
+  const claims = await readClaims();
+  return (claims?.organization_id as string | undefined) ?? null;
 }
 
 export async function requireRole(...roles: AppRole[]): Promise<User> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) throw new Error("No autenticado");
-  const rol = claim<AppRole>(user, "rol");
+  const rol = await getRole();
   if (!rol || !roles.includes(rol)) throw new Error("Rol no autorizado");
   return user;
 }
