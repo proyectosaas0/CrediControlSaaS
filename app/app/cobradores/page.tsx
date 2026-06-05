@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Phone, CheckCircle, XCircle } from "lucide-react";
 import { cobradorSchema, type CobradorFormData } from "@/lib/schemas/admin";
-import { MOCK_COBRADORES, type MockCobrador } from "@/lib/mock/admin";
+import { useCobradores, type Cobrador } from "@/lib/hooks";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,6 +17,7 @@ import { cn } from "@/components/ui/cn";
 
 export default function CobradoresPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { data: cobradores = [], isPending, error } = useCobradores();
 
   return (
     <div className="space-y-4">
@@ -28,11 +29,27 @@ export default function CobradoresPage() {
         </Button>
       </div>
 
-      <div className="space-y-3">
-        {MOCK_COBRADORES.map((cobrador) => (
-          <CobradorCard key={cobrador.id} cobrador={cobrador} />
-        ))}
-      </div>
+      {isPending && (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Cargando cobradores...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-danger/10 border border-danger/20 rounded-lg p-4">
+          <p className="text-danger text-sm">
+            Error al cargar cobradores: {error.message}
+          </p>
+        </div>
+      )}
+
+      {!isPending && !error && (
+        <div className="space-y-3">
+          {cobradores.map((cobrador) => (
+            <CobradorCard key={cobrador.id} cobrador={cobrador} />
+          ))}
+        </div>
+      )}
 
       <Dialog
         open={dialogOpen}
@@ -48,7 +65,7 @@ export default function CobradoresPage() {
   );
 }
 
-function CobradorCard({ cobrador }: { cobrador: MockCobrador }) {
+function CobradorCard({ cobrador }: { cobrador: Cobrador }) {
   return (
     <Card padding="md">
       <div className="flex items-start justify-between">
@@ -73,26 +90,11 @@ function CobradorCard({ cobrador }: { cobrador: MockCobrador }) {
       </div>
 
       {cobrador.activo && (
-        <div className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-3">
+        <div className="mt-3 border-t border-border pt-3">
           <div>
-            <p className="text-xs text-muted-foreground">Cobros hoy</p>
+            <p className="text-xs text-muted-foreground">Comisión</p>
             <p className="text-sm font-bold text-foreground">
-              {cobrador.cobrosHoy}/{cobrador.cobrosTotales}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Recaudado</p>
-            <p className="text-sm font-bold font-mono text-foreground">
-              {formatCop(cobrador.recaudadoHoy)}
-            </p>
-          </div>
-          <div>
-            <p className="text-xs text-muted-foreground">Cumplimiento</p>
-            <p className="text-sm font-bold text-foreground">
-              {cobrador.cobrosTotales > 0
-                ? Math.round((cobrador.cobrosHoy / cobrador.cobrosTotales) * 100)
-                : 0}
-              %
+              {cobrador.comision}%
             </p>
           </div>
         </div>
