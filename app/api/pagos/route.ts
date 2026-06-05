@@ -3,6 +3,8 @@ import { requireApiActor } from "@/lib/api/auth";
 import { apiError, apiOk } from "@/lib/api/errors";
 import { paginationParams, parseJson } from "@/lib/api/validation";
 import { createClient } from "@/lib/supabase/server";
+import { withTransaction } from "@/lib/database/transactions";
+import { logger } from "@/lib/logger";
 
 const registerPaymentSchema = z.object({
   cronogramaPagoId: z.string().uuid(),
@@ -50,43 +52,55 @@ export async function POST(request: Request) {
   if (parsed.response) return parsed.response;
   const input = parsed.data!;
 
-  const supabase = await createClient();
-  const { data: cuota, error: cuotaError } = await supabase
-    .from("cronograma_pagos")
-    .select("id, organization_id, prestamo_id, cobrador_id")
-    .eq("id", input.cronogramaPagoId)
-    .eq("organization_id", actor!.organizationId)
-    .maybeSingle();
-  if (cuotaError) return apiError("INTERNAL_ERROR", cuotaError.message, 500);
-  if (!cuota) return apiError("NOT_FOUND", "Cuota no encontrada", 404);
-  if (actor!.role === "cobrador" && cuota.cobrador_id !== actor!.userId) {
-    return apiError("FORBIDDEN", "Cuota no asignada al cobrador", 403);
+  try {
+    const result = await withTransaction(
+      async (supabase) => {
+        const { data: cuota, error: cuotaError } = await supabase
+          .from("cronograma_pagos")
+          .select("id, organization_id, prestamo_id, cobrador_id")
+          .eq("id", input.cronogramaPagoId)
+          .eq("organization_id", actor!.organizationId)
+          .maybeSingle();
+        if (cuotaError) throw cuotaError;
+        if (!cuota) return { error: apiError("NOT_FOUND", "Cuota no encontrada", 404) };
+        if (actor!.role === "cobrador" && cuota.cobrador_id !== actor!.userId) {
+          return { error: apiError("FORBIDDEN", "Cuota no asignada al cobrador", 403) };
+        }
+
+        const { data: prestamo, error: prestamoError } = await supabase
+          .from("prestamos")
+          .select("cliente_id")
+          .eq("id", cuota.prestamo_id)
+          .eq("organization_id", actor!.organizationId)
+          .maybeSingle();
+        if (prestamoError) throw prestamoError;
+        if (!prestamo) return { error: apiError("NOT_FOUND", "Prestamo no encontrado", 404) };
+
+        const { data: pagoId, error } = await supabase.rpc("register_payment", {
+          p_cliente_id: prestamo.cliente_id,
+          p_cobrador_id: cuota.cobrador_id ?? actor!.userId,
+          p_cronograma_pago_id: cuota.id,
+          p_lat: input.lat ?? null,
+          p_lng: input.lng ?? null,
+          p_medio_pago: input.medioPago,
+          p_monto: input.monto,
+          p_nota: input.nota ?? null,
+          p_organization_id: actor!.organizationId,
+          p_prestamo_id: cuota.prestamo_id,
+          p_registrado_por: actor!.userId,
+          p_tipo: input.tipo,
+        });
+
+        if (error) throw error;
+        return { pagoId };
+      },
+      { userId: actor!.userId, organizationId: actor!.organizationId }
+    );
+
+    if (result.error) return result.error;
+    return apiOk({ id: result.pagoId }, {}, 201);
+  } catch (error) {
+    logger.error({ error: String(error), actor: actor!.userId }, "Payment registration failed");
+    return apiError("INTERNAL_ERROR", "Error al registrar pago", 500);
   }
-
-  const { data: prestamo, error: prestamoError } = await supabase
-    .from("prestamos")
-    .select("cliente_id")
-    .eq("id", cuota.prestamo_id)
-    .eq("organization_id", actor!.organizationId)
-    .maybeSingle();
-  if (prestamoError) return apiError("INTERNAL_ERROR", prestamoError.message, 500);
-  if (!prestamo) return apiError("NOT_FOUND", "Prestamo no encontrado", 404);
-
-  const { data: pagoId, error } = await supabase.rpc("register_payment", {
-    p_cliente_id: prestamo.cliente_id,
-    p_cobrador_id: cuota.cobrador_id ?? actor!.userId,
-    p_cronograma_pago_id: cuota.id,
-    p_lat: input.lat ?? null,
-    p_lng: input.lng ?? null,
-    p_medio_pago: input.medioPago,
-    p_monto: input.monto,
-    p_nota: input.nota ?? null,
-    p_organization_id: actor!.organizationId,
-    p_prestamo_id: cuota.prestamo_id,
-    p_registrado_por: actor!.userId,
-    p_tipo: input.tipo,
-  });
-
-  if (error) return apiError("INTERNAL_ERROR", error.message, 500);
-  return apiOk({ id: pagoId }, {}, 201);
 }
