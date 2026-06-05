@@ -41,17 +41,29 @@ async function request<T = any>(
     headers,
   });
 
-  const result: ApiResponse<T> = await response.json();
+  let result: ApiResponse<T>;
+  try {
+    result = await response.json();
+  } catch {
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    throw new Error('Failed to parse response as JSON');
+  }
+
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}: ${result.error?.message || response.statusText}`);
+  }
 
   if (result.error) {
     throw new Error(result.error.message || 'API request failed');
   }
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${result.error?.message || 'Request failed'}`);
+  if (result.data === undefined) {
+    throw new Error('API response missing data field');
   }
 
-  return result.data as T;
+  return result.data;
 }
 
 export const apiClient = {

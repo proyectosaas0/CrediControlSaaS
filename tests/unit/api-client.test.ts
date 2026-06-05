@@ -79,10 +79,49 @@ describe('apiClient', () => {
     (global.fetch as any).mockResolvedValue({
       ok: false,
       status: 500,
+      statusText: 'Internal Server Error',
       json: vi.fn().mockResolvedValue({ error: { message: 'Server Error' } }),
     });
 
-    await expect(apiClient.get('/test')).rejects.toThrow();
+    await expect(apiClient.get('/test')).rejects.toThrow('HTTP 500');
+  });
+
+  it('should throw error when HTTP response fails with non-JSON response', async () => {
+    vi.mocked(createClient).mockReturnValue({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: null },
+          error: null,
+        })
+      },
+    } as any);
+
+    (global.fetch as any).mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+      json: vi.fn().mockRejectedValue(new Error('Not JSON')),
+    });
+
+    await expect(apiClient.get('/test')).rejects.toThrow('HTTP 500');
+  });
+
+  it('should throw error when response is missing data field', async () => {
+    vi.mocked(createClient).mockReturnValue({
+      auth: {
+        getSession: vi.fn().mockResolvedValue({
+          data: { session: null },
+          error: null,
+        })
+      },
+    } as any);
+
+    (global.fetch as any).mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({}),
+    });
+
+    await expect(apiClient.get('/test')).rejects.toThrow('missing data field');
   });
 
   it('should return data when response is successful', async () => {
