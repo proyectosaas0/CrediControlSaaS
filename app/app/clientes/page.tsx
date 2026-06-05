@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Search, Plus, Phone } from "lucide-react";
-import { MOCK_CLIENTES, type MockCliente } from "@/lib/mock/admin";
+import { useClientes, type Cliente } from "@/lib/hooks";
 import { ScoreBadge } from "@/components/domain/score-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,8 +18,10 @@ export default function ClientesPage() {
   const [filter, setFilter] = useState<FilterPill>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const { data: clientes = [], isPending, error } = useClientes();
+
   const filtered = useMemo(() => {
-    let list: MockCliente[] = MOCK_CLIENTES;
+    let list: Cliente[] = clientes;
 
     if (filter === "activos") list = list.filter((c) => c.activo);
     if (filter === "inactivos") list = list.filter((c) => !c.activo);
@@ -34,7 +36,7 @@ export default function ClientesPage() {
     }
 
     return list;
-  }, [search, filter]);
+  }, [clientes, search, filter]);
 
   const pills: { value: FilterPill; label: string }[] = [
     { value: "todos", label: "Todos" },
@@ -80,7 +82,15 @@ export default function ClientesPage() {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {isPending ? (
+        <div className="py-12 text-center">
+          <p className="text-muted-foreground">Cargando clientes...</p>
+        </div>
+      ) : error ? (
+        <div className="py-12 text-center">
+          <p className="text-red-500">Error: {error.message}</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-muted-foreground">No se encontraron clientes</p>
         </div>
