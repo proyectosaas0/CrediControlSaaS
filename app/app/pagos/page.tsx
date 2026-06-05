@@ -1,63 +1,77 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
+import { Search } from "lucide-react";
+import { usePagos } from "@/lib/hooks";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { EmptyState } from "@/components/feedback/empty-state";
-import { MOCK_PAGOS_HOY } from "@/lib/mock/ruta";
 import { formatCop } from "@/lib/domain/money";
-import { Banknote } from "lucide-react";
 
 export default function PagosPage() {
-  const pagos = MOCK_PAGOS_HOY;
+  const [search, setSearch] = useState("");
+  const { data: pagos = [], isPending, error } = usePagos();
 
-  const totalDia = pagos.reduce((sum, p) => sum + p.monto, 0);
+  const filtered = pagos.filter((p) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      p.clienteNombre.toLowerCase().includes(q) ||
+      p.id.toLowerCase().includes(q)
+    );
+  });
+
+  const totalMonto = filtered.reduce((sum, p) => sum + p.monto, 0);
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Pagos de hoy</h1>
-        <p className="text-sm text-muted-foreground">
-          {pagos.length} pagos &middot; Total: {formatCop(totalDia)}
-        </p>
+      <h1 className="text-2xl font-bold text-foreground">Pagos</h1>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          placeholder="Buscar por cliente o ID..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="flex h-11 w-full rounded-lg border border-border bg-background pl-10 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+        />
       </div>
 
-      {pagos.length === 0 ? (
-        <EmptyState
-          icon={<Banknote className="h-10 w-10" />}
-          title="Sin pagos hoy"
-          description="Aun no has registrado pagos en el dia de hoy."
-        />
+      <p className="text-xs text-muted-foreground">
+        {filtered.length} pago{filtered.length !== 1 ? "s" : ""} · Total: {formatCop(totalMonto)}
+      </p>
+
+      {isPending ? (
+        <div className="py-12 text-center">
+          <p className="text-muted-foreground">Cargando pagos...</p>
+        </div>
+      ) : error ? (
+        <div className="py-12 text-center">
+          <p className="text-red-500">Error: {error.message}</p>
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="py-12 text-center">
+          <p className="text-muted-foreground">No se encontraron pagos</p>
+        </div>
       ) : (
-        <div className="space-y-2">
-          {pagos.map((pago) => (
-            <Card key={pago.id} padding="sm">
-              <div className="flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
+        <div className="space-y-3">
+          {filtered.map((pago) => (
+            <Link key={pago.id} href={`/app/pagos/${pago.id}`}>
+              <Card padding="md" className="mb-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-foreground">
                     {pago.clienteNombre}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {pago.fecha} · Cuota {pago.cuota}
+                  <p className="text-sm font-semibold text-foreground">
+                    {formatCop(pago.monto)}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Badge
-                    variant={
-                      pago.medioPago === "efectivo"
-                        ? "success"
-                        : pago.medioPago === "nequi"
-                          ? "info"
-                          : "primary"
-                    }
-                  >
-                    {pago.medioPago}
-                  </Badge>
-                  <span className="text-sm font-semibold text-success">
-                    {formatCop(pago.monto)}
-                  </span>
+                <div className="mt-2 flex justify-between text-xs text-muted-foreground">
+                  <span>Fecha: {new Date(pago.fecha).toLocaleDateString()}</span>
+                  <span>Método: {pago.metodo}</span>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
