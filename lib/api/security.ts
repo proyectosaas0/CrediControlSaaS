@@ -9,20 +9,39 @@ export function addSecurityHeaders(response: NextResponse) {
     "Permissions-Policy",
     "geolocation=(self), camera=(), microphone=()"
   );
+  // Remove unsafe-inline and unsafe-eval for production security
   response.headers.set(
     "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'"
+    "default-src 'self'; script-src 'self'; style-src 'self'"
   );
 
   return response;
+}
+
+function isValidOrigin(url: string | undefined): boolean {
+  if (!url) return false;
+  try {
+    const parsed = new URL(url);
+    // Production must use https
+    if (process.env.NODE_ENV === "production" && parsed.protocol !== "https:") {
+      console.warn(`[CORS] Invalid NEXT_PUBLIC_APP_URL: must use https in production`);
+      return false;
+    }
+    return true;
+  } catch {
+    console.warn(`[CORS] Invalid NEXT_PUBLIC_APP_URL format: ${url}`);
+    return false;
+  }
 }
 
 export function getCorsHeaders(origin?: string): Record<string, string> {
   const allowedOrigins = [
     "http://localhost:3000",
     "http://localhost:3001",
-    process.env.NEXT_PUBLIC_APP_URL,
-  ].filter(Boolean);
+    ...(isValidOrigin(process.env.NEXT_PUBLIC_APP_URL)
+      ? [process.env.NEXT_PUBLIC_APP_URL]
+      : []),
+  ];
 
   const isAllowed = allowedOrigins.includes(origin || "");
 
