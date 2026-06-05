@@ -6,6 +6,7 @@ export type ApiErrorCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "VALIDATION_ERROR"
+  | "RATE_LIMITED"
   | "INTERNAL_ERROR";
 
 export function apiOk<TData, TMeta extends Record<string, unknown> = Record<string, never>>(
