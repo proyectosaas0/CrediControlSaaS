@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "@/components/ui/toaster";
 import { QueryProvider } from "@/providers/query-provider";
 import { OnlineProvider } from "@/providers/online-provider";
+import { AuthProvider } from "@/providers/auth-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,10 +34,12 @@ export default function RootLayout({
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <QueryProvider>
-          <OnlineProvider>
-            {children}
-            <Toaster />
-          </OnlineProvider>
+          <AuthProvider>
+            <OnlineProvider>
+              {children}
+              <Toaster />
+            </OnlineProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

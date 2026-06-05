@@ -8,11 +8,28 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
   const isPublic = PUBLIC_PREFIXES.some((p) => path.startsWith(p));
+  const isRoot = path === "/";
 
-  if (!user && !isPublic) {
+  if (!user && !isPublic && !isRoot) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login"; // TODO: redirect back after login
+    url.pathname = "/login";
+    url.searchParams.set("redirect", path);
     return NextResponse.redirect(url);
+  }
+
+  if (user) {
+    if (path === "/login" || path === "/register" || path === "/verify") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/app";
+      url.searchParams.delete("redirect");
+      return NextResponse.redirect(url);
+    }
+
+    if (isRoot) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/app";
+      return NextResponse.redirect(url);
+    }
   }
 
   return response;
