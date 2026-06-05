@@ -4,6 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryProvider } from "@/providers/query-provider";
 import { OnlineProvider } from "@/providers/online-provider";
 import { AuthProvider } from "@/providers/auth-provider";
+import { logger } from "@/lib/logger";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -27,6 +28,10 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  if (typeof window === "undefined") {
+    logger.info("RootLayout initialized");
+  }
+
   return (
     <html
       lang="es"
