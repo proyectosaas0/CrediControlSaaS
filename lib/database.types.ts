@@ -46,6 +46,7 @@ export interface Database {
           trial_hasta?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
       profiles: {
         Row: {
@@ -75,6 +76,22 @@ export interface Database {
           activo?: boolean;
           ultimo_acceso?: string | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "profiles_id_fkey";
+            columns: ["id"];
+            isOneToOne: true;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "profiles_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       clientes: {
         Row: {
@@ -116,6 +133,15 @@ export interface Database {
           activo?: boolean;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "clientes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       prestamos: {
         Row: {
@@ -181,6 +207,43 @@ export interface Database {
           created_by?: string | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "prestamos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "prestamos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "prestamos_cobrador_id_fkey";
+            columns: ["cobrador_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "prestamos_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "prestamos_prestamo_anterior_id_fkey";
+            columns: ["prestamo_anterior_id"];
+            isOneToOne: false;
+            referencedRelation: "prestamos";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       cronograma_pagos: {
         Row: {
@@ -228,6 +291,29 @@ export interface Database {
           lat?: number | null;
           lng?: number | null;
         };
+        Relationships: [
+          {
+            foreignKeyName: "cronograma_pagos_prestamo_id_fkey";
+            columns: ["prestamo_id"];
+            isOneToOne: false;
+            referencedRelation: "prestamos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cronograma_pagos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cronograma_pagos_cobrador_id_fkey";
+            columns: ["cobrador_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       mora_registros: {
         Row: {
@@ -260,6 +346,22 @@ export interface Database {
           monto_pagado_mora?: number;
           estado?: Database["public"]["Enums"]["estado_mora"];
         };
+        Relationships: [
+          {
+            foreignKeyName: "mora_registros_prestamo_id_fkey";
+            columns: ["prestamo_id"];
+            isOneToOne: false;
+            referencedRelation: "prestamos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "mora_registros_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       cierres_caja: {
         Row: {
@@ -295,6 +397,29 @@ export interface Database {
           cerrado_por?: string | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "cierres_caja_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cierres_caja_cobrador_id_fkey";
+            columns: ["cobrador_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "cierres_caja_cerrado_por_fkey";
+            columns: ["cerrado_por"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: {
