@@ -20,8 +20,18 @@ const createPrestamoSchema = z.object({
 
 const estadoPrestamoSchema = z.enum(["activo", "en_mora", "saldado", "refinanciado", "cancelado"]);
 
+// Mock data for development/testing without authentication
+const MOCK_PRESTAMOS = [
+  { id: "p1", organization_id: "test", cliente_id: "c1", cliente_nombre: "Cliente 1", capital: 100000, cuota_diaria: 5000, total_pagar: 150000, cuotas_pagadas: 5, cuotas_totales: 30, estado: "activo", cobrador_id: null, cobrador_nombre: "Juan", created_at: "2024-01-01" },
+  { id: "p2", organization_id: "test", cliente_id: "c2", cliente_nombre: "Cliente 2", capital: 50000, cuota_diaria: 2500, total_pagar: 75000, cuotas_pagadas: 10, cuotas_totales: 30, estado: "activo", cobrador_id: null, cobrador_nombre: "Carlos", created_at: "2024-01-02" },
+];
+
 export async function GET(request: Request) {
   const { actor, response } = await requireApiActor();
+  // If not authenticated in development, return mock data
+  if (response && process.env.NODE_ENV !== "production") {
+    return apiOk(MOCK_PRESTAMOS);
+  }
   if (response) return response;
 
   const url = new URL(request.url);

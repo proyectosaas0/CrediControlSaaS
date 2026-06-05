@@ -13,8 +13,18 @@ const createClienteSchema = z.object({
   telefono: z.string().trim().optional(),
 });
 
+// Mock data for development/testing without authentication
+const MOCK_CLIENTES = [
+  { id: "c1", organization_id: "test", nombre: "Cliente 1", cedula: "123", telefono: "555", direccion: "Cra 1", barrio: "Centro", notas: "Test", score_pago: 90, activo: true, created_at: "2024-01-01" },
+  { id: "c2", organization_id: "test", nombre: "Cliente 2", cedula: "456", telefono: "555", direccion: "Cra 2", barrio: "Norte", notas: "Test", score_pago: 75, activo: true, created_at: "2024-01-02" },
+];
+
 export async function GET(request: Request) {
   const { actor, response } = await requireApiActor();
+  // If not authenticated in development, return mock data
+  if (response && process.env.NODE_ENV !== "production") {
+    return apiOk(MOCK_CLIENTES);
+  }
   if (response) return response;
 
   const url = new URL(request.url);
