@@ -5,7 +5,13 @@ import { QueryProvider } from "@/providers/query-provider";
 import { OnlineProvider } from "@/providers/online-provider";
 import { AuthProvider } from "@/providers/auth-provider";
 import { logger } from "@/lib/logger";
+import { initSentry } from "@/lib/monitoring/sentry";
 import "./globals.css";
+
+// Initialize Sentry on server startup
+if (typeof window === "undefined") {
+  initSentry();
+}
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

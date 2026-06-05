@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { captureException } from "@/lib/monitoring/sentry";
 
 export type ApiErrorCode =
   | "UNAUTHENTICATED"
@@ -23,5 +24,13 @@ export function apiError(
   status: number,
   details: Record<string, unknown> = {},
 ) {
+  if (status >= 500) {
+    captureException(new Error(message), {
+      code,
+      status,
+      details,
+    });
+  }
+
   return NextResponse.json({ error: { code, message, details } }, { status });
 }
