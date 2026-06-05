@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
-import { MOCK_PRESTAMOS, type MockPrestamo } from "@/lib/mock/admin";
+import { usePrestamos, type Prestamo } from "@/lib/hooks";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,8 +25,10 @@ export default function PrestamosPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<EstadoFilter>("todos");
 
+  const { data: prestamos = [], isPending, error } = usePrestamos();
+
   const filtered = useMemo(() => {
-    let list: MockPrestamo[] = MOCK_PRESTAMOS;
+    let list: Prestamo[] = prestamos;
 
     if (filter !== "todos") list = list.filter((p) => p.estado === filter);
 
@@ -40,7 +42,7 @@ export default function PrestamosPage() {
     }
 
     return list;
-  }, [search, filter]);
+  }, [prestamos, search, filter]);
 
   const totalCapital = filtered.reduce((sum, p) => sum + p.capital, 0);
 
@@ -88,7 +90,15 @@ export default function PrestamosPage() {
         {filtered.length} prestamo{filtered.length !== 1 ? "s" : ""} · Capital total: {formatCop(totalCapital)}
       </p>
 
-      {filtered.length === 0 ? (
+      {isPending ? (
+        <div className="py-12 text-center">
+          <p className="text-muted-foreground">Cargando prestamos...</p>
+        </div>
+      ) : error ? (
+        <div className="py-12 text-center">
+          <p className="text-red-500">Error: {error.message}</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-muted-foreground">No se encontraron prestamos</p>
         </div>
