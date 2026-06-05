@@ -1,8 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
-// Prefijos que NO requieren sesión. Ajustar al conectar la UI.
-const PUBLIC_PREFIXES = ["/login", "/signup", "/auth", "/_next", "/favicon.ico"];
+const PUBLIC_PREFIXES = ["/login", "/register", "/verify", "/_next", "/favicon.ico", "/api"];
 
 export async function middleware(request: NextRequest) {
   const { response, user } = await updateSession(request);
@@ -12,7 +11,7 @@ export async function middleware(request: NextRequest) {
 
   if (!user && !isPublic) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/login"; // TODO: redirect back after login
     return NextResponse.redirect(url);
   }
 
