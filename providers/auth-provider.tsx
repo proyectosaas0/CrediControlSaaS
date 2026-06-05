@@ -49,12 +49,15 @@ function subscribe(listener: Listener) {
   };
 }
 
-function getSnapshot() {
+// Cache objects to avoid infinite loops in useSyncExternalStore
+const defaultState: AuthState = { user: null, role: null, orgId: null, loading: true };
+
+function getSnapshot(): AuthState {
   return authState;
 }
 
-function getServerSnapshot() {
-  return { user: null, role: null, orgId: null, loading: true };
+function getServerSnapshot(): AuthState {
+  return defaultState;
 }
 
 let initialized = false;
