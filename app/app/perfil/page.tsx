@@ -1,15 +1,17 @@
 "use client";
 
 import { useAuth } from "@/providers/auth-provider";
+import { useAuthMe } from "@/hooks/queries/use-auth-me";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User, LogOut } from "lucide-react";
-import { MOCK_COBRADOR } from "@/lib/mock/ruta";
 import { es } from "@/lib/i18n/es";
 
 export default function PerfilPage() {
   const { user, role, signOut } = useAuth();
+  const { data: me } = useAuthMe();
+  const nombre = me?.profile?.nombre_completo ?? user?.email ?? "Usuario";
 
   return (
     <div className="space-y-4">
@@ -22,7 +24,7 @@ export default function PerfilPage() {
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-lg font-semibold text-foreground">
-              {MOCK_COBRADOR}
+              {nombre}
             </p>
             <p className="truncate text-sm text-muted-foreground">
               {user?.email ?? "cobrador@correo.com"}
