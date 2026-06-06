@@ -60,10 +60,10 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card padding="md">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10">
               <Wallet className="h-5 w-5 text-success" />
             </div>
             <div>
@@ -76,7 +76,7 @@ export default function DashboardPage() {
         </Card>
         <Card padding="md">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
               <TrendingUp className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -89,7 +89,7 @@ export default function DashboardPage() {
         </Card>
         <Card padding="md">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-danger/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-danger/10">
               <AlertTriangle className="h-5 w-5 text-danger" />
             </div>
             <div>
@@ -100,7 +100,7 @@ export default function DashboardPage() {
         </Card>
         <Card padding="md">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-info/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10">
               <Users className="h-5 w-5 text-info" />
             </div>
             <div>
@@ -136,10 +136,10 @@ export default function DashboardPage() {
               <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="space-y-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recentPrestamos.map((p) => (
               <Link key={p.id} href={`/app/prestamos/${p.id}`}>
-                <Card padding="md" className="mb-3 transition-colors hover:border-primary/30 cursor-pointer">
+                <Card padding="md" className="transition-colors hover:border-primary/30 cursor-pointer h-full">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-foreground">
