@@ -22,13 +22,9 @@ export async function requireApiActor(roles?: AppRole[]) {
     organizationId: (claimsData.claims.organization_id as string | null | undefined) ?? null,
   };
 
-  if (!actor.role || (roles && !roles.includes(actor.role))) {
-    return { actor: null, response: apiError("FORBIDDEN", "Rol no autorizado", 403) };
-  }
-
   const { data: profile, error } = await supabase
     .from("profiles")
-    .select("activo")
+    .select("organization_id, rol, activo")
     .eq("id", actor.userId)
     .maybeSingle();
 
@@ -38,6 +34,13 @@ export async function requireApiActor(roles?: AppRole[]) {
 
   if (!profile?.activo) {
     return { actor: null, response: apiError("FORBIDDEN", "Usuario inactivo", 403) };
+  }
+
+  actor.role = actor.role ?? profile.rol;
+  actor.organizationId = actor.organizationId ?? profile.organization_id;
+
+  if (!actor.role || (roles && !roles.includes(actor.role))) {
+    return { actor: null, response: apiError("FORBIDDEN", "Rol no autorizado", 403) };
   }
 
   return { actor, response: null };
