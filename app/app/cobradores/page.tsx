@@ -45,9 +45,18 @@ export default function CobradoresPage() {
 
       {!isPending && !error && (
         <div className="space-y-3">
-          {cobradores.map((cobrador) => (
-            <CobradorCard key={cobrador.id} cobrador={cobrador} />
-          ))}
+          {cobradores.length === 0 ? (
+            <div className="py-12 text-center">
+              <p className="text-muted-foreground">No hay cobradores registrados</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Agrega un cobrador para empezar a asignar rutas de cobro.
+              </p>
+            </div>
+          ) : (
+            cobradores.map((cobrador) => (
+              <CobradorCard key={cobrador.id} cobrador={cobrador} />
+            ))
+          )}
         </div>
       )}
 

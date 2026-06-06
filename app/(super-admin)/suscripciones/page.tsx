@@ -114,6 +114,7 @@ export default function SuscripcionesPage() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        aria-label="Mes de cortesia"
                         onClick={() => toast.success("Mes de cortesia aplicado")}
                       >
                         <Gift className="h-4 w-4" />
@@ -123,6 +124,7 @@ export default function SuscripcionesPage() {
                       <Button
                         size="sm"
                         variant="ghost"
+                        aria-label="Aplicar descuento"
                         onClick={() => toast.success("Descuento del 10% aplicado")}
                       >
                         <Percent className="h-4 w-4" />

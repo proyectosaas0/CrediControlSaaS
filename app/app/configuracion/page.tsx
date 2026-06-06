@@ -107,7 +107,7 @@ export default function ConfiguracionPage() {
                     className="sr-only peer"
                     {...register("moraTipo")}
                   />
-                  <span className="flex items-center justify-center h-10 rounded-lg border border-border bg-background text-sm peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary cursor-pointer transition-colors">
+                  <span className="flex items-center justify-center h-10 rounded-lg border border-border bg-background text-sm peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring cursor-pointer transition-colors">
                     Porcentaje (%)
                   </span>
                 </label>
@@ -118,7 +118,7 @@ export default function ConfiguracionPage() {
                     className="sr-only peer"
                     {...register("moraTipo")}
                   />
-                  <span className="flex items-center justify-center h-10 rounded-lg border border-border bg-background text-sm peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary cursor-pointer transition-colors">
+                  <span className="flex items-center justify-center h-10 rounded-lg border border-border bg-background text-sm peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring cursor-pointer transition-colors">
                     Monto fijo ($)
                   </span>
                 </label>
@@ -176,7 +176,7 @@ export default function ConfiguracionPage() {
                     className="sr-only peer"
                     {...register("moneda")}
                   />
-                  <span className="flex items-center justify-center h-10 rounded-lg border border-border bg-background text-sm peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary cursor-pointer transition-colors">
+                  <span className="flex items-center justify-center h-10 rounded-lg border border-border bg-background text-sm peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring cursor-pointer transition-colors">
                     COP ($)
                   </span>
                 </label>
@@ -187,7 +187,7 @@ export default function ConfiguracionPage() {
                     className="sr-only peer"
                     {...register("moneda")}
                   />
-                  <span className="flex items-center justify-center h-10 rounded-lg border border-border bg-background text-sm peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary cursor-pointer transition-colors">
+                  <span className="flex items-center justify-center h-10 rounded-lg border border-border bg-background text-sm peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring cursor-pointer transition-colors">
                     USD ($)
                   </span>
                 </label>

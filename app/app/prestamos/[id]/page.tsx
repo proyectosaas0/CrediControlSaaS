@@ -53,7 +53,7 @@ export default function PrestamoDetailPage() {
     <div className="space-y-5">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
       >
         <ArrowLeft className="h-4 w-4" />
         Volver
@@ -236,7 +236,7 @@ function CronogramaSection({ prestamo }: { prestamo: NonNullable<ReturnType<type
       {schedule.length > 7 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="mt-2 text-xs text-primary hover:underline"
+          className="mt-2 text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
         >
           {showAll
             ? "Ver menos"

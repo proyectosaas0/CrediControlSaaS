@@ -88,7 +88,7 @@ export default function ClientesPage() {
         </div>
       ) : error ? (
         <div className="py-12 text-center">
-          <p className="text-red-500">Error: {error.message}</p>
+          <p className="text-danger">Error: {error.message}</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center">
@@ -98,7 +98,7 @@ export default function ClientesPage() {
         <div className="space-y-3">
           {filtered.map((cliente) => (
             <Link key={cliente.id} href={`/app/clientes/${cliente.id}`}>
-              <Card padding="md" className="mb-3 flex items-center gap-3">
+              <Card padding="md" className="mb-3 flex items-center gap-3 transition-colors hover:border-primary/30 cursor-pointer">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-semibold text-foreground">

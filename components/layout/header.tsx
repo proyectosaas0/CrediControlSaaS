@@ -27,7 +27,9 @@ export function Header({ onMenuClick, userName = "Usuario" }: HeaderProps) {
       <div className="relative flex items-center gap-2">
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-muted transition-colors"
+          aria-expanded={menuOpen}
+          aria-label="Menu de usuario"
+          className="flex items-center gap-2 rounded-lg p-1.5 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring transition-colors"
         >
           <span className="hidden text-sm text-muted-foreground sm:inline">
             {userName}

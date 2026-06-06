@@ -47,7 +47,7 @@ export default function ClienteDetailPage() {
     <div className="space-y-5">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
       >
         <ArrowLeft className="h-4 w-4" />
         Volver
@@ -120,7 +120,7 @@ export default function ClienteDetailPage() {
           <div className="space-y-3">
             {prestamosCliente.map((prestamo) => (
               <Link key={prestamo.id} href={`/app/prestamos/${prestamo.id}`}>
-                <Card padding="md" className="mb-3">
+                <Card padding="md" className="mb-3 transition-colors hover:border-primary/30 cursor-pointer">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-foreground">
