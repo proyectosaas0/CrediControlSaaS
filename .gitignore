@@ -48,3 +48,7 @@ __pycache__/
 # Artefactos locales de skills (npx skills)
 .agents/
 skills-lock.json
+
+# Claude Code local config (puede contener tokens)
+.claude/
+.mcp.json
