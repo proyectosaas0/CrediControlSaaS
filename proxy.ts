@@ -4,7 +4,7 @@ import { addSecurityHeaders, getCorsHeaders } from "@/lib/api/security";
 
 const PUBLIC_PREFIXES = ["/login", "/register", "/verify", "/_next", "/favicon.ico", "/api"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Handle CORS preflight requests
   if (request.method === "OPTIONS") {
     const origin = request.headers.get("origin") || undefined;
