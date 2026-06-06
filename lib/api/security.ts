@@ -9,17 +9,22 @@ export function addSecurityHeaders(response: NextResponse) {
     "Permissions-Policy",
     "geolocation=(self), camera=(), microphone=()"
   );
-  // CSP for Next.js: Allow inline scripts/styles for Turbopack HMR in dev
-  // Allow Supabase for auth and API calls
-  // In production, consider using nonces for stricter security
-  const csp = [
-    "default-src 'self'",
-    "script-src 'self'",
-    "style-src 'self'",
-    "img-src 'self' data: https:",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
-    "frame-ancestors 'none'",
-  ].join("; ");
+  const isDev = process.env.NODE_ENV !== "production";
+  const csp = isDev
+    ? [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+        "style-src 'self' 'unsafe-inline'",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+      ].join("; ")
+    : [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https:",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+        "frame-ancestors 'none'",
+      ].join("; ");
   response.headers.set("Content-Security-Policy", csp);
 
   return response;

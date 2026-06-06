@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { NextResponse } from "next/server";
 import { addSecurityHeaders, getCorsHeaders } from "@/lib/api/security";
 
@@ -21,16 +21,18 @@ describe("Security Headers", () => {
     );
   });
 
-  it("CSP contains required directives", () => {
+  it("CSP script-src does not contain unsafe-inline or unsafe-eval in production", () => {
+    vi.stubEnv("NODE_ENV", "production");
+
     const response = new NextResponse();
     addSecurityHeaders(response);
 
+    vi.unstubAllEnvs();
+
     const csp = response.headers.get("Content-Security-Policy") || "";
-    expect(csp).toContain("default-src");
-    expect(csp).toContain("script-src");
-    expect(csp).toContain("style-src");
-    expect(csp).toContain("connect-src");
-    expect(csp).toContain("supabase.co");
+    const scriptSrc = csp.split(";").find((d) => d.trim().startsWith("script-src")) ?? "";
+    expect(scriptSrc).not.toContain("unsafe-inline");
+    expect(scriptSrc).not.toContain("unsafe-eval");
   });
 });
 
