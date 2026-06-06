@@ -7,7 +7,7 @@ import { MobileNav } from "@/components/layout/mobile-nav";
 import { RoleGate } from "@/components/layout/role-gate";
 import { useAuth } from "@/providers/auth-provider";
 import type { AppRole } from "@/lib/auth";
-import { MOCK_ROUTE_ITEMS } from "@/lib/mock/ruta";
+import { useRutaHoy } from "@/hooks/queries/use-ruta";
 
 export default function DashboardLayout({
   children,
@@ -19,9 +19,11 @@ export default function DashboardLayout({
 
   const userName = user?.email?.slice(0, 2).toUpperCase() ?? "U";
 
-  const pendingCount = MOCK_ROUTE_ITEMS.filter(
-    (i) => i.estado === "pendiente" || i.estado === "mora" || i.estado === "parcial",
-  ).length;
+  const { data: rutaItems } = useRutaHoy();
+  const pendingCount =
+    rutaItems?.filter(
+      (i) => i.estado === "pendiente" || i.estado === "mora" || i.estado === "parcial",
+    ).length ?? 0;
 
   return (
     <div className="flex h-full">
