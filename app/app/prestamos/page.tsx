@@ -96,7 +96,7 @@ export default function PrestamosPage() {
         </div>
       ) : error ? (
         <div className="py-12 text-center">
-          <p className="text-danger">Error: {error.message}</p>
+          <p className="text-danger">No se pudieron cargar los prestamos: {error.message}</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center">

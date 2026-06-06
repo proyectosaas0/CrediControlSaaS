@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Phone, CheckCircle, XCircle } from "lucide-react";
 import { cobradorSchema, type CobradorFormData } from "@/lib/schemas/admin";
@@ -145,24 +146,43 @@ function CobradorForm({
     formState: { errors, isSubmitting },
   } = useForm<CobradorFormData>({
     resolver: zodResolver(cobradorSchema),
-    defaultValues: { nombre: "", telefono: "" },
+    defaultValues: { nombre: "", email: "", telefono: "" },
   });
 
+  const queryClient = useQueryClient();
+
   async function onSubmit(data: CobradorFormData) {
-    // TODO: Reemplazar por POST /api/cobradores (invitacion con organization_id)
-    console.log("Crear cobrador:", data);
+    const res = await fetch("/api/cobradores", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(json.error?.message ?? "Error al agregar cobrador");
+      return;
+    }
     toast.success("Cobrador agregado correctamente");
+    void queryClient.invalidateQueries({ queryKey: ["cobradores"] });
     onSuccess();
   }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <Input
-        label="Nombre"
+        label="Nombre completo"
         placeholder="Juan Perez"
         error={errors.nombre?.message}
         required
         {...register("nombre")}
+      />
+      <Input
+        label="Correo electronico"
+        type="email"
+        placeholder="cobrador@ejemplo.com"
+        error={errors.email?.message}
+        required
+        {...register("email")}
       />
       <Input
         label="Telefono"
@@ -172,8 +192,7 @@ function CobradorForm({
         {...register("telefono")}
       />
       <p className="text-xs text-muted-foreground">
-        Se enviara una invitacion al cobrador para que se registre con este
-        telefono.
+        Se creara una cuenta para el cobrador con este correo.
       </p>
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
