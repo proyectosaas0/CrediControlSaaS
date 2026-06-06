@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Search, Plus, Phone } from "lucide-react";
-import { useClientes, type Cliente } from "@/lib/hooks";
+import { useClientes, type Cliente } from "@/hooks/queries/use-clientes";
 import { ScoreBadge } from "@/components/domain/score-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,7 @@ export default function ClientesPage() {
       list = list.filter(
         (c) =>
           c.nombre.toLowerCase().includes(q) ||
-          c.cedula.toLowerCase().includes(q),
+          (c.cedula ?? "").toLowerCase().includes(q),
       );
     }
 
@@ -104,7 +104,7 @@ export default function ClientesPage() {
                     <p className="truncate text-sm font-semibold text-foreground">
                       {cliente.nombre}
                     </p>
-                    <ScoreBadge score={cliente.scorePago} />
+                    <ScoreBadge score={cliente.score_pago} />
                   </div>
                   <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                     {cliente.cedula && <span>CC {cliente.cedula}</span>}

@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   let query = supabase
     .from("pagos")
-    .select("*", { count: "exact" })
+    .select("id, monto, medio_pago, tipo, nota, created_at, prestamo_id, cliente_id, cobrador_id, clientes(nombre)", { count: "exact" })
     .order("created_at", { ascending: false })
     .range(from, to);
 

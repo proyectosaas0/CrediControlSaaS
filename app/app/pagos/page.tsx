@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Search } from "lucide-react";
-import { usePagos } from "@/lib/hooks";
+import { usePagos } from "@/hooks/queries/use-pagos";
 import { Card } from "@/components/ui/card";
 import { formatCop } from "@/lib/domain/money";
 
@@ -15,7 +15,7 @@ export default function PagosPage() {
     if (!search.trim()) return true;
     const q = search.toLowerCase();
     return (
-      p.clienteNombre.toLowerCase().includes(q) ||
+      (p.clientes?.nombre ?? "").toLowerCase().includes(q) ||
       p.id.toLowerCase().includes(q)
     );
   });
@@ -60,15 +60,15 @@ export default function PagosPage() {
               <Card padding="md" className="transition-colors hover:border-primary/30 cursor-pointer h-full">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">
-                    {pago.clienteNombre}
+                    {pago.clientes?.nombre ?? "—"}
                   </p>
                   <p className="text-sm font-semibold text-foreground">
                     {formatCop(pago.monto)}
                   </p>
                 </div>
                 <div className="mt-2 flex justify-between text-xs text-muted-foreground">
-                  <span>Fecha: {new Date(pago.fecha).toLocaleDateString()}</span>
-                  <span>Método: {pago.metodo}</span>
+                  <span>Fecha: {new Date(pago.created_at).toLocaleDateString()}</span>
+                  <span>Método: {pago.medio_pago}</span>
                 </div>
               </Card>
             </Link>
