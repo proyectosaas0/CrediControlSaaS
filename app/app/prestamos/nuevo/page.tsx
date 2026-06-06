@@ -12,7 +12,8 @@ import {
 } from "@/lib/schemas/admin";
 import { calculateLoanTotals, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
-import { MOCK_CLIENTES, MOCK_COBRADORES } from "@/lib/mock/admin";
+import { apiClient } from "@/lib/api/client";
+import { useClientes, useCobradores } from "@/lib/hooks";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,32 @@ export default function NuevoPrestamoPage() {
   const [step, setStep] = useState<Step>(1);
   const [step1Data, setStep1Data] = useState<PrestamoStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<PrestamoStep2Data | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleConfirm() {
+    if (!step1Data || !step2Data) return;
+    setSubmitting(true);
+    try {
+      const payload = {
+        capital: step2Data.capital,
+        clienteId: step1Data.clienteId,
+        cobradorId: step2Data.cobradorId || null,
+        excluirDomingos: step2Data.excluirDomingos,
+        excluirSabados: step2Data.excluirSabados,
+        fechaInicio: step2Data.fechaInicio,
+        modeloInteres: step2Data.modeloInteres,
+        plazoDias: step2Data.plazoDias,
+        tasaMensual: step2Data.tasaMensual,
+      };
+      const result = await apiClient.post<{ id: string }>("/prestamos", payload);
+      toast.success("Prestamo creado correctamente");
+      router.push(`/app/prestamos/${result.id}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error al crear prestamo");
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
@@ -90,11 +117,8 @@ export default function NuevoPrestamoPage() {
           clienteId={step1Data.clienteId}
           data={step2Data}
           onBack={() => setStep(2)}
-          onConfirm={() => {
-            // TODO: Reemplazar por POST /api/prestamos
-            toast.success("Prestamo creado correctamente");
-            router.push("/app/prestamos");
-          }}
+          onConfirm={handleConfirm}
+          submitting={submitting}
         />
       )}
     </div>
@@ -110,16 +134,17 @@ function Step1({ onNext }: { onNext: (data: PrestamoStep1Data) => void }) {
     resolver: zodResolver(prestamoStep1Schema),
   });
 
-  const clienteOptions = MOCK_CLIENTES.filter((c) => c.activo).map((c) => ({
-    value: c.id,
-    label: `${c.nombre}${c.cedula ? ` · CC ${c.cedula}` : ""}`,
-  }));
+  const { data: clientes = [] } = useClientes();
+
+  const clienteOptions = clientes
+    .filter((c) => c.activo)
+    .map((c) => ({
+      value: c.id,
+      label: `${c.nombre}${c.cedula ? ` · CC ${c.cedula}` : ""}`,
+    }));
 
   return (
-    <form
-      onSubmit={handleSubmit(onNext)}
-      className="space-y-4"
-    >
+    <form onSubmit={handleSubmit(onNext)} className="space-y-4">
       <Select
         label="Cliente"
         options={clienteOptions}
@@ -178,48 +203,52 @@ function Step2({ onNext }: { onNext: (data: PrestamoStep2Data) => void }) {
     }
   }, [capital, modeloInteres, tasaMensual, plazoDias]);
 
+  const { data: cobradores = [] } = useCobradores();
+
   const cobradorOptions = [
     { value: "", label: "Sin cobrador asignado" },
-    ...MOCK_COBRADORES.filter((c) => c.activo).map((c) => ({
-      value: c.id,
-      label: c.nombre,
-    })),
+    ...cobradores
+      .filter((c) => c.activo)
+      .map((c) => ({
+        value: c.id,
+        label: c.nombre,
+      })),
   ];
 
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-4">
-        <Input
-          label="Capital"
-          type="number"
-          placeholder="1.500.000"
-          error={errors.capital?.message}
-          {...register("capital", { valueAsNumber: true })}
-        />
+      <Input
+        label="Capital"
+        type="number"
+        placeholder="1.500.000"
+        error={errors.capital?.message}
+        {...register("capital", { valueAsNumber: true })}
+      />
 
-        <Select
-          label="Modelo de interes"
-          options={MODELO_OPTIONS}
-          placeholder="Selecciona un modelo"
-          error={errors.modeloInteres?.message}
-          {...register("modeloInteres")}
-        />
+      <Select
+        label="Modelo de interes"
+        options={MODELO_OPTIONS}
+        placeholder="Selecciona un modelo"
+        error={errors.modeloInteres?.message}
+        {...register("modeloInteres")}
+      />
 
-        <Input
-          label="Tasa mensual (%)"
-          type="number"
-          step="0.1"
-          placeholder="10"
-          error={errors.tasaMensual?.message}
-          {...register("tasaMensual", { valueAsNumber: true })}
-        />
+      <Input
+        label="Tasa mensual (%)"
+        type="number"
+        step="0.1"
+        placeholder="10"
+        error={errors.tasaMensual?.message}
+        {...register("tasaMensual", { valueAsNumber: true })}
+      />
 
-        <Input
-          label="Plazo (dias)"
-          type="number"
-          placeholder="30"
-          error={errors.plazoDias?.message}
-          {...register("plazoDias", { valueAsNumber: true })}
-        />
+      <Input
+        label="Plazo (dias)"
+        type="number"
+        placeholder="30"
+        error={errors.plazoDias?.message}
+        {...register("plazoDias", { valueAsNumber: true })}
+      />
 
       <Input
         label="Fecha de inicio"
@@ -275,15 +304,20 @@ function Step3({
   data,
   onBack,
   onConfirm,
+  submitting,
 }: {
   clienteId: string;
   data: PrestamoStep2Data;
   onBack: () => void;
   onConfirm: () => void;
+  submitting: boolean;
 }) {
-  const cliente = MOCK_CLIENTES.find((c) => c.id === clienteId);
+  const { data: clientes = [] } = useClientes();
+  const { data: cobradores = [] } = useCobradores();
+
+  const cliente = clientes.find((c) => c.id === clienteId);
   const cobrador = data.cobradorId
-    ? MOCK_COBRADORES.find((c) => c.id === data.cobradorId)
+    ? cobradores.find((c) => c.id === data.cobradorId)
     : null;
 
   const totals = calculateLoanTotals({
@@ -372,7 +406,7 @@ function Step3({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Atras
         </Button>
-        <Button type="button" onClick={onConfirm} className="flex-1">
+        <Button type="button" onClick={onConfirm} disabled={submitting} className="flex-1">
           <Check className="mr-2 h-4 w-4" />
           Confirmar
         </Button>

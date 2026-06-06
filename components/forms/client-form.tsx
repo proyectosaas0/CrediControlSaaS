@@ -46,7 +46,17 @@ export function ClientForm({ onSuccess, onCancel }: ClientFormProps) {
   });
 
   async function onSubmit(data: ClienteFormData) {
+<<<<<<< HEAD
+    try {
+      await apiClient.post("/clientes", data);
+      toast.success("Cliente creado correctamente");
+      onSuccess();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error al crear cliente");
+    }
+
     mutation.mutate(data);
+
   }
 
   return (
