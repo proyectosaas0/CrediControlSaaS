@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Phone, CheckCircle, XCircle } from "lucide-react";
 import { cobradorSchema, type CobradorFormData } from "@/lib/schemas/admin";
-import { useCobradores, type Cobrador } from "@/lib/hooks";
+import { useCobradores, type Cobrador } from "@/hooks/queries/use-cobradores";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -80,7 +80,7 @@ function CobradorCard({ cobrador }: { cobrador: Cobrador }) {
         <div>
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-foreground">
-              {cobrador.nombre}
+              {cobrador.nombre_completo}
             </p>
             <Badge variant={cobrador.activo ? "success" : "muted"}>
               {cobrador.activo ? "Activo" : "Inactivo"}
@@ -97,16 +97,6 @@ function CobradorCard({ cobrador }: { cobrador: Cobrador }) {
         />
       </div>
 
-      {cobrador.activo && (
-        <div className="mt-3 border-t border-border pt-3">
-          <div>
-            <p className="text-xs text-muted-foreground">Comisión</p>
-            <p className="text-sm font-bold text-foreground">
-              {cobrador.comision}%
-            </p>
-          </div>
-        </div>
-      )}
     </Card>
   );
 }
