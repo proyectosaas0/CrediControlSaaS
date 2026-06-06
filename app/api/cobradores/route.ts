@@ -3,7 +3,7 @@ import { apiError, apiOk } from "@/lib/api/errors";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
-  const { response } = await requireApiActor();
+  const { actor, response } = await requireApiActor();
   if (response) return response;
 
   const url = new URL(request.url);

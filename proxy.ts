@@ -34,11 +34,17 @@ export async function proxy(request: NextRequest) {
   const isPublic = PUBLIC_PREFIXES.some((p) => path.startsWith(p));
   const isRoot = path === "/";
 
+  function secureRedirect(destination: URL): NextResponse {
+    const r = NextResponse.redirect(destination);
+    addSecurityHeaders(r);
+    return r;
+  }
+
   if (!user && !isPublic && !isRoot) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", path);
-    return NextResponse.redirect(url);
+    return secureRedirect(url);
   }
 
   if (user) {
@@ -46,13 +52,13 @@ export async function proxy(request: NextRequest) {
       const url = request.nextUrl.clone();
       url.pathname = "/app";
       url.searchParams.delete("redirect");
-      return NextResponse.redirect(url);
+      return secureRedirect(url);
     }
 
     if (isRoot) {
       const url = request.nextUrl.clone();
       url.pathname = "/app";
-      return NextResponse.redirect(url);
+      return secureRedirect(url);
     }
   }
 

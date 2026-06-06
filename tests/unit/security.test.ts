@@ -21,7 +21,7 @@ describe("Security Headers", () => {
     );
   });
 
-  it("CSP script-src does not contain unsafe-inline or unsafe-eval in production", () => {
+  it("CSP production: tiene unsafe-inline (Next.js lo requiere) pero no unsafe-eval", () => {
     vi.stubEnv("NODE_ENV", "production");
 
     const response = new NextResponse();
@@ -31,8 +31,9 @@ describe("Security Headers", () => {
 
     const csp = response.headers.get("Content-Security-Policy") || "";
     const scriptSrc = csp.split(";").find((d) => d.trim().startsWith("script-src")) ?? "";
-    expect(scriptSrc).not.toContain("unsafe-inline");
     expect(scriptSrc).not.toContain("unsafe-eval");
+    expect(csp).toContain("supabase.co");
+    expect(csp).toContain("frame-ancestors 'none'");
   });
 });
 

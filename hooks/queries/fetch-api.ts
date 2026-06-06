@@ -20,7 +20,12 @@ export async function fetchApi<T>(
     }
   }
   const res = await fetch(url.toString());
-  const json = await res.json();
+  let json: { data?: T; error?: { code?: string; message?: string } };
+  try {
+    json = await res.json();
+  } catch {
+    throw new ApiError("PARSE_ERROR", `Error ${res.status}: respuesta inválida`, res.status);
+  }
   if (!res.ok) {
     throw new ApiError(
       json.error?.code ?? "UNKNOWN",
