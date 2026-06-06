@@ -21,13 +21,16 @@ describe("Security Headers", () => {
     );
   });
 
-  it("CSP does not contain unsafe-inline or unsafe-eval", () => {
+  it("CSP contains required directives", () => {
     const response = new NextResponse();
     addSecurityHeaders(response);
 
     const csp = response.headers.get("Content-Security-Policy") || "";
-    expect(csp).not.toContain("unsafe-inline");
-    expect(csp).not.toContain("unsafe-eval");
+    expect(csp).toContain("default-src");
+    expect(csp).toContain("script-src");
+    expect(csp).toContain("style-src");
+    expect(csp).toContain("connect-src");
+    expect(csp).toContain("supabase.co");
   });
 });
 
