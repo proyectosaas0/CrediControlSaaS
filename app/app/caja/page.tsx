@@ -4,35 +4,21 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Wallet, TrendingUp, TrendingDown, Percent, Clock, Ban, CheckCircle } from "lucide-react";
-import {
-  MOCK_CAJA_RESUMEN,
-  MOCK_CAJA_COBRADORES,
-  MOCK_PAGOS_HOY,
-  MOCK_CIERRES_CAJA,
-} from "@/lib/mock/caja";
+import { Wallet, TrendingUp, TrendingDown, Percent, Ban, CheckCircle } from "lucide-react";
+import { useCajaResumen } from "@/hooks/queries/use-caja";
 import { formatCop } from "@/lib/domain/money";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
-import { cn } from "@/components/ui/cn";
 import { toast } from "sonner";
 
-const medioLabels: Record<string, string> = {
-  efectivo: "Efectivo",
-  nequi: "Nequi",
-  transferencia: "Transferencia",
-};
-
-const medioColors: Record<string, string> = {
-  efectivo: "bg-success text-white",
-  nequi: "bg-primary text-white",
-  transferencia: "bg-info text-white",
-};
-
 export default function CajaPage() {
-  const resumen = MOCK_CAJA_RESUMEN;
+  const { data: resumen, isLoading } = useCajaResumen();
+
+  if (isLoading) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">Cargando caja...</p>;
+  }
 
   return (
     <div className="space-y-5">
@@ -43,14 +29,14 @@ export default function CajaPage() {
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">
           Resumen del dia
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           <Card padding="md">
             <div className="flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-success" />
               <p className="text-xs text-muted-foreground">Total esperado</p>
             </div>
             <p className="text-lg font-bold font-mono text-foreground mt-1">
-              {formatCop(resumen.totalEsperado)}
+              {formatCop(resumen?.totalEsperado ?? 0)}
             </p>
           </Card>
           <Card padding="md">
@@ -59,7 +45,7 @@ export default function CajaPage() {
               <p className="text-xs text-muted-foreground">Recaudado</p>
             </div>
             <p className="text-lg font-bold font-mono text-success mt-1">
-              {formatCop(resumen.totalRecaudado)}
+              {formatCop(resumen?.totalRecaudado ?? 0)}
             </p>
           </Card>
           <Card padding="md">
@@ -68,166 +54,22 @@ export default function CajaPage() {
               <p className="text-xs text-muted-foreground">Diferencia</p>
             </div>
             <p className="text-lg font-bold font-mono text-danger mt-1">
-              {formatCop(resumen.diferencia)}
-            </p>
-          </Card>
-          <Card padding="md">
-            <div className="flex items-center gap-2">
-              <Percent className="h-4 w-4 text-primary" />
-              <p className="text-xs text-muted-foreground">Cumplimiento</p>
-            </div>
-            <p className="text-lg font-bold text-primary mt-1">
-              {resumen.cumplimiento}%
+              {formatCop(resumen?.diferencia ?? 0)}
             </p>
           </Card>
         </div>
       </div>
 
-      {/* Desglose por medio de pago */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-          Desglose por medio de pago
-        </h2>
-        <div className="flex gap-3">
-          {Object.entries(resumen.desgloseMedioPago).map(([medio, monto]) => (
-            <Card key={medio} padding="sm" className="flex-1 text-center">
-              <span
-                className={cn(
-                  "inline-block rounded-full px-2 py-0.5 text-xs font-medium mb-1",
-                  medioColors[medio] ?? "bg-muted text-muted-foreground",
-                )}
-              >
-                {medioLabels[medio] ?? medio}
-              </span>
-              <p className="text-sm font-bold font-mono text-foreground">
-                {formatCop(monto)}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {Math.round((monto / resumen.totalRecaudado) * 100)}%
-              </p>
-            </Card>
-          ))}
-        </div>
-      </div>
+      {/* Detalle cobradores */}
+      <Card padding="md">
+        <p className="text-sm text-muted-foreground text-center">Detalle disponible próximamente</p>
+      </Card>
 
-      {/* Rendimiento por cobrador */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-          Rendimiento por cobrador
-        </h2>
-        <div className="space-y-2">
-          {MOCK_CAJA_COBRADORES.map((cb) => (
-            <Card key={cb.id} padding="md">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-foreground">{cb.nombre}</p>
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-medium",
-                    cb.cumplimiento >= 90
-                      ? "bg-success/15 text-success"
-                      : cb.cumplimiento >= 70
-                        ? "bg-warning/15 text-warning"
-                        : "bg-danger/15 text-danger",
-                  )}
-                >
-                  {cb.cumplimiento}%
-                </span>
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Esperado: {formatCop(cb.totalEsperado)}</span>
-                <span>Recaudado: {formatCop(cb.totalRecaudado)}</span>
-                <span>Dif: {formatCop(cb.diferencia)}</span>
-              </div>
-              <div className="mt-1 h-2 w-full rounded-full bg-muted">
-                <div
-                  className={cn(
-                    "h-2 rounded-full transition-all",
-                    cb.cumplimiento >= 90
-                      ? "bg-success"
-                      : cb.cumplimiento >= 70
-                        ? "bg-warning"
-                        : "bg-danger",
-                  )}
-                  style={{ width: `${Math.min(cb.cumplimiento, 100)}%` }}
-                />
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Pagos del dia */}
-      <PagosDelDia />
-
-      {/* Cierres */}
+      {/* Acciones de cierre */}
       <div className="flex gap-3">
         <CerrarRutaButton />
-        <CierreGeneralButton />
+        <CierreGeneralButton resumen={resumen} />
       </div>
-
-      {/* Historial */}
-      <HistorialCierres />
-    </div>
-  );
-}
-
-function PagosDelDia() {
-  const [showAll, setShowAll] = useState(false);
-  const display = showAll ? MOCK_PAGOS_HOY : MOCK_PAGOS_HOY.slice(0, 5);
-
-  return (
-    <div>
-      <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-        Pagos del dia
-      </h2>
-      {MOCK_PAGOS_HOY.length === 0 ? (
-        <Card padding="md">
-          <p className="text-center text-sm text-muted-foreground">
-            Sin pagos registrados hoy
-          </p>
-        </Card>
-      ) : (
-        <div className="space-y-1">
-          {display.map((pago) => (
-            <Card key={pago.id} padding="sm">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {pago.clienteNombre}
-                  </p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    <span>{pago.hora}</span>
-                    <span>·</span>
-                    <span>{pago.cobradorNombre}</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold font-mono text-foreground">
-                    {formatCop(pago.monto)}
-                  </p>
-                  <span
-                    className={cn(
-                      "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                      medioColors[pago.medioPago] ?? "bg-muted",
-                    )}
-                  >
-                    {medioLabels[pago.medioPago] ?? pago.medioPago}
-                  </span>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-      {MOCK_PAGOS_HOY.length > 5 && (
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="mt-2 text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-        >
-          {showAll ? "Ver menos" : `Ver todos (${MOCK_PAGOS_HOY.length})`}
-        </button>
-      )}
     </div>
   );
 }
@@ -296,7 +138,11 @@ function CerrarRutaButton() {
   );
 }
 
-function CierreGeneralButton() {
+type CierreGeneralButtonProps = {
+  resumen?: { totalEsperado: number; totalRecaudado: number; diferencia: number } | null;
+};
+
+function CierreGeneralButton({ resumen }: CierreGeneralButtonProps) {
   const [open, setOpen] = useState(false);
 
   function handleCierre() {
@@ -324,19 +170,19 @@ function CierreGeneralButton() {
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total esperado</span>
               <span className="font-mono font-medium">
-                {formatCop(MOCK_CAJA_RESUMEN.totalEsperado)}
+                {formatCop(resumen?.totalEsperado ?? 0)}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Total recaudado</span>
               <span className="font-mono font-medium text-success">
-                {formatCop(MOCK_CAJA_RESUMEN.totalRecaudado)}
+                {formatCop(resumen?.totalRecaudado ?? 0)}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Diferencia</span>
               <span className="font-mono font-medium text-danger">
-                {formatCop(MOCK_CAJA_RESUMEN.diferencia)}
+                {formatCop(resumen?.diferencia ?? 0)}
               </span>
             </div>
           </div>
@@ -361,61 +207,5 @@ function CierreGeneralButton() {
         </div>
       </Dialog>
     </>
-  );
-}
-
-function HistorialCierres() {
-  return (
-    <div>
-      <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-        Historial de cierres
-      </h2>
-      {MOCK_CIERRES_CAJA.length === 0 ? (
-        <Card padding="md">
-          <p className="text-center text-sm text-muted-foreground">
-            Sin cierres registrados
-          </p>
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {MOCK_CIERRES_CAJA.map((cierre) => (
-            <Card key={cierre.id} padding="sm">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium text-foreground">
-                      {cierre.fecha}
-                    </p>
-                    <span
-                      className={cn(
-                        "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
-                        cierre.tipo === "general"
-                          ? "bg-primary/15 text-primary"
-                          : "bg-muted text-muted-foreground",
-                      )}
-                    >
-                      {cierre.tipo === "general" ? "General" : "Ruta"}
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {cierre.cobradorNombre} · Cerrado por {cierre.cerradoPor}
-                  </p>
-                </div>
-                <div className="text-right text-xs">
-                  <p className="font-mono text-foreground">
-                    {formatCop(cierre.totalRecaudado)}
-                  </p>
-                  {cierre.diferencia > 0 && (
-                    <p className="text-danger">
-                      Dif: {formatCop(cierre.diferencia)}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
   );
 }
