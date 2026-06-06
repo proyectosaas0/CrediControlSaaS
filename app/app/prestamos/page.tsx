@@ -69,7 +69,7 @@ export default function PrestamosPage() {
         />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {FILTER_PILLS.map((pill) => (
           <button
             key={pill.value}
@@ -96,7 +96,7 @@ export default function PrestamosPage() {
         </div>
       ) : error ? (
         <div className="py-12 text-center">
-          <p className="text-red-500">Error: {error.message}</p>
+          <p className="text-danger">Error: {error.message}</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center">
@@ -106,7 +106,7 @@ export default function PrestamosPage() {
         <div className="space-y-3">
           {filtered.map((prestamo) => (
             <Link key={prestamo.id} href={`/app/prestamos/${prestamo.id}`}>
-              <Card padding="md" className="mb-3">
+              <Card padding="md" className="mb-3 transition-colors hover:border-primary/30 cursor-pointer">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">
                     {prestamo.clienteNombre}

@@ -167,7 +167,7 @@ function MoraCard({ mora }: { mora: MockMora }) {
     mora.diasMora <= 10
       ? "border-l-warning"
       : mora.diasMora <= 20
-        ? "border-l-orange-500"
+        ? "border-l-amber-500"
         : "border-l-danger";
 
   return (
@@ -339,7 +339,7 @@ function WhatsAppButton({ telefono, cliente }: { telefono: string; cliente: stri
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#25D366] px-3 text-xs font-medium text-white hover:bg-[#22c35e] transition-colors"
+      className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-500 px-3 text-xs font-medium text-white hover:bg-green-600 transition-colors"
     >
       <Send className="h-4 w-4" />
       WhatsApp

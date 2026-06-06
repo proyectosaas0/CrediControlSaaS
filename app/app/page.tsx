@@ -139,7 +139,7 @@ export default function DashboardPage() {
           <div className="space-y-3">
             {recentPrestamos.map((p) => (
               <Link key={p.id} href={`/app/prestamos/${p.id}`}>
-                <Card padding="md" className="mb-3">
+                <Card padding="md" className="mb-3 transition-colors hover:border-primary/30 cursor-pointer">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-foreground">

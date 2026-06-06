@@ -223,7 +223,7 @@ function PagosDelDia() {
       {MOCK_PAGOS_HOY.length > 5 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="mt-2 text-xs text-primary hover:underline"
+          className="mt-2 text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
         >
           {showAll ? "Ver menos" : `Ver todos (${MOCK_PAGOS_HOY.length})`}
         </button>

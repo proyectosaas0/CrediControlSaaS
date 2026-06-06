@@ -47,7 +47,7 @@ export default function PagosPage() {
         </div>
       ) : error ? (
         <div className="py-12 text-center">
-          <p className="text-red-500">Error: {error.message}</p>
+          <p className="text-danger">Error: {error.message}</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="py-12 text-center">
@@ -57,7 +57,7 @@ export default function PagosPage() {
         <div className="space-y-3">
           {filtered.map((pago) => (
             <Link key={pago.id} href={`/app/pagos/${pago.id}`}>
-              <Card padding="md" className="mb-3">
+              <Card padding="md" className="mb-3 transition-colors hover:border-primary/30 cursor-pointer">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">
                     {pago.clienteNombre}

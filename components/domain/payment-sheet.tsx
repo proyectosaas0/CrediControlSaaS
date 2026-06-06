@@ -150,7 +150,10 @@ export function PaymentSheet({
                       : "border-border bg-background hover:border-muted-foreground/30",
                   )}
                 >
-                  <span className="text-xl" aria-hidden="true">{mp.icon}</span>
+                  {(() => {
+                    const Icon = mp.icon;
+                    return <Icon className="h-6 w-6" aria-hidden="true" />;
+                  })()}
                   <span className="text-xs font-medium text-foreground">
                     {mp.label}
                   </span>
@@ -178,7 +181,7 @@ export function PaymentSheet({
             type="button"
             onClick={handleNotFound}
             disabled={submitting}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-3 text-sm text-muted-foreground transition-colors hover:bg-muted min-h-11"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-3 text-sm text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-11"
           >
             <UserX className="h-4 w-4" />
             Cliente no encontrado
