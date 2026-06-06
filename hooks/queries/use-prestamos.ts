@@ -1,0 +1,51 @@
+import { useQuery } from "@tanstack/react-query";
+import { fetchApi } from "./fetch-api";
+
+export type PrestamoSaldo = {
+  id: string;
+  prestamo_id: string;
+  cuotas_pagadas: number;
+  cuotas_totales: number;
+  saldo_pendiente: number;
+};
+
+export type Prestamo = {
+  id: string;
+  organization_id: string;
+  cliente_id: string;
+  cobrador_id: string | null;
+  estado: "activo" | "en_mora" | "saldado" | "refinanciado" | "cancelado";
+  capital: number;
+  cuota_diaria: number | null;
+  total_pagar: number | null;
+  plazo_dias: number;
+  modelo_interes: "cuota_fija" | "solo_interes" | "sobre_saldo";
+  tasa_mensual: number;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  created_at: string;
+  clientes: { nombre: string } | null;
+  prestamo_saldos: PrestamoSaldo[];
+};
+
+export function usePrestamos(params?: {
+  estado?: string;
+  page?: number;
+}) {
+  return useQuery({
+    queryKey: ["prestamos", params],
+    queryFn: () =>
+      fetchApi<Prestamo[]>("/api/prestamos", {
+        estado: params?.estado,
+        page: params?.page,
+      }),
+  });
+}
+
+export function usePrestamo(id: string) {
+  return useQuery({
+    queryKey: ["prestamos", id],
+    queryFn: () => fetchApi<Prestamo>(`/api/prestamos/${id}`),
+    enabled: !!id,
+  });
+}
