@@ -1,5 +1,5 @@
 import { requireApiActor } from "@/lib/api/auth";
-import { apiOk, apiError } from "@/lib/api/errors";
+import { apiOk } from "@/lib/api/errors";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   prestamoStep1Schema,
@@ -167,7 +167,7 @@ function Step2({ onNext }: { onNext: (data: PrestamoStep2Data) => void }) {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<PrestamoStep2Data>({
     resolver: zodResolver(prestamoStep2Schema),
@@ -179,12 +179,10 @@ function Step2({ onNext }: { onNext: (data: PrestamoStep2Data) => void }) {
     },
   });
 
-  const [capital, modeloInteres, tasaMensual, plazoDias] = watch([
-    "capital",
-    "modeloInteres",
-    "tasaMensual",
-    "plazoDias",
-  ]);
+  const [capital, modeloInteres, tasaMensual, plazoDias] = useWatch({
+    control,
+    name: ["capital", "modeloInteres", "tasaMensual", "plazoDias"],
+  });
 
   const preview = useMemo(() => {
     const c = Number(capital);

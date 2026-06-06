@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Building2, Palette, MessageSquare, Percent, Clock } from "lucide-react";
@@ -36,8 +36,8 @@ export default function ConfiguracionPage() {
   const {
     register,
     handleSubmit,
+    control,
     formState: { isSubmitting },
-    watch,
   } = useForm<ConfiguracionFormData>({
     resolver: zodResolver(configuracionSchema),
     defaultValues: {
@@ -45,7 +45,7 @@ export default function ConfiguracionPage() {
     },
   });
 
-  const moraTipo = watch("moraTipo");
+  const moraTipo = useWatch({ control, name: "moraTipo" });
 
   function onSubmit() {
     toast.success("Configuracion guardada correctamente");

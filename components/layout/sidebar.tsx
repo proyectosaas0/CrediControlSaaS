@@ -56,7 +56,7 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
     <>
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-200 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -64,29 +64,34 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-border bg-sidebar-bg transition-transform duration-300 lg:static lg:w-56 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-sidebar-border bg-sidebar-bg transition-transform duration-300 lg:static lg:w-60 lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >
-        <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
+        {/* Brand */}
+        <div className="flex h-14 shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+            <span className="text-sm font-bold text-primary-foreground">C</span>
+          </div>
           <Link
             href="/app"
             onClick={onClose}
-            className="text-lg font-bold text-sidebar-foreground"
+            className="text-base font-semibold tracking-tight text-sidebar-foreground"
           >
             {orgName}
           </Link>
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-sidebar-foreground hover:bg-sidebar-border lg:hidden"
+            className="ml-auto inline-flex min-h-8 min-w-8 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-border lg:hidden"
             aria-label="Cerrar menu"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto p-3">
+        {/* Navigation */}
+        <nav className="flex-1 overflow-y-auto px-3 py-4">
           <ul className="space-y-1">
             {items.map((item) => {
               const Icon = item.icon;
@@ -100,14 +105,22 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
                     href={item.href}
                     onClick={onClose}
                     className={cn(
-                      "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
                       isActive
-                        ? "bg-sidebar-active text-sidebar-active-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-border",
+                        ? "bg-primary/10 text-primary shadow-[inset_0_1px_0_0_rgba(99,102,241,0.1)]"
+                        : "text-sidebar-foreground hover:bg-sidebar-border hover:text-foreground",
                     )}
                   >
-                    <Icon className="h-5 w-5 shrink-0" />
+                    <Icon
+                      className={cn(
+                        "h-4 w-4 shrink-0 transition-colors",
+                        isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+                      )}
+                    />
                     {item.label}
+                    {isActive && (
+                      <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
+                    )}
                   </Link>
                 </li>
               );
@@ -115,7 +128,8 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
           </ul>
         </nav>
 
-        <div className="border-t border-sidebar-border p-3">
+        {/* Footer */}
+        <div className="shrink-0 border-t border-sidebar-border px-3 py-3">
           <div className="flex items-center gap-3 rounded-lg px-3 py-2">
             <Avatar initials={userName.slice(0, 2).toUpperCase()} size="sm" />
             <div className="flex-1 overflow-hidden">
@@ -138,7 +152,7 @@ export function SidebarTrigger({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-foreground hover:bg-muted lg:hidden"
+      className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg text-foreground hover:bg-muted lg:hidden"
       aria-label="Abrir menu"
     >
       <Menu className="h-5 w-5" />

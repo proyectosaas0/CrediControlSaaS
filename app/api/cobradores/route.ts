@@ -39,7 +39,7 @@ const MOCK_COBRADORES: Cobrador[] = [
 ];
 
 export async function GET(request: Request) {
-  const { actor, response } = await requireApiActor();
+  const { response } = await requireApiActor();
   if (response) return response;
 
   const url = new URL(request.url);

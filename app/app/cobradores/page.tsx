@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { formatCop } from "@/lib/domain/money";
 import { toast } from "sonner";
 import { cn } from "@/components/ui/cn";
 

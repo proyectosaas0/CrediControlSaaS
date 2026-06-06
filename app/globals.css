@@ -1,35 +1,47 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  --primary: #1d4ed8;
+  /* ── Base ── */
+  --background: #09090b;
+  --foreground: #fafafa;
+
+  /* ── Primary — Indigo fintech (not basic blue) ── */
+  --primary: #6366f1;
   --primary-foreground: #ffffff;
-  --primary-hover: #1e40af;
-  --success: #16a34a;
+  --primary-hover: #4f46e5;
+
+  /* ── Semantic ── */
+  --success: #10b981;
   --success-foreground: #ffffff;
-  --warning: #ca8a04;
-  --warning-foreground: #ffffff;
-  --danger: #dc2626;
+  --warning: #f59e0b;
+  --warning-foreground: #0c0a09;
+  --danger: #f43f5e;
   --danger-foreground: #ffffff;
   --info: #0ea5e9;
   --info-foreground: #ffffff;
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --border: #e2e8f0;
-  --ring: #1d4ed8;
-  --cobrador-action: #16a34a;
-  --cobrador-action-hover: #15803d;
+
+  /* ── Surfaces ── */
+  --card: #18181b;
+  --card-foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --ring: #6366f1;
+
+  /* ── Cobrador ── */
+  --cobrador-action: #10b981;
+  --cobrador-action-hover: #059669;
   --cobrador-pending: #f59e0b;
   --cobrador-paid: #22c55e;
-  --sidebar-bg: #f8fafc;
-  --sidebar-foreground: #334155;
-  --sidebar-border: #e2e8f0;
-  --sidebar-active: #1d4ed8;
+
+  /* ── Sidebar ── */
+  --sidebar-bg: #0c0c10;
+  --sidebar-foreground: #a1a1aa;
+  --sidebar-border: #1f1f23;
+  --sidebar-active: #6366f1;
   --sidebar-active-foreground: #ffffff;
-  --radius: 0.5rem;
+
+  --radius: 0.625rem;
 }
 
 @theme inline {
@@ -69,31 +81,6 @@
   --radius-full: 9999px;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --primary: #3b82f6;
-    --primary-foreground: #ffffff;
-    --primary-hover: #2563eb;
-    --success: #22c55e;
-    --warning: #eab308;
-    --danger: #ef4444;
-    --info: #38bdf8;
-    --card: #111111;
-    --card-foreground: #ededed;
-    --muted: #1a1a2e;
-    --muted-foreground: #94a3b8;
-    --border: #2d2d44;
-    --ring: #3b82f6;
-    --sidebar-bg: #111111;
-    --sidebar-foreground: #94a3b8;
-    --sidebar-border: #2d2d44;
-    --sidebar-active: #3b82f6;
-    --sidebar-active-foreground: #ffffff;
-  }
 }
 
 * {
