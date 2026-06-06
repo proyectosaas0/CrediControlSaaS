@@ -38,8 +38,10 @@ export default function DashboardLayout({
           userName={userName}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 pb-20 lg:p-6 lg:pb-6">
-          {children}
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto w-full max-w-7xl p-4 pb-20 sm:p-6 lg:p-8 lg:pb-8">
+            {children}
+          </div>
         </main>
 
         <RoleGate allowed={["cobrador"]} role={role}>

@@ -188,7 +188,7 @@ function CronogramaSection({ prestamo }: { prestamo: NonNullable<ReturnType<type
         Cronograma de pagos
       </h2>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-border text-muted-foreground">

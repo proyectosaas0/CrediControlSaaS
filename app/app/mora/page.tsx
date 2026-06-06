@@ -75,7 +75,7 @@ export default function MoraPage() {
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-foreground">Panel de Mora</h1>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 lg:grid-cols-3 gap-3">
         <Card padding="md">
           <p className="text-xs text-muted-foreground">Clientes en mora</p>
           <p className="text-lg font-bold text-danger">{resumen.clientesEnMora}</p>
@@ -103,7 +103,7 @@ export default function MoraPage() {
         />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {estados.map((f) => (
           <button
             key={f.value}
@@ -120,7 +120,7 @@ export default function MoraPage() {
         ))}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {diasFiltros.map((f) => (
           <button
             key={f.value}

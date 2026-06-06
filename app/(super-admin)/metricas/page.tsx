@@ -221,7 +221,7 @@ export default function MetricasPage() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card padding="md">
           <p className="text-xs text-muted-foreground">Prestamos creados</p>
           <p className="text-xl font-bold text-foreground mt-1">{m.prestamosTotales}</p>

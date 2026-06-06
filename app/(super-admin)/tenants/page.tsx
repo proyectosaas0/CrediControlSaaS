@@ -97,7 +97,7 @@ export default function TenantsPage() {
         />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {ESTADOS.map((e) => (
           <button
             key={e.value}

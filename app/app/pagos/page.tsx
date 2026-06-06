@@ -54,10 +54,10 @@ export default function PagosPage() {
           <p className="text-muted-foreground">No se encontraron pagos</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((pago) => (
             <Link key={pago.id} href={`/app/pagos/${pago.id}`}>
-              <Card padding="md" className="mb-3 transition-colors hover:border-primary/30 cursor-pointer">
+              <Card padding="md" className="transition-colors hover:border-primary/30 cursor-pointer h-full">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">
                     {pago.clienteNombre}

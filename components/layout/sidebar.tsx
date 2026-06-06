@@ -56,7 +56,7 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
     <>
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-200 lg:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
@@ -64,7 +64,7 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-border bg-sidebar-bg transition-transform duration-200 lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-border bg-sidebar-bg transition-transform duration-300 lg:static lg:w-56 lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
         )}
       >

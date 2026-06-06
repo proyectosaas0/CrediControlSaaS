@@ -65,7 +65,7 @@ export default function ClientesPage() {
         />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {pills.map((pill) => (
           <button
             key={pill.value}
@@ -95,10 +95,10 @@ export default function ClientesPage() {
           <p className="text-muted-foreground">No se encontraron clientes</p>
         </div>
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((cliente) => (
             <Link key={cliente.id} href={`/app/clientes/${cliente.id}`}>
-              <Card padding="md" className="mb-3 flex items-center gap-3 transition-colors hover:border-primary/30 cursor-pointer">
+              <Card padding="md" className="flex items-center gap-3 transition-colors hover:border-primary/30 cursor-pointer h-full">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="truncate text-sm font-semibold text-foreground">
