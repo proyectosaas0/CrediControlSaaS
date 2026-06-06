@@ -2,6 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { clienteSchema, type ClienteFormData } from "@/lib/schemas/admin";
 import { apiClient } from "@/lib/api/client";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,8 @@ type ClientFormProps = {
 };
 
 export function ClientForm({ onSuccess, onCancel }: ClientFormProps) {
+  const queryClient = useQueryClient();
+
   const {
     register,
     handleSubmit,
@@ -30,7 +33,20 @@ export function ClientForm({ onSuccess, onCancel }: ClientFormProps) {
     },
   });
 
+  const mutation = useMutation({
+    mutationFn: (data: ClienteFormData) => apiClient.post('/clientes', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['clientes'] });
+      toast.success("Cliente creado correctamente");
+      onSuccess();
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Error al crear cliente");
+    },
+  });
+
   async function onSubmit(data: ClienteFormData) {
+<<<<<<< HEAD
     try {
       await apiClient.post("/clientes", data);
       toast.success("Cliente creado correctamente");
@@ -38,6 +54,9 @@ export function ClientForm({ onSuccess, onCancel }: ClientFormProps) {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Error al crear cliente");
     }
+
+    mutation.mutate(data);
+
   }
 
   return (
@@ -85,8 +104,8 @@ export function ClientForm({ onSuccess, onCancel }: ClientFormProps) {
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting} className="flex-1">
-          Crear cliente
+        <Button type="submit" disabled={isSubmitting || mutation.isPending} className="flex-1">
+          {mutation.isPending ? "Creando..." : "Crear cliente"}
         </Button>
       </div>
     </form>
