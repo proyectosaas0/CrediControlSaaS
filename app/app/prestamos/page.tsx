@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Plus, Search } from "lucide-react";
-import { usePrestamos, type Prestamo } from "@/lib/hooks";
+import { usePrestamos, type Prestamo } from "@/hooks/queries/use-prestamos";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,7 @@ export default function PrestamosPage() {
       const q = search.toLowerCase();
       list = list.filter(
         (p) =>
-          p.clienteNombre.toLowerCase().includes(q) ||
+          (p.clientes?.nombre ?? "").toLowerCase().includes(q) ||
           p.id.toLowerCase().includes(q),
       );
     }
@@ -109,21 +109,16 @@ export default function PrestamosPage() {
               <Card padding="md" className="transition-colors hover:border-primary/30 cursor-pointer h-full">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">
-                    {prestamo.clienteNombre}
+                    {prestamo.clientes?.nombre ?? "—"}
                   </p>
                   <LoanStatusBadge estado={prestamo.estado} />
                 </div>
                 <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground">
                   <span>Capital: {formatCop(prestamo.capital)}</span>
-                  <span>Cuota: {formatCop(prestamo.cuotaDiaria)}/dia</span>
-                  <span>Total: {formatCop(prestamo.totalPagar)}</span>
-                  <span>Cuota {prestamo.cuotasPagadas}/{prestamo.cuotasTotales}</span>
+                  <span>Cuota: {formatCop(prestamo.cuota_diaria ?? 0)}/dia</span>
+                  <span>Total: {formatCop(prestamo.total_pagar ?? 0)}</span>
+                  <span>Cuota {prestamo.prestamo_saldos[0]?.cuotas_pagadas ?? 0}/{prestamo.prestamo_saldos[0]?.cuotas_totales ?? 0}</span>
                 </div>
-                {prestamo.cobradorNombre && (
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Cobrador: {prestamo.cobradorNombre}
-                  </p>
-                )}
               </Card>
             </Link>
           ))}

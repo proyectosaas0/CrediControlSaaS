@@ -43,6 +43,8 @@ export async function GET(request: Request) {
   if (actor!.role === "cobrador") query = query.eq("cobrador_id", actor!.userId);
   const estado = estadoPrestamoSchema.safeParse(url.searchParams.get("estado"));
   if (estado.success) query = query.eq("estado", estado.data);
+  const clienteId = url.searchParams.get("cliente_id");
+  if (clienteId) query = query.eq("cliente_id", clienteId);
 
   const { count, data, error } = await query;
   if (error) return apiError("INTERNAL_ERROR", error.message, 500);

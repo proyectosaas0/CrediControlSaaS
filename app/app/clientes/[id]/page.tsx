@@ -16,7 +16,7 @@ export default function ClienteDetailPage() {
   const id = params.id as string;
 
   const { data: cliente, isLoading, error } = useCliente(id);
-  const { data: todosPrestamos = [] } = usePrestamos();
+  const { data: prestamos = [] } = usePrestamos({ clienteId: id });
 
   if (isLoading) {
     return (
@@ -40,7 +40,6 @@ export default function ClienteDetailPage() {
     );
   }
 
-  const prestamos = todosPrestamos.filter((p) => p.cliente_id === cliente.id);
   const totalPrestado = prestamos.reduce((sum, p) => sum + p.capital, 0);
   const prestamosActivos = prestamos.filter((p) => p.estado === "activo" || p.estado === "en_mora");
 

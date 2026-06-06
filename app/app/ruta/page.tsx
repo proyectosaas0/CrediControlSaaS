@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { RouteCard } from "@/components/domain/route-card";
 import { PaymentSheet } from "@/components/domain/payment-sheet";
 import { AdminRutaView } from "@/components/domain/admin-ruta-view";
@@ -53,6 +54,7 @@ export default function RutaPage() {
 
 function CobradorRutaView() {
   const { data: rawItems = [], isLoading } = useRutaHoy();
+  const queryClient = useQueryClient();
   const [selectedItem, setSelectedItem] = useState<RouteItem | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>("todos");
@@ -74,6 +76,7 @@ function CobradorRutaView() {
 
   function handlePaymentSuccess(_id: string, _medioPago: MedioPago, _monto: number) {
     toast.success("Pago registrado");
+    void queryClient.invalidateQueries({ queryKey: ["ruta"] });
     setSheetOpen(false);
   }
 

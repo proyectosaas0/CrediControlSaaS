@@ -31,6 +31,7 @@ export type Prestamo = {
 export function usePrestamos(params?: {
   estado?: string;
   page?: number;
+  clienteId?: string;
 }) {
   return useQuery({
     queryKey: ["prestamos", params],
@@ -38,6 +39,7 @@ export function usePrestamos(params?: {
       fetchApi<Prestamo[]>("/api/prestamos", {
         estado: params?.estado,
         page: params?.page,
+        cliente_id: params?.clienteId,
       }),
   });
 }

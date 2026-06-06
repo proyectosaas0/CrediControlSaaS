@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   TrendingUp,
   AlertTriangle,
@@ -36,6 +36,26 @@ export default function ReportesPage() {
   const [desde, setDesde] = useState("2026-06-01");
   const [hasta, setHasta] = useState("2026-06-05");
 
+  useEffect(() => {
+    if (periodo === "rango") return;
+    const today = new Date();
+    const hasta = today.toISOString().slice(0, 10);
+    let desde: string;
+    if (periodo === "hoy") {
+      desde = hasta;
+    } else if (periodo === "semana") {
+      const d = new Date(today);
+      d.setDate(d.getDate() - 6);
+      desde = d.toISOString().slice(0, 10);
+    } else {
+      const d = new Date(today);
+      d.setDate(1);
+      desde = d.toISOString().slice(0, 10);
+    }
+    setDesde(desde);
+    setHasta(hasta);
+  }, [periodo]);
+
   const rango = { desde, hasta };
   const { data: metricas, isLoading: loadingMetricas } = useReportesResumen(rango);
   const { data: recaudoDiario = [], isLoading: loadingChart } = useRecaudoDiario(rango);
@@ -43,6 +63,11 @@ export default function ReportesPage() {
   const { data: cartera } = useCarteraRiesgo();
   const { data: proyeccion } = useProyeccion(30);
   const { data: cobradores = [] } = useCobradores({ activo: true });
+
+  const rendimientoFiltrado =
+    cobradorFiltro === "todos"
+      ? cobradoresRendimiento
+      : cobradoresRendimiento.filter((r) => r.cobrador_id === cobradorFiltro);
 
   return (
     <div className="space-y-5">
@@ -225,13 +250,13 @@ export default function ReportesPage() {
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">
           Rendimiento por cobrador
         </h2>
-        {cobradoresRendimiento.length === 0 ? (
+        {rendimientoFiltrado.length === 0 ? (
           <Card padding="md">
             <p className="text-center text-sm text-muted-foreground">Sin datos para el periodo</p>
           </Card>
         ) : (
           <div className="space-y-2">
-            {cobradoresRendimiento.map((c) => (
+            {rendimientoFiltrado.map((c) => (
               <Card key={c.cobrador_id} padding="md">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">

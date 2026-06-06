@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,9 +35,43 @@ export default function NuevoPrestamoPage() {
   const [step, setStep] = useState<Step>(1);
   const [step1Data, setStep1Data] = useState<PrestamoStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<PrestamoStep2Data | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: clientes = [] } = useClientes({ activo: true });
   const { data: cobradores = [] } = useCobradores({ activo: true });
+
+  const handleConfirm = useCallback(async () => {
+    if (!step1Data || !step2Data) return;
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/prestamos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clienteId: step1Data.clienteId,
+          capital: step2Data.capital,
+          modeloInteres: step2Data.modeloInteres,
+          tasaMensual: step2Data.tasaMensual,
+          plazoDias: step2Data.plazoDias,
+          fechaInicio: step2Data.fechaInicio,
+          cobradorId: step2Data.cobradorId || null,
+          excluirSabados: step2Data.excluirSabados,
+          excluirDomingos: step2Data.excluirDomingos,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error((body as { message?: string }).message ?? "Error al crear el préstamo");
+      }
+      toast.success("Prestamo creado correctamente");
+      router.push("/app/prestamos");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error al crear el préstamo";
+      toast.error(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [step1Data, step2Data, router]);
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
@@ -99,11 +133,8 @@ export default function NuevoPrestamoPage() {
           clientes={clientes}
           cobradores={cobradores}
           onBack={() => setStep(2)}
-          onConfirm={() => {
-            // TODO: Reemplazar por POST /api/prestamos
-            toast.success("Prestamo creado correctamente");
-            router.push("/app/prestamos");
-          }}
+          onConfirm={handleConfirm}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>
@@ -298,6 +329,7 @@ function Step3({
   cobradores,
   onBack,
   onConfirm,
+  isSubmitting,
 }: {
   clienteId: string;
   data: PrestamoStep2Data;
@@ -305,6 +337,7 @@ function Step3({
   cobradores: Cobrador[];
   onBack: () => void;
   onConfirm: () => void;
+  isSubmitting?: boolean;
 }) {
   const cliente = clientes.find((c) => c.id === clienteId);
   const cobrador = data.cobradorId
@@ -397,9 +430,9 @@ function Step3({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Atras
         </Button>
-        <Button type="button" onClick={onConfirm} className="flex-1">
+        <Button type="button" onClick={onConfirm} className="flex-1" disabled={isSubmitting}>
           <Check className="mr-2 h-4 w-4" />
-          Confirmar
+          {isSubmitting ? "Creando..." : "Confirmar"}
         </Button>
       </div>
     </div>

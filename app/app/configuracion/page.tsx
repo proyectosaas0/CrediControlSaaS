@@ -1,6 +1,7 @@
 "use client";
 
 import { useForm, useWatch } from "react-hook-form";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Building2, Palette, MessageSquare, Percent, Clock } from "lucide-react";
@@ -38,6 +39,7 @@ export default function ConfiguracionPage() {
     register,
     handleSubmit,
     control,
+    reset,
     formState: { isSubmitting },
   } = useForm<ConfiguracionFormData>({
     resolver: zodResolver(configuracionSchema),
@@ -59,6 +61,28 @@ export default function ConfiguracionPage() {
       colorPrimario: "#1d4ed8",
     },
   });
+
+  useEffect(() => {
+    if (org) {
+      reset({
+        nombreNegocio: org.nombre_negocio ?? "",
+        ciudad: org.ciudad ?? "",
+        telefono: org.telefono ?? "",
+        moraTipo: "porcentaje",
+        moraValor: 5,
+        diasGracia: 3,
+        tasaInteresDefault: 10,
+        cobrarSabados: true,
+        cobrarDomingos: false,
+        geolocalizacionRequerida: false,
+        moneda: "COP",
+        horarioInicio: "07:00",
+        horarioFin: "18:00",
+        whatsappTemplate: "Hola {cliente}, tu pago de {monto} ha sido registrado.",
+        colorPrimario: "#1d4ed8",
+      });
+    }
+  }, [org, reset]);
 
   const moraTipo = useWatch({ control, name: "moraTipo" });
 
