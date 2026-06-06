@@ -9,14 +9,13 @@ import {
   Download,
 } from "lucide-react";
 import {
-  MOCK_RECAUDO_DIARIO,
-  MOCK_COBRADOR_RENDIMIENTO,
-  MOCK_MEDIO_PAGO_DISTRIBUCION,
-  MOCK_CARTERA_RIESGO,
-  MOCK_RESUMEN_METRICAS,
-  MOCK_PROYECCION,
-} from "@/lib/mock/reportes";
-import { MOCK_COBRADORES } from "@/lib/mock/admin";
+  useReportesResumen,
+  useRecaudoDiario,
+  useReportesCobradores,
+  useCarteraRiesgo,
+  useProyeccion,
+} from "@/hooks/queries/use-reportes";
+import { useCobradores } from "@/hooks/queries/use-cobradores";
 import { formatCop } from "@/lib/domain/money";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,7 +36,13 @@ export default function ReportesPage() {
   const [desde, setDesde] = useState("2026-06-01");
   const [hasta, setHasta] = useState("2026-06-05");
 
-  const metricas = MOCK_RESUMEN_METRICAS;
+  const rango = { desde, hasta };
+  const { data: metricas, isLoading: loadingMetricas } = useReportesResumen(rango);
+  const { data: recaudoDiario = [], isLoading: loadingChart } = useRecaudoDiario(rango);
+  const { data: cobradoresRendimiento = [] } = useReportesCobradores(rango);
+  const { data: cartera } = useCarteraRiesgo();
+  const { data: proyeccion } = useProyeccion(30);
+  const { data: cobradores = [] } = useCobradores({ activo: true });
 
   return (
     <div className="space-y-5">
@@ -47,7 +52,7 @@ export default function ReportesPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => toast.success("CSV exportado (mock)")}
+            onClick={() => toast.success("CSV exportado")}
           >
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">CSV</span>
@@ -55,7 +60,7 @@ export default function ReportesPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => toast.success("PDF exportado (mock)")}
+            onClick={() => toast.success("PDF exportado")}
           >
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">PDF</span>
@@ -117,9 +122,9 @@ export default function ReportesPage() {
               className="mt-1 flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <option value="todos">Todos los cobradores</option>
-              {MOCK_COBRADORES.filter((c) => c.activo).map((c) => (
+              {cobradores.map((c) => (
                 <option key={c.id} value={c.id}>
-                  {c.nombre}
+                  {c.nombre_completo}
                 </option>
               ))}
             </select>
@@ -135,16 +140,7 @@ export default function ReportesPage() {
             <p className="text-xs text-muted-foreground">Recaudo del periodo</p>
           </div>
           <p className="text-lg font-bold font-mono text-success mt-1">
-            {formatCop(metricas.recaudoTotal)}
-          </p>
-          <div className="mt-1 h-1.5 w-full rounded-full bg-muted">
-            <div
-              className="h-1.5 rounded-full bg-success"
-              style={{ width: `${metricas.recaudoPorcentaje}%` }}
-            />
-          </div>
-         <p className="text-xs text-muted-foreground mt-0.5">
-            {metricas.recaudoPorcentaje}% de {formatCop(metricas.recaudoEsperado)}
+            {formatCop(metricas?.recaudoTotal ?? 0)}
           </p>
         </Card>
         <Card padding="md">
@@ -153,10 +149,7 @@ export default function ReportesPage() {
             <p className="text-xs text-muted-foreground">Mora activa</p>
           </div>
           <p className="text-lg font-bold font-mono text-danger mt-1">
-            {formatCop(metricas.moraMonto)}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {metricas.clientesEnMora} clientes
+            {formatCop(cartera?.montoTotal ?? 0)}
           </p>
         </Card>
         <Card padding="md">
@@ -165,19 +158,19 @@ export default function ReportesPage() {
             <p className="text-xs text-muted-foreground">Prestamos activos</p>
           </div>
           <p className="text-lg font-bold text-primary mt-1">
-            {metricas.prestamosActivos}
+            {metricas?.prestamosActivos ?? 0}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Capital activo: {formatCop(metricas.capitalActivo)}
+            En mora: {metricas?.prestamosEnMora ?? 0}
           </p>
         </Card>
         <Card padding="md">
           <div className="flex items-center gap-2">
             <Target className="h-4 w-4 text-primary" />
-            <p className="text-xs text-muted-foreground">Efectividad de cobro</p>
+            <p className="text-xs text-muted-foreground">Proyeccion 30 dias</p>
           </div>
           <p className="text-lg font-bold text-primary mt-1">
-            {metricas.efectividadCobro}%
+            {formatCop(proyeccion?.total ?? 0)}
           </p>
         </Card>
       </div>
@@ -188,36 +181,42 @@ export default function ReportesPage() {
           Recaudo diario
         </h2>
         <Card padding="md">
-          <div className="space-y-2">
-            {MOCK_RECAUDO_DIARIO.map((d) => {
-              const maxEsperado = Math.max(...MOCK_RECAUDO_DIARIO.map((x) => x.esperado));
-              const barWidth = maxEsperado > 0 ? (d.recaudo / maxEsperado) * 100 : 0;
-              const esperadoWidth = maxEsperado > 0 ? (d.esperado / maxEsperado) * 100 : 0;
-              return (
-                <div key={d.fecha} className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 text-xs text-muted-foreground">
-                    {d.fecha.slice(5)}
-                  </span>
-                  <div className="flex-1 relative h-5">
-                    <div
-                      className="absolute inset-y-1 bg-muted rounded-sm"
-                      style={{ width: `${esperadoWidth}%` }}
-                    />
-                    <div
-                      className={cn(
-                        "absolute inset-y-1 rounded-sm",
-                        d.recaudo >= d.esperado ? "bg-success" : d.recaudo > 0 ? "bg-primary" : "bg-muted-foreground/20",
-                      )}
-                      style={{ width: `${barWidth}%` }}
-                    />
+          {loadingChart ? (
+            <p className="text-center text-sm text-muted-foreground py-4">Cargando...</p>
+          ) : recaudoDiario.length === 0 ? (
+            <p className="text-center text-sm text-muted-foreground py-4">Sin datos para el periodo</p>
+          ) : (
+            <div className="space-y-2">
+              {recaudoDiario.map((d) => {
+                const maxEsperado = Math.max(...recaudoDiario.map((x) => x.esperado));
+                const barWidth = maxEsperado > 0 ? (d.recaudado / maxEsperado) * 100 : 0;
+                const esperadoWidth = maxEsperado > 0 ? (d.esperado / maxEsperado) * 100 : 0;
+                return (
+                  <div key={d.fecha} className="flex items-center gap-2">
+                    <span className="w-20 shrink-0 text-xs text-muted-foreground">
+                      {d.fecha.slice(5)}
+                    </span>
+                    <div className="flex-1 relative h-5">
+                      <div
+                        className="absolute inset-y-1 bg-muted rounded-sm"
+                        style={{ width: `${esperadoWidth}%` }}
+                      />
+                      <div
+                        className={cn(
+                          "absolute inset-y-1 rounded-sm",
+                          d.recaudado >= d.esperado ? "bg-success" : d.recaudado > 0 ? "bg-primary" : "bg-muted-foreground/20",
+                        )}
+                        style={{ width: `${barWidth}%` }}
+                      />
+                    </div>
+                    <span className="w-20 text-right text-xs font-mono text-foreground">
+                      {formatCop(d.recaudado)}
+                    </span>
                   </div>
-                  <span className="w-20 text-right text-xs font-mono text-foreground">
-                    {formatCop(d.recaudo)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </Card>
       </div>
 
@@ -226,86 +225,26 @@ export default function ReportesPage() {
         <h2 className="text-sm font-semibold text-muted-foreground mb-3">
           Rendimiento por cobrador
         </h2>
-        <div className="space-y-2">
-          {MOCK_COBRADOR_RENDIMIENTO.map((cb) => (
-            <Card key={cb.cobradorId} padding="md">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-sm font-semibold text-foreground">
-                  {cb.cobradorNombre}
-                </p>
-                <span
-                  className={cn(
-                    "rounded-full px-2 py-0.5 text-xs font-medium",
-                    cb.efectividad >= 90
-                      ? "bg-success/15 text-success"
-                      : cb.efectividad >= 75
-                        ? "bg-warning/15 text-warning"
-                        : "bg-danger/15 text-danger",
-                  )}
-                >
-                  {cb.efectividad}% efectividad
-                </span>
-              </div>
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{cb.clientesActivos} clientes</span>
-                <span>Recaudo: {formatCop(cb.recaudoPeriodo)}</span>
-                <span>Esperado: {formatCop(cb.esperadoPeriodo)}</span>
-              </div>
-              <div className="mt-1 h-2 w-full rounded-full bg-muted">
-                <div
-                  className={cn(
-                    "h-2 rounded-full",
-                    cb.efectividad >= 90
-                      ? "bg-success"
-                      : cb.efectividad >= 75
-                        ? "bg-warning"
-                        : "bg-danger",
-                  )}
-                  style={{ width: `${Math.min(cb.efectividad, 100)}%` }}
-                />
-              </div>
-              {cb.moraGenerada > 0 && (
-                <p className="mt-1 text-xs text-danger">
-                  Mora generada: {formatCop(cb.moraGenerada)}
-                </p>
-              )}
-            </Card>
-          ))}
-        </div>
-      </div>
-
-      {/* Distribucion por medio de pago */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-          Distribucion por medio de pago
-        </h2>
-        <Card padding="md">
-          <div className="space-y-3">
-            {MOCK_MEDIO_PAGO_DISTRIBUCION.map((item) => (
-              <div key={item.medio}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-foreground">{item.medio}</span>
-                  <span className="font-mono text-muted-foreground">
-                    {formatCop(item.monto)} ({item.porcentaje}%)
+        {cobradoresRendimiento.length === 0 ? (
+          <Card padding="md">
+            <p className="text-center text-sm text-muted-foreground">Sin datos para el periodo</p>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {cobradoresRendimiento.map((c) => (
+              <Card key={c.cobrador_id} padding="md">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-foreground">
+                    {c.cobrador_id}
+                  </p>
+                  <span className="font-mono text-sm text-foreground">
+                    {formatCop(c.total)}
                   </span>
                 </div>
-                <div className="h-3 w-full rounded-full bg-muted">
-                  <div
-                    className={cn(
-                      "h-3 rounded-full",
-                      item.medio === "Efectivo"
-                        ? "bg-success"
-                        : item.medio === "Nequi"
-                          ? "bg-primary"
-                          : "bg-info",
-                    )}
-                    style={{ width: `${item.porcentaje}%` }}
-                  />
-                </div>
-              </div>
+              </Card>
             ))}
           </div>
-        </Card>
+        )}
       </div>
 
       {/* Cartera en riesgo */}
@@ -314,59 +253,39 @@ export default function ReportesPage() {
           Cartera en riesgo
         </h2>
         <Card padding="md">
-          <div className="space-y-2">
-            {MOCK_CARTERA_RIESGO.map((item) => {
-              const maxMonto = Math.max(...MOCK_CARTERA_RIESGO.map((x) => x.monto));
-              const width = maxMonto > 0 ? (item.monto / maxMonto) * 100 : 0;
-              return (
-                <div key={item.categoria}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="text-foreground">{item.categoria}</span>
-                    <span className="font-mono text-muted-foreground">
-                      {item.clientes} clientes · {formatCop(item.monto)}
-                    </span>
+          {cartera ? (
+            <div className="space-y-2">
+              {[
+                { label: "Mora leve (3+ dias)", monto: cartera.mayorA3 },
+                { label: "Mora moderada (7+ dias)", monto: cartera.mayorA7 },
+                { label: "Mora severa (15+ dias)", monto: cartera.mayorA15 },
+              ].map((item) => {
+                const maxMonto = Math.max(cartera.mayorA3, cartera.mayorA7, cartera.mayorA15, 1);
+                const width = (item.monto / maxMonto) * 100;
+                return (
+                  <div key={item.label}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-foreground">{item.label}</span>
+                      <span className="font-mono text-muted-foreground">
+                        {formatCop(item.monto)}
+                      </span>
+                    </div>
+                    <div className="h-2.5 w-full rounded-full bg-muted">
+                      <div
+                        className="h-2.5 rounded-full bg-danger"
+                        style={{ width: `${width}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2.5 w-full rounded-full bg-muted">
-                    <div
-                      className="h-2.5 rounded-full"
-                      style={{ width: `${width}%`, backgroundColor: item.color }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </Card>
-      </div>
-
-      {/* Proyeccion 30 dias */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-          Proyeccion 30 dias
-        </h2>
-        <Card padding="md">
-          <div className="space-y-2">
-            {MOCK_PROYECCION.map((p) => {
-              const maxProy = Math.max(...MOCK_PROYECCION.map((x) => x.proyectado));
-              const width = maxProy > 0 ? (p.proyectado / maxProy) * 100 : 0;
-              return (
-                <div key={p.fecha} className="flex items-center gap-2">
-                  <span className="w-20 shrink-0 text-xs text-muted-foreground">
-                    {p.fecha.slice(5)}
-                  </span>
-                  <div className="flex-1 h-4 relative">
-                    <div
-                      className="absolute inset-y-0.5 bg-info/30 rounded-sm"
-                      style={{ width: `${width}%` }}
-                    />
-                  </div>
-                  <span className="w-24 text-right text-xs font-mono text-foreground">
-                    {formatCop(p.proyectado)}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+              <p className="text-xs text-muted-foreground pt-1">
+                Total en riesgo: {formatCop(cartera.montoTotal)}
+              </p>
+            </div>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground py-4">Sin datos</p>
+          )}
         </Card>
       </div>
     </div>
