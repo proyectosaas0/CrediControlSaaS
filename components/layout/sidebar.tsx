@@ -15,6 +15,7 @@ import {
   Settings,
   Menu,
   X,
+  UsersRound,
 } from "lucide-react";
 import { cn } from "@/components/ui/cn";
 import { Avatar } from "@/components/ui/avatar";
@@ -30,6 +31,7 @@ const ADMIN_ITEMS = [
   { href: "/app/caja", label: "Caja", icon: Building2 },
   { href: "/app/reportes", label: "Reportes", icon: BarChart3 },
   { href: "/app/cobradores", label: "Cobradores", icon: UserCircle },
+  { href: "/app/usuarios", label: "Usuarios", icon: UsersRound },
   { href: "/app/configuracion", label: "Configuracion", icon: Settings },
 ] as const;
 
