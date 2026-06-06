@@ -3,7 +3,8 @@
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Phone, MapPin, FileText } from "lucide-react";
-import { useCliente, usePrestamos } from "@/lib/hooks";
+import { useCliente } from "@/hooks/queries/use-clientes";
+import { usePrestamos } from "@/hooks/queries/use-prestamos";
 import { ScoreBadge } from "@/components/domain/score-badge";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Card } from "@/components/ui/card";
@@ -14,10 +15,10 @@ export default function ClienteDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const { data: cliente, isPending, error } = useCliente(id);
-  const { data: prestamos = [] } = usePrestamos();
+  const { data: cliente, isLoading, error } = useCliente(id);
+  const { data: todosPrestamos = [] } = usePrestamos();
 
-  if (isPending) {
+  if (isLoading) {
     return (
       <div className="py-12 text-center">
         <p className="text-muted-foreground">Cargando...</p>
@@ -39,15 +40,15 @@ export default function ClienteDetailPage() {
     );
   }
 
-  const prestamosCliente = prestamos.filter((p) => p.clienteId === cliente.id);
-  const totalPrestado = prestamosCliente.reduce((sum, p) => sum + p.capital, 0);
-  const prestamosActivos = prestamosCliente.filter((p) => p.estado === "activo" || p.estado === "en_mora");
+  const prestamos = todosPrestamos.filter((p) => p.cliente_id === cliente.id);
+  const totalPrestado = prestamos.reduce((sum, p) => sum + p.capital, 0);
+  const prestamosActivos = prestamos.filter((p) => p.estado === "activo" || p.estado === "en_mora");
 
   return (
     <div className="space-y-5">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Volver
@@ -66,7 +67,7 @@ export default function ClienteDetailPage() {
                 </p>
               )}
             </div>
-            <ScoreBadge score={cliente.scorePago} size="lg" />
+            <ScoreBadge score={cliente.score_pago} size="lg" />
           </div>
 
           <div className="space-y-2 text-sm">
@@ -112,30 +113,30 @@ export default function ClienteDetailPage() {
         <h2 className="text-lg font-semibold text-foreground mb-3">
           Historial de prestamos
         </h2>
-        {prestamosCliente.length === 0 ? (
+        {prestamos.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Sin prestamos registrados
           </p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {prestamosCliente.map((prestamo) => (
+          <div className="space-y-3">
+            {prestamos.map((prestamo) => (
               <Link key={prestamo.id} href={`/app/prestamos/${prestamo.id}`}>
-                <Card padding="md" className="transition-colors hover:border-primary/30 cursor-pointer h-full">
+                <Card padding="md" className="mb-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-foreground">
                         {formatCop(prestamo.capital)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {prestamo.modeloInteres.replace("_", " ")} · {prestamo.tasaMensual}% mensual
+                        {prestamo.modelo_interes.replace("_", " ")} · {prestamo.tasa_mensual}% mensual
                       </p>
                     </div>
                     <LoanStatusBadge estado={prestamo.estado} />
                   </div>
                   <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Cuota {prestamo.cuotasPagadas}/{prestamo.cuotasTotales}</span>
+                    <span>Cuota {prestamo.prestamo_saldos[0]?.cuotas_pagadas ?? 0}/{prestamo.prestamo_saldos[0]?.cuotas_totales ?? 0}</span>
                     <span>·</span>
-                    <span>{formatCop(prestamo.saldoPendiente)} pendiente</span>
+                    <span>{formatCop(prestamo.prestamo_saldos[0]?.saldo_pendiente ?? 0)} pendiente</span>
                   </div>
                 </Card>
               </Link>

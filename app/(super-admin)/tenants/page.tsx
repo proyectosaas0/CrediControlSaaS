@@ -7,9 +7,6 @@ import {
   MapPin,
   Calendar,
   Clock,
-  Users,
-  Activity,
-  UserCheck,
   PlayCircle,
   PauseCircle,
   CalendarPlus,
@@ -17,7 +14,7 @@ import {
   ArrowLeft,
   ShieldCheck,
 } from "lucide-react";
-import { MOCK_TENANTS, type MockTenant } from "@/lib/mock/super-admin";
+import { useTenants, type Tenant } from "@/hooks/queries/use-super-admin";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
@@ -53,24 +50,26 @@ export default function TenantsPage() {
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("todos");
   const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
 
+  const { data: tenants = [], isLoading } = useTenants();
+
   const filtered = useMemo(() => {
-    let list = MOCK_TENANTS;
+    let list = tenants;
     if (filtroEstado !== "todos") {
-      list = list.filter((t) => t.estadoSuscripcion === filtroEstado);
+      list = list.filter((t) => t.estado_suscripcion === filtroEstado);
     }
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
         (t) =>
-          t.nombreNegocio.toLowerCase().includes(q) ||
+          t.nombre_negocio.toLowerCase().includes(q) ||
           (t.ciudad && t.ciudad.toLowerCase().includes(q)),
       );
     }
     return list;
-  }, [search, filtroEstado]);
+  }, [search, filtroEstado, tenants]);
 
   const tenant = selectedTenant
-    ? MOCK_TENANTS.find((t) => t.id === selectedTenant)
+    ? tenants.find((t) => t.id === selectedTenant)
     : null;
 
   if (tenant) {
@@ -114,7 +113,11 @@ export default function TenantsPage() {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
+      {isLoading ? (
+        <div className="py-12 text-center">
+          <p className="text-muted-foreground">Cargando...</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="py-12 text-center">
           <p className="text-muted-foreground">No se encontraron tenants</p>
           <p className="text-xs text-muted-foreground mt-1">
@@ -124,7 +127,7 @@ export default function TenantsPage() {
       ) : (
         <div className="space-y-3">
           {filtered.map((t) => {
-            const badge = estadoBadge[t.estadoSuscripcion];
+            const badge = estadoBadge[t.estado_suscripcion] ?? { className: "bg-muted text-muted-foreground", label: t.estado_suscripcion };
             return (
               <Card
                 key={t.id}
@@ -136,7 +139,7 @@ export default function TenantsPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-foreground truncate">
-                        {t.nombreNegocio}
+                        {t.nombre_negocio}
                       </p>
                       <span
                         className={cn(
@@ -163,23 +166,11 @@ export default function TenantsPage() {
                       )}
                       <span className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        {t.createdAt}
+                        {t.created_at}
                       </span>
                     </div>
 
                     <div className="mt-2 flex items-center gap-3 text-xs">
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Users className="h-3 w-3" />
-                        {t.clientes}
-                      </span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <Activity className="h-3 w-3" />
-                        {t.prestamos}
-                      </span>
-                      <span className="flex items-center gap-1 text-muted-foreground">
-                        <UserCheck className="h-3 w-3" />
-                        {t.cobradores}
-                      </span>
                       <span
                         className={cn(
                           "rounded px-1.5 py-0.5 text-xs font-medium",
@@ -212,15 +203,16 @@ function TenantDetail({
   tenant,
   onBack,
 }: {
-  tenant: MockTenant;
+  tenant: Tenant;
   onBack: () => void;
 }) {
-  const badge = estadoBadge[tenant.estadoSuscripcion];
+  const badge = estadoBadge[tenant.estado_suscripcion] ?? { className: "bg-muted text-muted-foreground", label: tenant.estado_suscripcion };
 
   const trialDaysLeft = (() => {
-    if (tenant.estadoSuscripcion !== "trial") return 0;
+    if (tenant.estado_suscripcion !== "trial") return 0;
+    if (!tenant.trial_hasta) return 0;
     const now = new Date();
-    const end = new Date(tenant.trialHasta);
+    const end = new Date(tenant.trial_hasta);
     return Math.max(0, Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
   })();
 
@@ -236,9 +228,9 @@ function TenantDetail({
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">{tenant.nombreNegocio}</h1>
+          <h1 className="text-xl font-bold text-foreground">{tenant.nombre_negocio}</h1>
           <p className="text-sm text-muted-foreground">
-            {tenant.ciudad ?? "Sin ciudad"} · Creado {tenant.createdAt}
+            {tenant.ciudad ?? "Sin ciudad"} · Creado {tenant.created_at}
           </p>
         </div>
         <span
@@ -262,20 +254,12 @@ function TenantDetail({
           </div>
           <div>
             <p className="text-muted-foreground">Trial hasta</p>
-            <p className="font-medium text-foreground">{tenant.trialHasta}</p>
+            <p className="font-medium text-foreground">{tenant.trial_hasta ?? "—"}</p>
           </div>
           <div>
             <p className="text-muted-foreground">Telefono</p>
             <p className="font-medium text-foreground">
               {tenant.telefono ?? "—"}
-            </p>
-          </div>
-          <div>
-            <p className="text-muted-foreground">Ultimo acceso</p>
-            <p className="font-medium text-foreground text-xs">
-              {tenant.ultimoAcceso
-                ? new Date(tenant.ultimoAcceso).toLocaleString("es-CO")
-                : "—"}
             </p>
           </div>
         </div>
@@ -292,27 +276,11 @@ function TenantDetail({
         )}
       </Card>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card padding="md">
-          <p className="text-xs text-muted-foreground">Clientes</p>
-          <p className="text-lg font-bold text-foreground">{tenant.clientes}</p>
-        </Card>
-        <Card padding="md">
-          <p className="text-xs text-muted-foreground">Prestamos</p>
-          <p className="text-lg font-bold text-foreground">{tenant.prestamos}</p>
-        </Card>
-        <Card padding="md">
-          <p className="text-xs text-muted-foreground">Cobradores</p>
-          <p className="text-lg font-bold text-foreground">{tenant.cobradores}</p>
-        </Card>
-      </div>
-
       {/* Actions */}
       <div className="space-y-2">
         <h2 className="text-sm font-semibold text-muted-foreground">Acciones</h2>
         <div className="grid grid-cols-2 gap-2">
-          {tenant.estadoSuscripcion === "suspendido" && (
+          {tenant.estado_suscripcion === "suspendido" && (
             <Button
               size="sm"
               variant="success"
@@ -323,7 +291,7 @@ function TenantDetail({
               Activar
             </Button>
           )}
-          {tenant.estadoSuscripcion === "activo" && (
+          {tenant.estado_suscripcion === "activo" && (
             <Button
               size="sm"
               variant="danger"
@@ -334,7 +302,7 @@ function TenantDetail({
               Suspender
             </Button>
           )}
-          {tenant.estadoSuscripcion === "trial" && (
+          {tenant.estado_suscripcion === "trial" && (
             <Button
               size="sm"
               variant="outline"
@@ -348,7 +316,7 @@ function TenantDetail({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => toast.info(`Vista de admin: ${tenant.nombreNegocio}`)}
+            onClick={() => toast.info(`Vista de admin: ${tenant.nombre_negocio}`)}
             className="w-full"
           >
             <ShieldCheck className="h-4 w-4" />

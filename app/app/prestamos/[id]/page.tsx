@@ -8,7 +8,7 @@ import { ArrowLeft, RefreshCcw, XCircle } from "lucide-react";
 import { cancelarPrestamoSchema, type CancelarPrestamoData } from "@/lib/schemas/admin";
 import { buildLoanSchedule, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
-import { usePrestamo } from "@/lib/hooks";
+import { usePrestamo, type Prestamo } from "@/hooks/queries/use-prestamos";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,9 @@ export default function PrestamoDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const { data: prestamo, isPending, error } = usePrestamo(id);
+  const { data: prestamo, isLoading, error } = usePrestamo(id);
 
-  if (isPending) {
+  if (isLoading) {
     return (
       <div className="py-12 text-center">
         <p className="text-muted-foreground">Cargando...</p>
@@ -45,6 +45,10 @@ export default function PrestamoDetailPage() {
     );
   }
 
+  const cuotasPagadas = prestamo.prestamo_saldos[0]?.cuotas_pagadas ?? 0;
+  const cuotasTotales = prestamo.prestamo_saldos[0]?.cuotas_totales ?? 0;
+  const saldoPendiente = prestamo.prestamo_saldos[0]?.saldo_pendiente ?? 0;
+
   const canRefinance =
     prestamo.estado === "activo" || prestamo.estado === "en_mora";
   const canCancel = prestamo.estado === "activo" || prestamo.estado === "en_mora";
@@ -53,7 +57,7 @@ export default function PrestamoDetailPage() {
     <div className="space-y-5">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         Volver
@@ -71,7 +75,7 @@ export default function PrestamoDetailPage() {
           <div className="flex justify-between">
             <span className="text-muted-foreground">Cliente</span>
             <span className="font-medium text-foreground">
-              {prestamo.clienteNombre}
+              {prestamo.clientes?.nombre ?? "—"}
             </span>
           </div>
           <div className="flex justify-between">
@@ -83,50 +87,44 @@ export default function PrestamoDetailPage() {
           <div className="flex justify-between">
             <span className="text-muted-foreground">Modelo</span>
             <span className="text-foreground">
-              {prestamo.modeloInteres.replace("_", " ")}
+              {prestamo.modelo_interes.replace("_", " ")}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Tasa mensual</span>
-            <span className="text-foreground">{prestamo.tasaMensual}%</span>
+            <span className="text-foreground">{prestamo.tasa_mensual}%</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Plazo</span>
-            <span className="text-foreground">{prestamo.plazoDias} dias</span>
+            <span className="text-foreground">{prestamo.plazo_dias} dias</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Inicio</span>
-            <span className="text-foreground">{prestamo.fechaInicio}</span>
+            <span className="text-foreground">{prestamo.fecha_inicio ?? ""}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Fin</span>
-            <span className="text-foreground">{prestamo.fechaFin}</span>
+            <span className="text-foreground">{prestamo.fecha_fin ?? ""}</span>
           </div>
-          {prestamo.cobradorNombre && (
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Cobrador</span>
-              <span className="text-foreground">{prestamo.cobradorNombre}</span>
-            </div>
-          )}
         </div>
 
         <div className="mt-4 border-t border-border pt-4 space-y-1">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Cuota diaria</span>
             <span className="font-bold font-mono text-primary">
-              {formatCop(prestamo.cuotaDiaria)}
+              {formatCop(prestamo.cuota_diaria ?? 0)}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Total a pagar</span>
             <span className="font-bold font-mono text-foreground">
-              {formatCop(prestamo.totalPagar)}
+              {formatCop(prestamo.total_pagar ?? 0)}
             </span>
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Saldo pendiente</span>
             <span className="font-bold font-mono text-danger">
-              {formatCop(prestamo.saldoPendiente)}
+              {formatCop(saldoPendiente)}
             </span>
           </div>
         </div>
@@ -136,26 +134,26 @@ export default function PrestamoDetailPage() {
         <Card padding="md">
           <p className="text-xs text-muted-foreground">Cuotas pagadas</p>
           <p className="text-lg font-bold text-success">
-            {prestamo.cuotasPagadas}/{prestamo.cuotasTotales}
+            {cuotasPagadas}/{cuotasTotales}
           </p>
         </Card>
         <Card padding="md">
           <p className="text-xs text-muted-foreground">Progreso</p>
           <p className="text-lg font-bold text-foreground">
-            {Math.round((prestamo.cuotasPagadas / prestamo.cuotasTotales) * 100)}%
+            {cuotasTotales > 0 ? Math.round((cuotasPagadas / cuotasTotales) * 100) : 0}%
           </p>
           <div className="mt-1 h-2 w-full rounded-full bg-muted">
             <div
               className="h-2 rounded-full bg-primary transition-all"
               style={{
-                width: `${Math.round((prestamo.cuotasPagadas / prestamo.cuotasTotales) * 100)}%`,
+                width: `${cuotasTotales > 0 ? Math.round((cuotasPagadas / cuotasTotales) * 100) : 0}%`,
               }}
             />
           </div>
         </Card>
       </div>
 
-      <CronogramaSection prestamo={prestamo} />
+      <CronogramaSection prestamo={prestamo} cuotasPagadas={cuotasPagadas} />
 
       {(canRefinance || canCancel) && (
         <div className="flex gap-3 pt-2">
@@ -167,17 +165,23 @@ export default function PrestamoDetailPage() {
   );
 }
 
-function CronogramaSection({ prestamo }: { prestamo: NonNullable<ReturnType<typeof usePrestamo>['data']> }) {
+function CronogramaSection({
+  prestamo,
+  cuotasPagadas,
+}: {
+  prestamo: Prestamo;
+  cuotasPagadas: number;
+}) {
   const [showAll, setShowAll] = useState(false);
 
   const schedule = buildLoanSchedule({
     capital: prestamo.capital,
     excluirDomingos: false,
     excluirSabados: false,
-    fechaInicio: prestamo.fechaInicio,
-    modelo: prestamo.modeloInteres as LoanModel,
-    plazoDias: prestamo.plazoDias,
-    tasaMensual: prestamo.tasaMensual,
+    fechaInicio: prestamo.fecha_inicio ?? "",
+    modelo: prestamo.modelo_interes as LoanModel,
+    plazoDias: prestamo.plazo_dias,
+    tasaMensual: prestamo.tasa_mensual,
   });
 
   const displaySchedule = showAll ? schedule : schedule.slice(0, 7);
@@ -188,7 +192,7 @@ function CronogramaSection({ prestamo }: { prestamo: NonNullable<ReturnType<type
         Cronograma de pagos
       </h2>
 
-      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+      <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-border text-muted-foreground">
@@ -202,7 +206,7 @@ function CronogramaSection({ prestamo }: { prestamo: NonNullable<ReturnType<type
           </thead>
           <tbody>
             {displaySchedule.map((cuota) => {
-              const isPaid = cuota.numeroCuota <= prestamo.cuotasPagadas;
+              const isPaid = cuota.numeroCuota <= cuotasPagadas;
               return (
                 <tr
                   key={cuota.numeroCuota}
@@ -236,7 +240,7 @@ function CronogramaSection({ prestamo }: { prestamo: NonNullable<ReturnType<type
       {schedule.length > 7 && (
         <button
           onClick={() => setShowAll(!showAll)}
-          className="mt-2 text-xs text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+          className="mt-2 text-xs text-primary hover:underline"
         >
           {showAll
             ? "Ver menos"
@@ -247,7 +251,7 @@ function CronogramaSection({ prestamo }: { prestamo: NonNullable<ReturnType<type
   );
 }
 
-function RefinanciarButton({}: { prestamoId: string }) {
+function RefinanciarButton({ }: { prestamoId: string }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -272,6 +276,9 @@ function RefinanciarButton({}: { prestamoId: string }) {
             Se creara un nuevo prestamo con las nuevas condiciones. El prestamo
             actual cambiara a estado &ldquo;Refinanciado&rdquo;.
           </p>
+          <p className="text-sm text-muted-foreground">
+            Configura las nuevas condiciones en el wizard de nuevo prestamo.
+          </p>
           <div className="flex gap-3">
             <Button
               type="button"
@@ -284,6 +291,7 @@ function RefinanciarButton({}: { prestamoId: string }) {
             <Button
               type="button"
               onClick={() => {
+                // TODO: Reemplazar por navegación a wizard con datos del prestamo actual
                 setOpen(false);
                 toast.info("Refinanciamiento — pendiente de integracion con API");
               }}
@@ -310,7 +318,7 @@ function CancelarButton({ prestamoId }: { prestamoId: string }) {
   });
 
   async function onSubmit(data: CancelarPrestamoData) {
-    // TODO: Reemplazar por apiClient.post(`/api/prestamos/${prestamoId}/cancelar`, data)
+    // TODO: Reemplazar por POST /api/prestamos/[id]/cancelar
     console.log("Cancelar prestamo:", prestamoId, data);
     toast.success("Prestamo cancelado");
     setOpen(false);
@@ -352,11 +360,11 @@ function CancelarButton({ prestamoId }: { prestamoId: string }) {
             >
               No cancelar
             </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="flex-1 bg-danger text-white hover:bg-danger/90"
-            >
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="flex-1 bg-danger text-white hover:bg-danger/90"
+          >
               Cancelar prestamo
             </Button>
           </div>

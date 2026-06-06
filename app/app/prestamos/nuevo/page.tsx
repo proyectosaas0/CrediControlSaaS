@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   prestamoStep1Schema,
@@ -12,8 +12,9 @@ import {
 } from "@/lib/schemas/admin";
 import { calculateLoanTotals, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
-import { apiClient } from "@/lib/api/client";
-import { useClientes, useCobradores } from "@/lib/hooks";
+import { useClientes } from "@/hooks/queries/use-clientes";
+import { useCobradores, type Cobrador } from "@/hooks/queries/use-cobradores";
+import type { Cliente } from "@/hooks/queries/use-clientes";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -34,32 +35,9 @@ export default function NuevoPrestamoPage() {
   const [step, setStep] = useState<Step>(1);
   const [step1Data, setStep1Data] = useState<PrestamoStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<PrestamoStep2Data | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
-  async function handleConfirm() {
-    if (!step1Data || !step2Data) return;
-    setSubmitting(true);
-    try {
-      const payload = {
-        capital: step2Data.capital,
-        clienteId: step1Data.clienteId,
-        cobradorId: step2Data.cobradorId || null,
-        excluirDomingos: step2Data.excluirDomingos,
-        excluirSabados: step2Data.excluirSabados,
-        fechaInicio: step2Data.fechaInicio,
-        modeloInteres: step2Data.modeloInteres,
-        plazoDias: step2Data.plazoDias,
-        tasaMensual: step2Data.tasaMensual,
-      };
-      const result = await apiClient.post<{ id: string }>("/prestamos", payload);
-      toast.success("Prestamo creado correctamente");
-      router.push(`/app/prestamos/${result.id}`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error al crear prestamo");
-    } finally {
-      setSubmitting(false);
-    }
-  }
+  const { data: clientes = [] } = useClientes({ activo: true });
+  const { data: cobradores = [] } = useCobradores({ activo: true });
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
@@ -68,7 +46,7 @@ export default function NuevoPrestamoPage() {
           if (step === 1) router.push("/app/prestamos");
           else setStep((s) => (s - 1) as Step);
         }}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
         {step === 1 ? "Volver a prestamos" : "Atras"}
@@ -98,6 +76,7 @@ export default function NuevoPrestamoPage() {
 
       {step === 1 && (
         <Step1
+          clientes={clientes}
           onNext={(data) => {
             setStep1Data(data);
             setStep(2);
@@ -106,6 +85,7 @@ export default function NuevoPrestamoPage() {
       )}
       {step === 2 && (
         <Step2
+          cobradores={cobradores}
           onNext={(data) => {
             setStep2Data(data);
             setStep(3);
@@ -116,16 +96,27 @@ export default function NuevoPrestamoPage() {
         <Step3
           clienteId={step1Data.clienteId}
           data={step2Data}
+          clientes={clientes}
+          cobradores={cobradores}
           onBack={() => setStep(2)}
-          onConfirm={handleConfirm}
-          submitting={submitting}
+          onConfirm={() => {
+            // TODO: Reemplazar por POST /api/prestamos
+            toast.success("Prestamo creado correctamente");
+            router.push("/app/prestamos");
+          }}
         />
       )}
     </div>
   );
 }
 
-function Step1({ onNext }: { onNext: (data: PrestamoStep1Data) => void }) {
+function Step1({
+  clientes,
+  onNext,
+}: {
+  clientes: Cliente[];
+  onNext: (data: PrestamoStep1Data) => void;
+}) {
   const {
     register,
     handleSubmit,
@@ -134,17 +125,16 @@ function Step1({ onNext }: { onNext: (data: PrestamoStep1Data) => void }) {
     resolver: zodResolver(prestamoStep1Schema),
   });
 
-  const { data: clientes = [] } = useClientes();
-
-  const clienteOptions = clientes
-    .filter((c) => c.activo)
-    .map((c) => ({
-      value: c.id,
-      label: `${c.nombre}${c.cedula ? ` · CC ${c.cedula}` : ""}`,
-    }));
+  const clienteOptions = clientes.map((c) => ({
+    value: c.id,
+    label: `${c.nombre}${c.cedula ? ` · CC ${c.cedula}` : ""}`,
+  }));
 
   return (
-    <form onSubmit={handleSubmit(onNext)} className="space-y-4">
+    <form
+      onSubmit={handleSubmit(onNext)}
+      className="space-y-4"
+    >
       <Select
         label="Cliente"
         options={clienteOptions}
@@ -161,13 +151,19 @@ function Step1({ onNext }: { onNext: (data: PrestamoStep1Data) => void }) {
   );
 }
 
-function Step2({ onNext }: { onNext: (data: PrestamoStep2Data) => void }) {
+function Step2({
+  cobradores,
+  onNext,
+}: {
+  cobradores: Cobrador[];
+  onNext: (data: PrestamoStep2Data) => void;
+}) {
   const today = new Date().toISOString().slice(0, 10);
 
   const {
     register,
     handleSubmit,
-    control,
+    watch,
     formState: { errors },
   } = useForm<PrestamoStep2Data>({
     resolver: zodResolver(prestamoStep2Schema),
@@ -179,10 +175,12 @@ function Step2({ onNext }: { onNext: (data: PrestamoStep2Data) => void }) {
     },
   });
 
-  const [capital, modeloInteres, tasaMensual, plazoDias] = useWatch({
-    control,
-    name: ["capital", "modeloInteres", "tasaMensual", "plazoDias"],
-  });
+  const [capital, modeloInteres, tasaMensual, plazoDias] = watch([
+    "capital",
+    "modeloInteres",
+    "tasaMensual",
+    "plazoDias",
+  ]);
 
   const preview = useMemo(() => {
     const c = Number(capital);
@@ -201,52 +199,48 @@ function Step2({ onNext }: { onNext: (data: PrestamoStep2Data) => void }) {
     }
   }, [capital, modeloInteres, tasaMensual, plazoDias]);
 
-  const { data: cobradores = [] } = useCobradores();
-
   const cobradorOptions = [
     { value: "", label: "Sin cobrador asignado" },
-    ...cobradores
-      .filter((c) => c.activo)
-      .map((c) => ({
-        value: c.id,
-        label: c.nombre,
-      })),
+    ...cobradores.map((c) => ({
+      value: c.id,
+      label: c.nombre_completo,
+    })),
   ];
 
   return (
     <form onSubmit={handleSubmit(onNext)} className="space-y-4">
-      <Input
-        label="Capital"
-        type="number"
-        placeholder="1.500.000"
-        error={errors.capital?.message}
-        {...register("capital", { valueAsNumber: true })}
-      />
+        <Input
+          label="Capital"
+          type="number"
+          placeholder="1.500.000"
+          error={errors.capital?.message}
+          {...register("capital", { valueAsNumber: true })}
+        />
 
-      <Select
-        label="Modelo de interes"
-        options={MODELO_OPTIONS}
-        placeholder="Selecciona un modelo"
-        error={errors.modeloInteres?.message}
-        {...register("modeloInteres")}
-      />
+        <Select
+          label="Modelo de interes"
+          options={MODELO_OPTIONS}
+          placeholder="Selecciona un modelo"
+          error={errors.modeloInteres?.message}
+          {...register("modeloInteres")}
+        />
 
-      <Input
-        label="Tasa mensual (%)"
-        type="number"
-        step="0.1"
-        placeholder="10"
-        error={errors.tasaMensual?.message}
-        {...register("tasaMensual", { valueAsNumber: true })}
-      />
+        <Input
+          label="Tasa mensual (%)"
+          type="number"
+          step="0.1"
+          placeholder="10"
+          error={errors.tasaMensual?.message}
+          {...register("tasaMensual", { valueAsNumber: true })}
+        />
 
-      <Input
-        label="Plazo (dias)"
-        type="number"
-        placeholder="30"
-        error={errors.plazoDias?.message}
-        {...register("plazoDias", { valueAsNumber: true })}
-      />
+        <Input
+          label="Plazo (dias)"
+          type="number"
+          placeholder="30"
+          error={errors.plazoDias?.message}
+          {...register("plazoDias", { valueAsNumber: true })}
+        />
 
       <Input
         label="Fecha de inicio"
@@ -300,19 +294,18 @@ function Step2({ onNext }: { onNext: (data: PrestamoStep2Data) => void }) {
 function Step3({
   clienteId,
   data,
+  clientes,
+  cobradores,
   onBack,
   onConfirm,
-  submitting,
 }: {
   clienteId: string;
   data: PrestamoStep2Data;
+  clientes: Cliente[];
+  cobradores: Cobrador[];
   onBack: () => void;
   onConfirm: () => void;
-  submitting: boolean;
 }) {
-  const { data: clientes = [] } = useClientes();
-  const { data: cobradores = [] } = useCobradores();
-
   const cliente = clientes.find((c) => c.id === clienteId);
   const cobrador = data.cobradorId
     ? cobradores.find((c) => c.id === data.cobradorId)
@@ -365,7 +358,7 @@ function Step3({
           {cobrador && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Cobrador</span>
-              <span className="text-foreground">{cobrador.nombre}</span>
+              <span className="text-foreground">{cobrador.nombre_completo}</span>
             </div>
           )}
           {(data.excluirSabados || data.excluirDomingos) && (
@@ -404,7 +397,7 @@ function Step3({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Atras
         </Button>
-        <Button type="button" onClick={onConfirm} disabled={submitting} className="flex-1">
+        <Button type="button" onClick={onConfirm} className="flex-1">
           <Check className="mr-2 h-4 w-4" />
           Confirmar
         </Button>
