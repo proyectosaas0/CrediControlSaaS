@@ -8,6 +8,7 @@ type ApiResponse<T> = {
   };
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function request<T = any>(
   endpoint: string,
   options: RequestInit = {}
@@ -22,7 +23,7 @@ async function request<T = any>(
   const response = await fetch(url, {
     ...options,
     headers,
-    credentials: 'include', // Send cookies with request
+    credentials: 'include',
   });
 
   let result: ApiResponse<T>;
@@ -50,11 +51,13 @@ async function request<T = any>(
   return result.data;
 }
 
+type JsonBody = Record<string, unknown> | unknown[] | string | number | boolean | null;
+
 export const apiClient = {
-  get: <T = any>(endpoint: string) => request<T>(endpoint, { method: 'GET' }),
-  post: <T = any>(endpoint: string, body: any) =>
+  get: <T = unknown>(endpoint: string) => request<T>(endpoint, { method: 'GET' }),
+  post: <T = unknown>(endpoint: string, body: JsonBody) =>
     request<T>(endpoint, { method: 'POST', body: JSON.stringify(body) }),
-  put: <T = any>(endpoint: string, body: any) =>
+  put: <T = unknown>(endpoint: string, body: JsonBody) =>
     request<T>(endpoint, { method: 'PUT', body: JSON.stringify(body) }),
-  delete: <T = any>(endpoint: string) => request<T>(endpoint, { method: 'DELETE' }),
+  delete: <T = unknown>(endpoint: string) => request<T>(endpoint, { method: 'DELETE' }),
 };

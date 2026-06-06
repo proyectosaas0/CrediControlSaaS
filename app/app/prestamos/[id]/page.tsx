@@ -8,7 +8,7 @@ import { ArrowLeft, RefreshCcw, XCircle } from "lucide-react";
 import { cancelarPrestamoSchema, type CancelarPrestamoData } from "@/lib/schemas/admin";
 import { buildLoanSchedule, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
-import { MOCK_PRESTAMOS } from "@/lib/mock/admin";
+import { usePrestamo } from "@/lib/hooks";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,9 +21,17 @@ export default function PrestamoDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const prestamo = MOCK_PRESTAMOS.find((p) => p.id === id);
+  const { data: prestamo, isPending, error } = usePrestamo(id);
 
-  if (!prestamo) {
+  if (isPending) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (error || !prestamo) {
     return (
       <div className="py-12 text-center">
         <p className="text-muted-foreground">Prestamo no encontrado</p>
@@ -159,11 +167,7 @@ export default function PrestamoDetailPage() {
   );
 }
 
-function CronogramaSection({
-  prestamo,
-}: {
-  prestamo: (typeof MOCK_PRESTAMOS)[number];
-}) {
+function CronogramaSection({ prestamo }: { prestamo: NonNullable<ReturnType<typeof usePrestamo>['data']> }) {
   const [showAll, setShowAll] = useState(false);
 
   const schedule = buildLoanSchedule({
@@ -243,7 +247,7 @@ function CronogramaSection({
   );
 }
 
-function RefinanciarButton({ }: { prestamoId: string }) {
+function RefinanciarButton({}: { prestamoId: string }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -268,9 +272,6 @@ function RefinanciarButton({ }: { prestamoId: string }) {
             Se creara un nuevo prestamo con las nuevas condiciones. El prestamo
             actual cambiara a estado &ldquo;Refinanciado&rdquo;.
           </p>
-          <p className="text-sm text-muted-foreground">
-            Configura las nuevas condiciones en el wizard de nuevo prestamo.
-          </p>
           <div className="flex gap-3">
             <Button
               type="button"
@@ -283,7 +284,6 @@ function RefinanciarButton({ }: { prestamoId: string }) {
             <Button
               type="button"
               onClick={() => {
-                // TODO: Reemplazar por navegación a wizard con datos del prestamo actual
                 setOpen(false);
                 toast.info("Refinanciamiento — pendiente de integracion con API");
               }}
@@ -310,7 +310,7 @@ function CancelarButton({ prestamoId }: { prestamoId: string }) {
   });
 
   async function onSubmit(data: CancelarPrestamoData) {
-    // TODO: Reemplazar por POST /api/prestamos/[id]/cancelar
+    // TODO: Reemplazar por apiClient.post(`/api/prestamos/${prestamoId}/cancelar`, data)
     console.log("Cancelar prestamo:", prestamoId, data);
     toast.success("Prestamo cancelado");
     setOpen(false);
@@ -352,11 +352,11 @@ function CancelarButton({ prestamoId }: { prestamoId: string }) {
             >
               No cancelar
             </Button>
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            className="flex-1 bg-danger text-white hover:bg-danger/90"
-          >
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="flex-1 bg-danger text-white hover:bg-danger/90"
+            >
               Cancelar prestamo
             </Button>
           </div>

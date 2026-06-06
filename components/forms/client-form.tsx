@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { clienteSchema, type ClienteFormData } from "@/lib/schemas/admin";
+import { apiClient } from "@/lib/api/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -30,10 +31,13 @@ export function ClientForm({ onSuccess, onCancel }: ClientFormProps) {
   });
 
   async function onSubmit(data: ClienteFormData) {
-    // TODO: Reemplazar por POST /api/clientes
-    console.log("Crear cliente:", data);
-    toast.success("Cliente creado correctamente");
-    onSuccess();
+    try {
+      await apiClient.post("/clientes", data);
+      toast.success("Cliente creado correctamente");
+      onSuccess();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Error al crear cliente");
+    }
   }
 
   return (

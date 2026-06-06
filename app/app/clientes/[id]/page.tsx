@@ -3,7 +3,7 @@
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Phone, MapPin, FileText } from "lucide-react";
-import { MOCK_CLIENTES, MOCK_PRESTAMOS } from "@/lib/mock/admin";
+import { useCliente, usePrestamos } from "@/lib/hooks";
 import { ScoreBadge } from "@/components/domain/score-badge";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Card } from "@/components/ui/card";
@@ -14,9 +14,18 @@ export default function ClienteDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const cliente = MOCK_CLIENTES.find((c) => c.id === id);
+  const { data: cliente, isPending, error } = useCliente(id);
+  const { data: prestamos = [] } = usePrestamos();
 
-  if (!cliente) {
+  if (isPending) {
+    return (
+      <div className="py-12 text-center">
+        <p className="text-muted-foreground">Cargando...</p>
+      </div>
+    );
+  }
+
+  if (error || !cliente) {
     return (
       <div className="py-12 text-center">
         <p className="text-muted-foreground">Cliente no encontrado</p>
@@ -30,9 +39,9 @@ export default function ClienteDetailPage() {
     );
   }
 
-  const prestamos = MOCK_PRESTAMOS.filter((p) => p.clienteId === cliente.id);
-  const totalPrestado = prestamos.reduce((sum, p) => sum + p.capital, 0);
-  const prestamosActivos = prestamos.filter((p) => p.estado === "activo" || p.estado === "en_mora");
+  const prestamosCliente = prestamos.filter((p) => p.clienteId === cliente.id);
+  const totalPrestado = prestamosCliente.reduce((sum, p) => sum + p.capital, 0);
+  const prestamosActivos = prestamosCliente.filter((p) => p.estado === "activo" || p.estado === "en_mora");
 
   return (
     <div className="space-y-5">
@@ -103,13 +112,13 @@ export default function ClienteDetailPage() {
         <h2 className="text-lg font-semibold text-foreground mb-3">
           Historial de prestamos
         </h2>
-        {prestamos.length === 0 ? (
+        {prestamosCliente.length === 0 ? (
           <p className="text-sm text-muted-foreground">
             Sin prestamos registrados
           </p>
         ) : (
           <div className="space-y-3">
-            {prestamos.map((prestamo) => (
+            {prestamosCliente.map((prestamo) => (
               <Link key={prestamo.id} href={`/app/prestamos/${prestamo.id}`}>
                 <Card padding="md" className="mb-3">
                   <div className="flex items-center justify-between">
