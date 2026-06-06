@@ -4,7 +4,7 @@ import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Building2, Palette, MessageSquare, Percent, Clock } from "lucide-react";
-import { MOCK_TENANT_SETTINGS } from "@/lib/mock/configuracion";
+import { useAuthMe } from "@/hooks/queries/use-auth-me";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,8 @@ const configuracionSchema = z.object({
 type ConfiguracionFormData = z.infer<typeof configuracionSchema>;
 
 export default function ConfiguracionPage() {
-  const settings = MOCK_TENANT_SETTINGS;
+  const { data: me, isLoading } = useAuthMe();
+  const org = me?.organization;
 
   const {
     register,
@@ -41,7 +42,21 @@ export default function ConfiguracionPage() {
   } = useForm<ConfiguracionFormData>({
     resolver: zodResolver(configuracionSchema),
     defaultValues: {
-      ...settings,
+      nombreNegocio: org?.nombre_negocio ?? "",
+      ciudad: org?.ciudad ?? "",
+      telefono: org?.telefono ?? "",
+      moraTipo: "porcentaje",
+      moraValor: 5,
+      diasGracia: 3,
+      tasaInteresDefault: 10,
+      cobrarSabados: true,
+      cobrarDomingos: false,
+      geolocalizacionRequerida: false,
+      moneda: "COP",
+      horarioInicio: "07:00",
+      horarioFin: "18:00",
+      whatsappTemplate: "Hola {cliente}, tu pago de {monto} ha sido registrado.",
+      colorPrimario: "#1d4ed8",
     },
   });
 
@@ -49,6 +64,10 @@ export default function ConfiguracionPage() {
 
   function onSubmit() {
     toast.success("Configuracion guardada correctamente");
+  }
+
+  if (isLoading) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">Cargando configuración...</p>;
   }
 
   return (
