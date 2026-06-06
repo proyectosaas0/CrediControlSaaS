@@ -42,13 +42,13 @@ export default function SuperAdminLayout({
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 items-center gap-4 border-b border-border bg-card px-4">
+        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-border bg-background/80 backdrop-blur-md px-4">
           <span className="text-sm font-medium text-muted-foreground">
             Panel Super Admin
           </span>
         </header>
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-6xl p-4 sm:p-6 lg:p-8">
             {children}
           </div>
         </main>

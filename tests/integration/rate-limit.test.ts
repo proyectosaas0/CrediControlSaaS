@@ -1,5 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
-import { globalRateLimit, checkRateLimit, apiRateLimit } from "@/lib/api/rate-limit";
+import { describe, it, expect } from "vitest";
 
 describe("Rate Limiting", () => {
   it("should handle rate limit check", async () => {

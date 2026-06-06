@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { getHealth, getReadiness } from "@/lib/monitoring/health";
 
 describe("Health Checks", () => {
   it("returns health status structure", async () => {

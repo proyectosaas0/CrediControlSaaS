@@ -32,14 +32,14 @@ export default function DashboardLayout({
         userName={userName}
       />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden lg:pl-0">
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           userName={userName}
         />
 
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto w-full max-w-7xl p-4 pb-20 sm:p-6 lg:p-8 lg:pb-8">
+          <div className="mx-auto w-full max-w-6xl p-4 pb-20 sm:p-6 lg:p-8 lg:pb-8">
             {children}
           </div>
         </main>

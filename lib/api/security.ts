@@ -1,4 +1,4 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 export function addSecurityHeaders(response: NextResponse) {
   response.headers.set("X-Content-Type-Options", "nosniff");
