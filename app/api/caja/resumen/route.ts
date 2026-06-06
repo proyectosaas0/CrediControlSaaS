@@ -21,5 +21,13 @@ export async function GET(request: Request) {
   if (cuotasError) return apiError("INTERNAL_ERROR", cuotasError.message, 500);
   const totalRecaudado = (pagosData ?? []).reduce((sum, pago) => sum + pago.monto, 0);
   const totalEsperado = (cuotasData ?? []).reduce((sum, cuota) => sum + cuota.monto_esperado, 0);
-  return apiOk({ diferencia: totalRecaudado - totalEsperado, fecha, totalEsperado, totalRecaudado });
+  const breakdown = (pagosData ?? []).reduce(
+    (acc, pago) => {
+      const key = pago.medio_pago as string;
+      acc[key] = (acc[key] ?? 0) + pago.monto;
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
+  return apiOk({ diferencia: totalRecaudado - totalEsperado, fecha, totalEsperado, totalRecaudado, breakdown });
 }

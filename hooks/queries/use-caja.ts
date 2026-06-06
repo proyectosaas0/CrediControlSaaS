@@ -6,6 +6,7 @@ export type CajaResumen = {
   totalEsperado: number;
   totalRecaudado: number;
   diferencia: number;
+  breakdown: Record<string, number>;
 };
 
 export function useCajaResumen(fecha?: string) {
