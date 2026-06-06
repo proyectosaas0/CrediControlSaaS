@@ -7,13 +7,13 @@ import { AdminRutaView } from "@/components/domain/admin-ruta-view";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/providers/auth-provider";
-import { MOCK_ROUTE_ITEMS, type RouteItem, type RouteItemStatus } from "@/lib/mock/ruta";
+import { useRutaHoy, type CuotaRuta } from "@/hooks/queries/use-ruta";
 import { type MedioPago } from "@/lib/mock/ruta-types";
+import type { RouteItem } from "@/lib/mock/ruta";
 import { MapPin } from "lucide-react";
 import { toast } from "sonner";
-import { formatCop } from "@/lib/domain/money";
 
-type FilterType = "todos" | RouteItemStatus;
+type FilterType = "todos" | CuotaRuta["estado"] | "no_encontrado";
 
 const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
   { value: "todos", label: "Todos" },
@@ -22,6 +22,24 @@ const FILTER_OPTIONS: { value: FilterType; label: string }[] = [
   { value: "parcial", label: "Parciales" },
   { value: "mora", label: "En mora" },
 ];
+
+function toRouteItem(cuota: CuotaRuta): RouteItem {
+  return {
+    id: cuota.id,
+    clienteId: cuota.prestamos.cliente_id,
+    clienteNombre: cuota.prestamos.clientes.nombre,
+    clienteTelefono: cuota.prestamos.clientes.telefono ?? "",
+    barrio: cuota.prestamos.clientes.barrio ?? "",
+    direccion: cuota.prestamos.clientes.direccion ?? "",
+    montoEsperado: cuota.monto_esperado,
+    montoPagado: cuota.monto_pagado > 0 ? cuota.monto_pagado : null,
+    medioPago: null,
+    cuotaNumero: cuota.numero_cuota,
+    cuotaTotal: 0,
+    saldoPendiente: cuota.monto_esperado - cuota.monto_pagado,
+    estado: cuota.estado as "pendiente" | "pagado" | "parcial" | "mora" | "no_encontrado",
+  };
+}
 
 export default function RutaPage() {
   const { role } = useAuth();
@@ -34,10 +52,12 @@ export default function RutaPage() {
 }
 
 function CobradorRutaView() {
-  const [items, setItems] = useState<RouteItem[]>(MOCK_ROUTE_ITEMS);
+  const { data: rawItems = [], isLoading } = useRutaHoy();
   const [selectedItem, setSelectedItem] = useState<RouteItem | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>("todos");
+
+  const items = rawItems.map(toRouteItem);
 
   const filteredItems =
     filter === "todos" ? items : items.filter((i) => i.estado === filter);
@@ -52,31 +72,18 @@ function CobradorRutaView() {
     setSheetOpen(true);
   }
 
-  function handlePaymentSuccess(itemId: string, medioPago: MedioPago, monto: number) {
-    setItems((prev) =>
-      prev.map((i) => {
-        if (i.id !== itemId) return i;
-        const isFull = monto >= i.montoEsperado;
-        return {
-          ...i,
-          montoPagado: monto,
-          medioPago,
-          estado: (isFull ? "pagado" : "parcial") as RouteItemStatus,
-        };
-      }),
-    );
-    toast.success(`Pago de ${formatCop(monto)} registrado`);
+  function handlePaymentSuccess(_id: string, _medioPago: MedioPago, _monto: number) {
+    toast.success("Pago registrado");
+    setSheetOpen(false);
   }
 
-  function handleMarkNotFound(itemId: string) {
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === itemId
-          ? { ...i, estado: "no_encontrado" as RouteItemStatus }
-          : i,
-      ),
-    );
+  function handleMarkNotFound(_itemId: string) {
     toast.info("Cliente marcado como no encontrado");
+    setSheetOpen(false);
+  }
+
+  if (isLoading) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">Cargando ruta...</p>;
   }
 
   return (
