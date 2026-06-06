@@ -5,10 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Search, Phone, DollarSign, ShieldCheck, Send } from "lucide-react";
-import { MOCK_MORA, type MockMora } from "@/lib/mock/mora";
-import { MOCK_CLIENTES } from "@/lib/mock/admin";
+import { useMoraList, type MoraRegistro } from "@/hooks/queries/use-mora";
 import { formatCop } from "@/lib/domain/money";
-import { ScoreBadge } from "@/components/domain/score-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,32 +28,33 @@ export default function MoraPage() {
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("todos");
   const [filtroDias, setFiltroDias] = useState<FiltroDias>("todos");
 
+  const { data: moraData = [], isLoading } = useMoraList();
+
   const filtered = useMemo(() => {
-    let list = MOCK_MORA;
+    let list = moraData;
 
     if (filtroEstado !== "todos") list = list.filter((m) => m.estado === filtroEstado);
-    if (filtroDias !== "todos") list = list.filter((m) => getDiasFiltro(m.diasMora) === filtroDias);
+    if (filtroDias !== "todos") list = list.filter((m) => getDiasFiltro(m.dias_mora ?? 0) === filtroDias);
 
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
         (m) =>
-          m.clienteNombre.toLowerCase().includes(q) ||
-          m.cobradorNombre.toLowerCase().includes(q),
+          m.prestamos.clientes.nombre.toLowerCase().includes(q),
       );
     }
 
-    return list.sort((a, b) => b.diasMora - a.diasMora);
-  }, [search, filtroEstado, filtroDias]);
+    return list.sort((a, b) => (b.dias_mora ?? 0) - (a.dias_mora ?? 0));
+  }, [search, filtroEstado, filtroDias, moraData]);
 
   const resumen = useMemo(() => {
-    const activas = MOCK_MORA.filter((m) => m.estado === "activa");
-    const totalMonto = activas.reduce((sum, m) => sum + (m.montoMora - m.montoPagadoMora), 0);
+    const activas = moraData.filter((m) => m.estado === "activa");
+    const totalMonto = activas.reduce((sum, m) => sum + ((m.monto_mora ?? 0) - m.monto_pagado_mora), 0);
     const avgDias = activas.length > 0
-      ? Math.round(activas.reduce((sum, m) => sum + m.diasMora, 0) / activas.length)
+      ? Math.round(activas.reduce((sum, m) => sum + (m.dias_mora ?? 0), 0) / activas.length)
       : 0;
     return { clientesEnMora: activas.length, montoTotalMora: totalMonto, promedioDias: avgDias };
-  }, []);
+  }, [moraData]);
 
   const estados: { value: FiltroEstado; label: string }[] = [
     { value: "todos", label: "Todos" },
@@ -71,11 +70,15 @@ export default function MoraPage() {
     { value: "severa", label: "21+ dias" },
   ];
 
+  if (isLoading) {
+    return <p className="py-8 text-center text-sm text-muted-foreground">Cargando mora...</p>;
+  }
+
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-foreground">Panel de Mora</h1>
 
-      <div className="grid grid-cols-3 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <Card padding="md">
           <p className="text-xs text-muted-foreground">Clientes en mora</p>
           <p className="text-lg font-bold text-danger">{resumen.clientesEnMora}</p>
@@ -96,14 +99,14 @@ export default function MoraPage() {
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Buscar por cliente o cobrador..."
+          placeholder="Buscar por cliente..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="flex h-11 w-full rounded-lg border border-border bg-background pl-10 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         />
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {estados.map((f) => (
           <button
             key={f.value}
@@ -120,7 +123,7 @@ export default function MoraPage() {
         ))}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex gap-2 overflow-x-auto pb-1">
         {diasFiltros.map((f) => (
           <button
             key={f.value}
@@ -159,15 +162,14 @@ export default function MoraPage() {
   );
 }
 
-function MoraCard({ mora }: { mora: MockMora }) {
-  const cliente = MOCK_CLIENTES.find((c) => c.id === mora.clienteId);
-  const score = cliente?.scorePago ?? 0;
+function MoraCard({ mora }: { mora: MoraRegistro }) {
+  const diasMora = mora.dias_mora ?? 0;
 
   const severityColor =
-    mora.diasMora <= 10
+    diasMora <= 10
       ? "border-l-warning"
-      : mora.diasMora <= 20
-        ? "border-l-amber-500"
+      : diasMora <= 20
+        ? "border-l-orange-500"
         : "border-l-danger";
 
   return (
@@ -176,16 +178,14 @@ function MoraCard({ mora }: { mora: MockMora }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <p className="truncate text-sm font-semibold text-foreground">
-              {mora.clienteNombre}
+              {mora.prestamos.clientes.nombre}
             </p>
-            <ScoreBadge score={score} />
           </div>
 
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span>{mora.cobradorNombre}</span>
             <span className="inline-flex items-center gap-1">
               <Phone className="h-3 w-3" />
-              {mora.clienteTelefono}
+              {mora.prestamos.clientes.telefono ?? ""}
             </span>
           </div>
 
@@ -200,17 +200,17 @@ function MoraCard({ mora }: { mora: MockMora }) {
                     : "bg-muted text-muted-foreground",
               )}
             >
-              {mora.diasMora} dias en mora
+              {diasMora} dias en mora
             </span>
             <span className="text-xs font-mono font-semibold text-danger">
-              {formatCop(mora.montoMora - mora.montoPagadoMora)}
+              {formatCop((mora.monto_mora ?? 0) - mora.monto_pagado_mora)}
             </span>
           </div>
 
           <div className="mt-2 flex gap-1 text-xs text-muted-foreground">
-            <span>Cuota: {formatCop(mora.cuotaDiaria)}</span>
+            <span>Cuota: {formatCop(mora.prestamos.cuota_diaria ?? 0)}</span>
             <span>·</span>
-            <span>Capital: {formatCop(mora.capital)}</span>
+            <span>Capital: {formatCop(mora.prestamos.capital)}</span>
           </div>
         </div>
       </div>
@@ -219,7 +219,10 @@ function MoraCard({ mora }: { mora: MockMora }) {
         <div className="mt-3 flex gap-2">
           <PagarMoraButton mora={mora} />
           <CondonarMoraButton mora={mora} />
-          <WhatsAppButton telefono={mora.clienteTelefono} cliente={mora.clienteNombre} />
+          <WhatsAppButton
+            telefono={mora.prestamos.clientes.telefono ?? ""}
+            cliente={mora.prestamos.clientes.nombre}
+          />
         </div>
       )}
     </Card>
@@ -230,7 +233,7 @@ const pagarMoraSchema = z.object({
   monto: z.number().positive("El monto debe ser mayor a 0"),
 });
 
-function PagarMoraButton({ mora }: { mora: MockMora }) {
+function PagarMoraButton({ mora }: { mora: MoraRegistro }) {
   const [open, setOpen] = useState(false);
 
   const {
@@ -239,7 +242,7 @@ function PagarMoraButton({ mora }: { mora: MockMora }) {
     formState: { errors, isSubmitting },
   } = useForm<{ monto: number }>({
     resolver: zodResolver(pagarMoraSchema),
-    defaultValues: { monto: mora.montoMora - mora.montoPagadoMora },
+    defaultValues: { monto: (mora.monto_mora ?? 0) - mora.monto_pagado_mora },
   });
 
   function onSubmit() {
@@ -280,7 +283,7 @@ const condonarSchema = z.object({
   motivo: z.string().trim().min(3, "El motivo debe tener al menos 3 caracteres"),
 });
 
-function CondonarMoraButton({ mora }: { mora: MockMora }) {
+function CondonarMoraButton({ mora }: { mora: MoraRegistro }) {
   const [open, setOpen] = useState(false);
 
   const {
@@ -339,7 +342,7 @@ function WhatsAppButton({ telefono, cliente }: { telefono: string; cliente: stri
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-green-500 px-3 text-xs font-medium text-white hover:bg-green-600 transition-colors"
+      className="inline-flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg bg-[#25D366] px-3 text-xs font-medium text-white hover:bg-[#22c35e] transition-colors"
     >
       <Send className="h-4 w-4" />
       WhatsApp
