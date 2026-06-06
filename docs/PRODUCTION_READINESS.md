@@ -1,18 +1,17 @@
 # PRODUCCION - CHECKLIST FINAL
 
-**Estado:** BLOQUEADO - requiere verificacion/correccion de migracion remota  
+**Estado:** BLOQUEADO - requiere acciones manuales de Dashboard y pruebas HTTP con cookies SSR  
 **Fecha:** 2026-06-05  
 **Versión:** v1.0
 
 ---
 
-## BLOQUEADORES DETECTADOS
+## BLOQUEADORES RESTANTES
 
-- `production_security_hardening` fue aplicado remotamente, pero no existe como archivo en `supabase/migrations/`; el historial local no reproduce produccion.
-- `lib/database.types.ts` quedo vacio tras el primer intento de generacion; fue restaurado desde el archivo temporal de Copilot, pero debe regenerarse con el CLI en un entorno con dependencias instaladas.
-- La migracion aplicada agrego overloads de `audit_action` y `register_payment` que no son las firmas usadas por la app; deben verificarse en PostgREST para evitar llamadas RPC ambiguas o funciones publicas innecesarias.
-- `drop extension if exists pg_trgm cascade` puede haber eliminado indices trigram, incluyendo busqueda por nombre de clientes; hay que confirmar y recrear indices afectados.
-- Las funciones `SECURITY DEFINER` en `public` deben tener grants revisados; no deben quedar ejecutables por `anon`, `authenticated` o `PUBLIC` salvo necesidad explicita.
+- Habilitar **Custom Access Token Hook** en Supabase Dashboard para que nuevos JWT incluyan `rol` y `organization_id`.
+- Habilitar **Leaked Password Protection** en Supabase Dashboard.
+- Rotar la contraseña seed `Password123!` antes de producción.
+- Completar pruebas HTTP reales contra `app/api/**` usando cookies SSR de Supabase; las pruebas REST/RLS con Bearer token ya pasaron.
 
 ---
 
@@ -24,6 +23,8 @@
 - [x] RLS policies para `audit_logs` restringidas (INSERT: solo `actor_id = auth.uid()`)
 - [x] Función `handle_new_user()` revocada de roles `anon/authenticated`
 - [x] Custom Access Token Hook configurado en código
+- [x] Helpers RLS `current_org_id`, `current_rol`, `is_super_admin` movidos fuera del schema `public` expuesto
+- [x] Overloads obsoletos de `audit_action` y `register_payment` eliminados
 
 ### 2. **Performance** ⚡
 - [x] 8 índices creados para foreign keys críticas:
@@ -35,12 +36,30 @@
   - `idx_pagos_prestamo_id`
   - `idx_clientes_organization_id`
   - `idx_profiles_organization_id`
+- [x] Índices FK adicionales creados según Supabase advisor para `mora_registros`, `pagos`, `prestamos`, `subscription_payments`, `tenant_subscriptions` y `visitas_cobro`
+- [x] Índices duplicados reportados por advisor eliminados
+- [x] Políticas RLS optimizadas para evitar `auth_rls_initplan` y múltiples políticas permisivas de lectura
 
 ### 3. **Schema & Migrations** 📊
 - [x] 12 migraciones aplicadas
+- [x] Migraciones correctivas locales creadas en `supabase/migrations/`
 - [x] RLS habilitado en todas las tablas (16 tablas)
 - [x] 8 usuarios con perfiles válidos
 - [x] Todos los usuarios con `rol` y `activo = true`
+
+### 4. **Verificación 2026-06-05**
+- [x] Smoke REST/RLS con tokens reales:
+  - `super_login=true`
+  - `admin_login=true`
+  - `cobrador_login=true`
+  - `super_orgs=4`
+  - `admin_clientes=3`
+  - `cobrador_prestamos=1`
+  - `cobrador_client_insert=denied_403`
+  - `cobrador_payment_rpc=ok_933905bd-3162-4f5b-836b-b6889cd8ad13`
+- [x] Security advisor: solo queda `auth_leaked_password_protection`, que requiere Dashboard.
+- [x] Performance advisor: corregidos `unindexed_foreign_keys`, `auth_rls_initplan`, `multiple_permissive_policies` y `duplicate_index`.
+- [ ] Performance advisor: quedan `unused_index` INFO; no se eliminaron por falta de tráfico suficiente y porque varios índices son nuevos o intencionales.
 
 ---
 
@@ -139,12 +158,14 @@ order by indexname;
 
 ## 📋 Checklist Pre-Deployment
 
-- [ ] Custom Access Token Hook habilitado
-- [ ] Leaked Password Protection habilitada
+- [ ] Custom Access Token Hook habilitado en Dashboard
+- [ ] Leaked Password Protection habilitada en Dashboard
+- [ ] Passwords seed rotados
 - [ ] Usuarios han cerrado sesión
 - [ ] JWT incluye `rol` y `organization_id`
 - [ ] RLS activo (test: intentar SELECT sin rol correcto = error)
 - [ ] Índices creados
+- [ ] Pruebas HTTP `app/api/**` ejecutadas con cookies SSR reales
 - [ ] Sin errores en logs de Postgres
 - [ ] Connection pooling configurado (si aplica)
 - [ ] Backups automáticos habilitados
@@ -163,7 +184,16 @@ order by indexname;
 
 ## 🎯 Resumen de Cambios
 
-**Migración:** `production_security_hardening`
+**Migraciones correctivas principales:**
+
+- `20260605_backend_roles_hardening.sql`
+- `20260605_audit_logs_policy_cleanup.sql`
+- `20260605_rls_helpers_profile_fallback.sql`
+- `20260605_payment_rls_cleanup.sql`
+- `20260605_register_payment_audit_cast.sql`
+- `20260605_audit_action_search_path.sql`
+- `20260605_rls_private_helpers_and_index_cleanup.sql`
+- `20260605_grant_private_rls_helpers_to_anon.sql`
 
 ```sql
 -- Funciones auditadas
@@ -204,4 +234,4 @@ REVOKE execute handle_new_user() FROM anon, authenticated, public
 ---
 
 **Status:** BLOQUEADO  
-**Próximo paso:** Auditar la base remota y crear una migracion correctiva trazable
+**Próximo paso:** completar acciones manuales de Dashboard y pruebas HTTP con cookies SSR reales

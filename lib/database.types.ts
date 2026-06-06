@@ -952,63 +952,39 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      audit_action:
-        | {
-            Args: {
-              action: string
-              new_data?: Json
-              old_data?: Json
-              record_id: string
-              table_name: string
-            }
-            Returns: undefined
-          }
-        | {
-            Args: {
-              p_accion: string
-              p_actor_id: string
-              p_actor_rol: string
-              p_entidad: string
-              p_entidad_id?: string
-              p_estado_anterior?: Json
-              p_estado_nuevo?: Json
-              p_ip?: unknown
-              p_organization_id: string
-              p_user_agent?: string
-            }
-            Returns: undefined
-          }
-      current_org_id: { Args: never; Returns: string }
-      current_rol: { Args: never; Returns: string }
+      audit_action: {
+        Args: {
+          p_accion: string
+          p_actor_id: string
+          p_actor_rol: string
+          p_entidad: string
+          p_entidad_id?: string
+          p_estado_anterior?: Json
+          p_estado_nuevo?: Json
+          p_ip?: unknown
+          p_organization_id: string
+          p_user_agent?: string
+        }
+        Returns: undefined
+      }
       custom_access_token_hook: { Args: { event: Json }; Returns: Json }
-      is_super_admin: { Args: never; Returns: boolean }
-      register_payment:
-        | {
-            Args: {
-              p_cliente_id: string
-              p_cobrador_id: string
-              p_cronograma_pago_id: string
-              p_lat?: number
-              p_lng?: number
-              p_medio_pago: Database["public"]["Enums"]["medio_pago"]
-              p_monto: number
-              p_nota?: string
-              p_organization_id: string
-              p_prestamo_id: string
-              p_registrado_por: string
-              p_tipo: string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              p_monto: number
-              p_prestamo_id: string
-              p_referencia?: string
-              p_tipo_pago?: string
-            }
-            Returns: Json
-          }
+      register_payment: {
+        Args: {
+          p_cliente_id: string
+          p_cobrador_id: string
+          p_cronograma_pago_id: string
+          p_lat?: number
+          p_lng?: number
+          p_medio_pago: Database["public"]["Enums"]["medio_pago"]
+          p_monto: number
+          p_nota?: string
+          p_organization_id: string
+          p_prestamo_id: string
+          p_registrado_por: string
+          p_tipo: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       estado_cuota: "pendiente" | "pagado" | "parcial" | "vencido" | "cancelado"
