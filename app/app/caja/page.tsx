@@ -158,8 +158,8 @@ function CerrarRutaButton({ fecha, onSuccess }: { fecha: string; onSuccess: () =
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Registrando..." : "Cerrar ruta"}
+            <Button type="submit" loading={isSubmitting} className="flex-1">
+              Cerrar ruta
             </Button>
           </div>
         </form>
@@ -226,8 +226,8 @@ function CierreGeneralButton({ fecha, resumen, onSuccess }: CierreGeneralButtonP
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancelar
             </Button>
-            <Button type="button" variant="danger" onClick={handleCierre} disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Cerrando..." : "Cerrar caja general"}
+            <Button type="button" variant="danger" onClick={handleCierre} loading={isSubmitting} className="flex-1">
+              Cerrar caja general
             </Button>
           </div>
         </div>

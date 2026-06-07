@@ -2,13 +2,16 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Search, Plus, Phone } from "lucide-react";
+import { Search, Plus, Phone, Users } from "lucide-react";
 import { useClientes, type Cliente } from "@/hooks/queries/use-clientes";
 import { ScoreBadge } from "@/components/domain/score-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { ClientForm } from "@/components/forms/client-form";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { cn } from "@/components/ui/cn";
 
 type FilterPill = "todos" | "activos" | "inactivos";
@@ -18,7 +21,7 @@ export default function ClientesPage() {
   const [filter, setFilter] = useState<FilterPill>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: clientes = [], isPending, error } = useClientes();
+  const { data: clientes = [], isPending, error, refetch } = useClientes();
 
   const filtered = useMemo(() => {
     let list: Cliente[] = clientes;
@@ -83,17 +86,18 @@ export default function ClientesPage() {
       </div>
 
       {isPending ? (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">Cargando clientes...</p>
-        </div>
+        <SkeletonList count={5} />
       ) : error ? (
-        <div className="py-12 text-center">
-          <p className="text-danger">No se pudieron cargar los clientes: {error.message}</p>
-        </div>
+        <ErrorState message={error.message} onRetry={() => refetch()} />
       ) : filtered.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">No se encontraron clientes</p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title={search || filter !== "todos" ? "Sin resultados" : "Sin clientes aun"}
+          description={search || filter !== "todos" ? "Intenta con otros filtros." : "Crea el primer cliente para empezar."}
+          action={!search && filter === "todos" ? (
+            <Button size="sm" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" />Crear cliente</Button>
+          ) : undefined}
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((cliente) => (

@@ -2,11 +2,14 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, FileText } from "lucide-react";
 import { usePrestamos, type Prestamo } from "@/hooks/queries/use-prestamos";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { cn } from "@/components/ui/cn";
 import { formatCop } from "@/lib/domain/money";
 
@@ -25,7 +28,7 @@ export default function PrestamosPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<EstadoFilter>("todos");
 
-  const { data: prestamos = [], isPending, error } = usePrestamos();
+  const { data: prestamos = [], isPending, error, refetch } = usePrestamos();
 
   const filtered = useMemo(() => {
     let list: Prestamo[] = prestamos;
@@ -91,17 +94,18 @@ export default function PrestamosPage() {
       </p>
 
       {isPending ? (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">Cargando prestamos...</p>
-        </div>
+        <SkeletonList count={4} />
       ) : error ? (
-        <div className="py-12 text-center">
-          <p className="text-danger">No se pudieron cargar los prestamos: {error.message}</p>
-        </div>
+        <ErrorState message={error.message} onRetry={() => refetch()} />
       ) : filtered.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">No se encontraron prestamos</p>
-        </div>
+        <EmptyState
+          icon={FileText}
+          title={search || filter !== "todos" ? "Sin resultados" : "Sin prestamos aun"}
+          description={search || filter !== "todos" ? "Intenta con otros filtros." : "Crea el primer prestamo para empezar."}
+          action={!search && filter === "todos" ? (
+            <Link href="/app/prestamos/nuevo"><Button size="sm"><Plus className="h-4 w-4" />Nuevo prestamo</Button></Link>
+          ) : undefined}
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((prestamo) => (

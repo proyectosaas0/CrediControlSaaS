@@ -51,8 +51,8 @@ export function ClientForm({ onSuccess, onCancel }: ClientFormProps) {
       <Input label="Notas" placeholder="Notas sobre el cliente..." error={errors.notas?.message} {...register("notas")} />
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">Cancelar</Button>
-        <Button type="submit" disabled={isSubmitting} className="flex-1">
-          {isSubmitting ? "Creando..." : "Crear cliente"}
+        <Button type="submit" loading={isSubmitting} className="flex-1">
+          Crear cliente
         </Button>
       </div>
     </form>

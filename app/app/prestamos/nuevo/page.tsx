@@ -430,9 +430,9 @@ function Step3({
           <ArrowLeft className="mr-2 h-4 w-4" />
           Atras
         </Button>
-        <Button type="button" onClick={onConfirm} className="flex-1" disabled={isSubmitting}>
+        <Button type="button" onClick={onConfirm} className="flex-1" loading={isSubmitting}>
           <Check className="mr-2 h-4 w-4" />
-          {isSubmitting ? "Creando..." : "Confirmar"}
+          Confirmar
         </Button>
       </div>
     </div>

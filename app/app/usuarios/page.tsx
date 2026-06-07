@@ -11,12 +11,16 @@ import {
   Trash2,
   Shield,
   User,
+  UsersRound,
 } from "lucide-react";
 import { useUsuarios, type Usuario } from "@/hooks/queries/use-usuarios";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { toast } from "sonner";
 import { cn } from "@/components/ui/cn";
 
@@ -26,26 +30,13 @@ const ROL_CONFIG: Record<string, { label: string; variant: "primary" | "muted" }
 };
 
 export default function UsuariosPage() {
-  const { data: usuarios = [], isPending, error } = useUsuarios();
+  const { data: usuarios = [], isPending, error, refetch } = useUsuarios();
 
   const admins = usuarios.filter((u) => u.rol === "admin");
   const cobradores = usuarios.filter((u) => u.rol === "cobrador");
 
-  if (isPending) {
-    return (
-      <div className="py-12 text-center">
-        <p className="text-muted-foreground">Cargando usuarios...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="py-12 text-center">
-        <p className="text-danger">No se pudieron cargar los usuarios: {error.message}</p>
-      </div>
-    );
-  }
+  if (isPending) return <SkeletonList count={4} />;
+  if (error) return <ErrorState message={error.message} onRetry={() => refetch()} />;
 
   return (
     <div className="space-y-6">
@@ -70,9 +61,7 @@ export default function UsuariosPage() {
           Cobradores
         </h2>
         {cobradores.length === 0 ? (
-          <Card padding="md">
-            <p className="text-sm text-muted-foreground text-center">No hay cobradores registrados</p>
-          </Card>
+          <EmptyState icon={UsersRound} title="Sin cobradores" description="Crea cobradores desde el módulo Cobradores." />
         ) : (
           cobradores.map((u) => <UsuarioCard key={u.id} usuario={u} />)
         )}
@@ -176,22 +165,22 @@ function UsuarioCard({ usuario }: { usuario: Usuario }) {
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex flex-col gap-1.5 shrink-0">
+        {/* Actions — min 44px touch target */}
+        <div className="flex flex-col gap-1 shrink-0">
           <button
             onClick={toggleActivo}
             disabled={loadingToggle}
             title={usuario.activo ? "Desactivar usuario" : "Activar usuario"}
             className={cn(
-              "flex h-8 w-8 items-center justify-center rounded-lg transition-colors disabled:opacity-50",
+              "flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors disabled:opacity-50",
               usuario.activo
                 ? "text-danger hover:bg-danger/10"
                 : "text-success hover:bg-success/10",
             )}
           >
             {usuario.activo
-              ? <UserX className="h-4 w-4" />
-              : <UserCheck className="h-4 w-4" />
+              ? <UserX className="h-5 w-5" />
+              : <UserCheck className="h-5 w-5" />
             }
           </button>
 
@@ -199,17 +188,17 @@ function UsuarioCard({ usuario }: { usuario: Usuario }) {
             onClick={resetPassword}
             disabled={loadingReset}
             title="Enviar correo de recuperacion de contrasena"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted transition-colors disabled:opacity-50"
           >
-            <KeyRound className="h-4 w-4" />
+            <KeyRound className="h-5 w-5" />
           </button>
 
           <button
             onClick={() => setConfirmEliminar(true)}
             title="Eliminar usuario"
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-danger hover:bg-danger/10 transition-colors"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-danger hover:bg-danger/10 transition-colors"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-5 w-5" />
           </button>
         </div>
       </div>

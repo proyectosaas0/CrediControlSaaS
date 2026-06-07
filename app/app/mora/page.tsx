@@ -4,13 +4,16 @@ import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Search, Phone, DollarSign, ShieldCheck, Send } from "lucide-react";
+import { Search, Phone, DollarSign, ShieldCheck, Send, AlertOctagon } from "lucide-react";
 import { useMoraList, type MoraRegistro } from "@/hooks/queries/use-mora";
 import { formatCop } from "@/lib/domain/money";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
+import { SkeletonGrid, SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { cn } from "@/components/ui/cn";
 import { toast } from "sonner";
 
@@ -28,7 +31,7 @@ export default function MoraPage() {
   const [filtroEstado, setFiltroEstado] = useState<FiltroEstado>("todos");
   const [filtroDias, setFiltroDias] = useState<FiltroDias>("todos");
 
-  const { data: moraData = [], isLoading } = useMoraList();
+  const { data: moraData = [], isLoading, error, refetch } = useMoraList();
 
   const filtered = useMemo(() => {
     let list = moraData;
@@ -70,30 +73,32 @@ export default function MoraPage() {
     { value: "severa", label: "21+ dias" },
   ];
 
-  if (isLoading) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">Cargando mora...</p>;
-  }
+  if (error) return <ErrorState message={error.message} onRetry={() => refetch()} />;
 
   return (
     <div className="space-y-4">
       <h1 className="text-2xl font-bold text-foreground">Panel de Mora</h1>
 
-      <div className="grid grid-cols-3 gap-3">
-        <Card padding="md">
-          <p className="text-xs text-muted-foreground">Clientes en mora</p>
-          <p className="text-lg font-bold text-danger">{resumen.clientesEnMora}</p>
-        </Card>
-        <Card padding="md">
-          <p className="text-xs text-muted-foreground">Monto total</p>
-          <p className="text-lg font-bold font-mono text-danger">
-            {formatCop(resumen.montoTotalMora)}
-          </p>
-        </Card>
-        <Card padding="md">
-          <p className="text-xs text-muted-foreground">Promedio dias</p>
-          <p className="text-lg font-bold text-warning">{resumen.promedioDias}</p>
-        </Card>
-      </div>
+      {isLoading ? (
+        <SkeletonGrid count={3} cols={3} />
+      ) : (
+        <div className="grid grid-cols-3 gap-3">
+          <Card padding="md">
+            <p className="text-xs text-muted-foreground">Clientes en mora</p>
+            <p className="text-lg font-bold text-danger">{resumen.clientesEnMora}</p>
+          </Card>
+          <Card padding="md">
+            <p className="text-xs text-muted-foreground">Monto total</p>
+            <p className="text-lg font-bold font-mono text-danger">
+              {formatCop(resumen.montoTotalMora)}
+            </p>
+          </Card>
+          <Card padding="md">
+            <p className="text-xs text-muted-foreground">Promedio dias</p>
+            <p className="text-lg font-bold text-warning">{resumen.promedioDias}</p>
+          </Card>
+        </div>
+      )}
 
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -140,13 +145,14 @@ export default function MoraPage() {
         ))}
       </div>
 
-      {filtered.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">Sin registros de mora</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            No hay clientes en mora con el filtro seleccionado.
-          </p>
-        </div>
+      {isLoading ? (
+        <SkeletonList count={4} />
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          icon={AlertOctagon}
+          title={search || filtroEstado !== "todos" || filtroDias !== "todos" ? "Sin resultados" : "Sin clientes en mora"}
+          description={search || filtroEstado !== "todos" || filtroDias !== "todos" ? "Intenta con otros filtros." : "Todos los clientes están al día."}
+        />
       ) : (
         <div className="space-y-3">
           {filtered.map((mora) => (
@@ -269,7 +275,7 @@ function PagarMoraButton({ mora }: { mora: MoraRegistro }) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1">
+            <Button type="submit" loading={isSubmitting} className="flex-1">
               Registrar pago
             </Button>
           </div>
@@ -323,7 +329,7 @@ function CondonarMoraButton({ mora }: { mora: MoraRegistro }) {
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1">
+            <Button type="submit" loading={isSubmitting} className="flex-1">
               Condonar
             </Button>
           </div>
