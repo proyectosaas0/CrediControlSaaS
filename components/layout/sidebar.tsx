@@ -109,8 +109,8 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
                     className={cn(
                       "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
                       isActive
-                        ? "bg-primary/10 text-primary shadow-[inset_0_1px_0_0_rgba(99,102,241,0.1)]"
-                        : "text-sidebar-foreground hover:bg-sidebar-border hover:text-foreground",
+                        ? "bg-primary/10 text-primary shadow-[0_0_8px_-3px_rgba(99,102,241,0.3)] ring-1 ring-primary/10"
+                        : "text-sidebar-foreground hover:bg-white/[0.04] hover:text-foreground",
                     )}
                   >
                     <Icon

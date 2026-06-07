@@ -52,10 +52,10 @@ function AdminDashboard({ userName }: { userName: string }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Card padding="md">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Card padding="md" className="transition-all duration-200 hover:border-primary/20 hover:shadow-md hover:shadow-black/30">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10 ring-1 ring-success/10">
               <Wallet className="h-5 w-5 text-success" />
             </div>
             <div>
@@ -66,9 +66,9 @@ function AdminDashboard({ userName }: { userName: string }) {
             </div>
           </div>
         </Card>
-        <Card padding="md">
+        <Card padding="md" className="transition-all duration-200 hover:border-primary/20 hover:shadow-md hover:shadow-black/30">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/10">
               <TrendingUp className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -79,9 +79,9 @@ function AdminDashboard({ userName }: { userName: string }) {
             </div>
           </div>
         </Card>
-        <Card padding="md">
+        <Card padding="md" className="transition-all duration-200 hover:border-danger/20 hover:shadow-md hover:shadow-black/30">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-danger/10">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-danger/10 ring-1 ring-danger/10">
               <AlertTriangle className="h-5 w-5 text-danger" />
             </div>
             <div>
@@ -119,7 +119,7 @@ function AdminDashboard({ userName }: { userName: string }) {
         <div className="space-y-3">
           {recentPrestamos.map((p) => (
             <Link key={p.id} href={`/app/prestamos/${p.id}`}>
-              <Card padding="md" className="mb-3">
+              <Card padding="md" className="transition-all duration-200 hover:border-primary/20 hover:shadow-md hover:shadow-black/30 cursor-pointer">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-semibold text-foreground">

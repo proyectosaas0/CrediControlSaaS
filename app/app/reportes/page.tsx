@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import {
   TrendingUp,
   AlertTriangle,
@@ -33,31 +33,26 @@ const PERIODOS: { value: Periodo; label: string }[] = [
 export default function ReportesPage() {
   const [periodo, setPeriodo] = useState<Periodo>("semana");
   const [cobradorFiltro, setCobradorFiltro] = useState<string>("todos");
-  const [desde, setDesde] = useState("2026-06-01");
-  const [hasta, setHasta] = useState("2026-06-05");
+  const [desdeManual, setDesdeManual] = useState("2026-06-01");
+  const [hastaManual, setHastaManual] = useState("2026-06-05");
 
-  useEffect(() => {
-    if (periodo === "rango") return;
+  const { desde, hasta } = useMemo(() => {
+    if (periodo === "rango") return { desde: desdeManual, hasta: hastaManual };
     const today = new Date();
-    const hasta = today.toISOString().slice(0, 10);
-    let desde: string;
-    if (periodo === "hoy") {
-      desde = hasta;
-    } else if (periodo === "semana") {
+    const h = today.toISOString().slice(0, 10);
+    if (periodo === "hoy") return { desde: h, hasta: h };
+    if (periodo === "semana") {
       const d = new Date(today);
       d.setDate(d.getDate() - 6);
-      desde = d.toISOString().slice(0, 10);
-    } else {
-      const d = new Date(today);
-      d.setDate(1);
-      desde = d.toISOString().slice(0, 10);
+      return { desde: d.toISOString().slice(0, 10), hasta: h };
     }
-    setDesde(desde);
-    setHasta(hasta);
-  }, [periodo]);
+    const d = new Date(today);
+    d.setDate(1);
+    return { desde: d.toISOString().slice(0, 10), hasta: h };
+  }, [periodo, desdeManual, hastaManual]);
 
   const rango = { desde, hasta };
-  const { data: metricas, isLoading: loadingMetricas } = useReportesResumen(rango);
+  const { data: metricas } = useReportesResumen(rango);
   const { data: recaudoDiario = [], isLoading: loadingChart } = useRecaudoDiario(rango);
   const { data: cobradoresRendimiento = [] } = useReportesCobradores(rango);
   const { data: cartera } = useCarteraRiesgo();
@@ -123,7 +118,7 @@ export default function ReportesPage() {
                 <input
                   type="date"
                   value={desde}
-                  onChange={(e) => setDesde(e.target.value)}
+                  onChange={(e) => setDesdeManual(e.target.value)}
                   className="mt-1 flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>
@@ -132,7 +127,7 @@ export default function ReportesPage() {
                 <input
                   type="date"
                   value={hasta}
-                  onChange={(e) => setHasta(e.target.value)}
+                  onChange={(e) => setHastaManual(e.target.value)}
                   className="mt-1 flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>

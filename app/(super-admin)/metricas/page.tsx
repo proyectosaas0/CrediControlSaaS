@@ -1,6 +1,5 @@
 "use client";
 
-import { Building2, Activity, DollarSign } from "lucide-react";
 import { useSuperAdminMetricas } from "@/hooks/queries/use-super-admin";
 import { Card } from "@/components/ui/card";
 

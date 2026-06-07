@@ -1,43 +1,43 @@
 @import "tailwindcss";
 
 :root {
-  /* ── Base ── */
+  /* ── Base — Linear/Vercel dark ── */
   --background: #09090b;
   --foreground: #fafafa;
 
-  /* ── Primary — Indigo fintech (not basic blue) ── */
+  /* ── Primary — Indigo/violet fintech ── */
   --primary: #6366f1;
   --primary-foreground: #ffffff;
   --primary-hover: #4f46e5;
 
-  /* ── Semantic ── */
+  /* ── Semantic — refined ── */
   --success: #10b981;
   --success-foreground: #ffffff;
   --warning: #f59e0b;
   --warning-foreground: #0c0a09;
   --danger: #f43f5e;
   --danger-foreground: #ffffff;
-  --info: #0ea5e9;
-  --info-foreground: #ffffff;
+  --info: #38bdf8;
+  --info-foreground: #0c0a09;
 
-  /* ── Surfaces ── */
+  /* ── Surfaces — deeper, premium ── */
   --card: #18181b;
   --card-foreground: #fafafa;
   --muted: #27272a;
   --muted-foreground: #a1a1aa;
-  --border: #27272a;
+  --border: rgba(255, 255, 255, 0.06);
   --ring: #6366f1;
 
-  /* ── Cobrador ── */
+  /* ── Cobrador actions ── */
   --cobrador-action: #10b981;
   --cobrador-action-hover: #059669;
   --cobrador-pending: #f59e0b;
   --cobrador-paid: #22c55e;
 
   /* ── Sidebar ── */
-  --sidebar-bg: #0c0c10;
+  --sidebar-bg: #0b0b0f;
   --sidebar-foreground: #a1a1aa;
-  --sidebar-border: #1f1f23;
+  --sidebar-border: rgba(255, 255, 255, 0.04);
   --sidebar-active: #6366f1;
   --sidebar-active-foreground: #ffffff;
 
