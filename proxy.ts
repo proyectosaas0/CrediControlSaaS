@@ -4,21 +4,26 @@ import { addSecurityHeaders, getCorsHeaders } from "@/lib/api/security";
 
 const PUBLIC_PREFIXES = ["/login", "/register", "/verify", "/_next", "/favicon.ico", "/api"];
 
+// Paths a los que un cobrador SÍ puede acceder.
+const COBRADOR_ALLOWED = ["/app", "/app/ruta", "/app/pagos", "/app/perfil"];
+
+function isCobradoresAllowed(path: string): boolean {
+  return COBRADOR_ALLOWED.some((p) => path === p || path.startsWith(p + "/"));
+}
+
 export async function proxy(request: NextRequest) {
   // Handle CORS preflight requests
   if (request.method === "OPTIONS") {
     const origin = request.headers.get("origin") || undefined;
     const corsHeaders = getCorsHeaders(origin);
-    const response = new NextResponse(null, {
-      status: 204,
-    });
+    const response = new NextResponse(null, { status: 204 });
     Object.entries(corsHeaders).forEach(([key, value]) => {
       response.headers.set(key, value);
     });
     return response;
   }
 
-  const { response, user } = await updateSession(request);
+  const { response, user, role } = await updateSession(request);
 
   // Add security headers
   addSecurityHeaders(response);
@@ -56,6 +61,13 @@ export async function proxy(request: NextRequest) {
     }
 
     if (isRoot) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/app";
+      return secureRedirect(url);
+    }
+
+    // Cobradores solo pueden acceder a sus rutas permitidas.
+    if (role === "cobrador" && path.startsWith("/app") && !isCobradoresAllowed(path)) {
       const url = request.nextUrl.clone();
       url.pathname = "/app";
       return secureRedirect(url);
