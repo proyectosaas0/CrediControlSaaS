@@ -75,12 +75,14 @@ function CobradorRutaView() {
   }
 
   function handlePaymentSuccess(_id: string, _medioPago: MedioPago, _monto: number) {
+    void _id; void _medioPago; void _monto;
     toast.success("Pago registrado");
     void queryClient.invalidateQueries({ queryKey: ["ruta"] });
     setSheetOpen(false);
   }
 
   function handleMarkNotFound(_itemId: string) {
+    void _itemId;
     toast.info("Cliente marcado como no encontrado");
     setSheetOpen(false);
   }
