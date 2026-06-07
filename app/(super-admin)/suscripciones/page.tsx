@@ -17,7 +17,9 @@ export default function SuscripcionesPage() {
       <h1 className="text-2xl font-bold text-foreground">Suscripciones</h1>
 
       {isLoading ? (
-        <p className="text-sm text-muted-foreground">Cargando...</p>
+        <Card padding="md" className="py-10 text-center">
+          <p className="text-sm text-muted-foreground">Cargando...</p>
+        </Card>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3">

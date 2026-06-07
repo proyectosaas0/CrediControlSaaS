@@ -5,7 +5,7 @@
   --background: #09090b;
   --foreground: #fafafa;
 
-  /* ── Primary — Indigo fintech (not basic blue) ── */
+  /* ── Primary — Indigo fintech ── */
   --primary: #6366f1;
   --primary-foreground: #ffffff;
   --primary-hover: #4f46e5;
@@ -17,15 +17,15 @@
   --warning-foreground: #0c0a09;
   --danger: #f43f5e;
   --danger-foreground: #ffffff;
-  --info: #0ea5e9;
-  --info-foreground: #ffffff;
+  --info: #38bdf8;
+  --info-foreground: #0c0a09;
 
-  /* ── Surfaces ── */
-  --card: #18181b;
+  /* ── Surfaces / Glass ── */
+  --card: rgba(255, 255, 255, 0.04);
   --card-foreground: #fafafa;
-  --muted: #27272a;
+  --muted: rgba(255, 255, 255, 0.06);
   --muted-foreground: #a1a1aa;
-  --border: #27272a;
+  --border: rgba(255, 255, 255, 0.08);
   --ring: #6366f1;
 
   /* ── Cobrador ── */
@@ -35,9 +35,9 @@
   --cobrador-paid: #22c55e;
 
   /* ── Sidebar ── */
-  --sidebar-bg: #0c0c10;
+  --sidebar-bg: #0b0b0f;
   --sidebar-foreground: #a1a1aa;
-  --sidebar-border: #1f1f23;
+  --sidebar-border: rgba(255, 255, 255, 0.04);
   --sidebar-active: #6366f1;
   --sidebar-active-foreground: #ffffff;
 
@@ -88,10 +88,16 @@
 }
 
 body {
-  background: var(--background);
+  --dot-size: 1px;
+  --dot-color: rgba(99, 102, 241, 0.06);
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.08), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(16, 185, 129, 0.04), transparent),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  min-height: 100vh;
 }
 
 @media (max-width: 767px) {
