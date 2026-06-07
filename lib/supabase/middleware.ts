@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import type { Database } from "@/lib/database.types";
+import type { AppRole } from "@/lib/auth";
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -29,5 +30,12 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { response, user };
+  // Lee el rol del JWT (sin llamada extra a la BD).
+  let role: AppRole | null = null;
+  if (user) {
+    const { data: claimsData } = await supabase.auth.getClaims();
+    role = (claimsData?.claims?.rol as AppRole | undefined) ?? null;
+  }
+
+  return { response, user, role };
 }

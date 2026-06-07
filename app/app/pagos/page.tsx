@@ -2,14 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Search, Banknote } from "lucide-react";
 import { usePagos } from "@/hooks/queries/use-pagos";
 import { Card } from "@/components/ui/card";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { formatCop } from "@/lib/domain/money";
 
 export default function PagosPage() {
   const [search, setSearch] = useState("");
-  const { data: pagos = [], isPending, error } = usePagos();
+  const { data: pagos = [], isPending, error, refetch } = usePagos();
 
   const filtered = pagos.filter((p) => {
     if (!search.trim()) return true;
@@ -42,17 +45,15 @@ export default function PagosPage() {
       </p>
 
       {isPending ? (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">Cargando pagos...</p>
-        </div>
+        <SkeletonList count={4} />
       ) : error ? (
-        <div className="py-12 text-center">
-          <p className="text-danger">No se pudieron cargar los pagos: {error.message}</p>
-        </div>
+        <ErrorState message={error.message} onRetry={() => refetch()} />
       ) : filtered.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">No se encontraron pagos</p>
-        </div>
+        <EmptyState
+          icon={Banknote}
+          title={search ? "Sin resultados" : "Sin pagos registrados"}
+          description={search ? "Intenta con otro término de búsqueda." : "Los pagos aparecerán aquí cuando se registren cuotas."}
+        />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((pago) => (

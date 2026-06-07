@@ -9,6 +9,7 @@ import { useAuthMe } from "@/hooks/queries/use-auth-me";
 import { Card, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 
 const configuracionSchema = z.object({
@@ -90,15 +91,13 @@ export default function ConfiguracionPage() {
     toast.success("Configuracion guardada correctamente");
   }
 
-  if (isLoading) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">Cargando configuración...</p>;
-  }
+  if (isLoading) return <SkeletonList count={6} />;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Configuracion</h1>
-        <Button size="sm" type="submit" form="form-configuracion" disabled={isSubmitting}>
+        <Button size="sm" type="submit" form="form-configuracion" loading={isSubmitting}>
           Guardar cambios
         </Button>
       </div>

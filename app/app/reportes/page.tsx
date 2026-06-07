@@ -18,6 +18,7 @@ import {
 import { useCobradores } from "@/hooks/queries/use-cobradores";
 import { formatCop } from "@/lib/domain/money";
 import { Card } from "@/components/ui/card";
+import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { toast } from "sonner";
@@ -135,19 +136,15 @@ export default function ReportesPage() {
           )}
 
           <div>
-            <label className="text-xs text-muted-foreground">Cobrador</label>
-            <select
+            <Select
+              label="Cobrador"
               value={cobradorFiltro}
               onChange={(e) => setCobradorFiltro(e.target.value)}
-              className="mt-1 flex h-10 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <option value="todos">Todos los cobradores</option>
-              {cobradores.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nombre_completo}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "todos", label: "Todos los cobradores" },
+                ...cobradores.map((c) => ({ value: c.id, label: c.nombre_completo })),
+              ]}
+            />
           </div>
         </div>
       </Card>

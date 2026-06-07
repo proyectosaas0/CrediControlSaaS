@@ -233,8 +233,8 @@ function EditClienteForm({ cliente, onSuccess, onCancel }: EditClienteFormProps)
       <Input label="Notas" error={errors.notas?.message} {...register("notas")} />
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">Cancelar</Button>
-        <Button type="submit" disabled={isSubmitting} className="flex-1">
-          {isSubmitting ? "Guardando..." : "Guardar cambios"}
+        <Button type="submit" loading={isSubmitting} className="flex-1">
+          Guardar cambios
         </Button>
       </div>
     </form>

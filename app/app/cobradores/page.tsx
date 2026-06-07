@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Phone, CheckCircle, XCircle } from "lucide-react";
+import { Plus, Phone, CheckCircle, XCircle, UserCircle } from "lucide-react";
 import { cobradorSchema, type CobradorFormData } from "@/lib/schemas/admin";
 import { useCobradores, type Cobrador } from "@/hooks/queries/use-cobradores";
 import { Card } from "@/components/ui/card";
@@ -12,12 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { toast } from "sonner";
 import { cn } from "@/components/ui/cn";
 
 export default function CobradoresPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
-  const { data: cobradores = [], isPending, error } = useCobradores();
+  const { data: cobradores = [], isPending, error, refetch } = useCobradores();
 
   return (
     <div className="space-y-4">
@@ -29,34 +32,22 @@ export default function CobradoresPage() {
         </Button>
       </div>
 
-      {isPending && (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Cargando cobradores...</p>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-danger/10 border border-danger/20 rounded-lg p-4">
-          <p className="text-danger text-sm">
-            Error al cargar cobradores: {error.message}
-          </p>
-        </div>
-      )}
-
-      {!isPending && !error && (
+      {isPending ? (
+        <SkeletonList count={3} />
+      ) : error ? (
+        <ErrorState message={error.message} onRetry={() => refetch()} />
+      ) : cobradores.length === 0 ? (
+        <EmptyState
+          icon={UserCircle}
+          title="Sin cobradores registrados"
+          description="Agrega un cobrador para empezar a asignar rutas de cobro."
+          action={<Button size="sm" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" />Agregar cobrador</Button>}
+        />
+      ) : (
         <div className="space-y-3">
-          {cobradores.length === 0 ? (
-            <div className="py-12 text-center">
-              <p className="text-muted-foreground">No hay cobradores registrados</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Agrega un cobrador para empezar a asignar rutas de cobro.
-              </p>
-            </div>
-          ) : (
-            cobradores.map((cobrador) => (
-              <CobradorCard key={cobrador.id} cobrador={cobrador} />
-            ))
-          )}
+          {cobradores.map((cobrador) => (
+            <CobradorCard key={cobrador.id} cobrador={cobrador} />
+          ))}
         </div>
       )}
 
@@ -198,7 +189,7 @@ function CobradorForm({
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancelar
         </Button>
-        <Button type="submit" disabled={isSubmitting} className="flex-1">
+        <Button type="submit" loading={isSubmitting} className="flex-1">
           Agregar cobrador
         </Button>
       </div>

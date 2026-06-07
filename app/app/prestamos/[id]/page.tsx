@@ -14,6 +14,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
+import { SkeletonList } from "@/components/ui/skeleton";
+import { ErrorState } from "@/components/ui/error-state";
 import { toast } from "sonner";
 
 export default function PrestamoDetailPage() {
@@ -23,26 +25,10 @@ export default function PrestamoDetailPage() {
 
   const { data: prestamo, isLoading, error } = usePrestamo(id);
 
-  if (isLoading) {
-    return (
-      <div className="py-12 text-center">
-        <p className="text-muted-foreground">Cargando...</p>
-      </div>
-    );
-  }
+  if (isLoading) return <SkeletonList count={5} />;
 
   if (error || !prestamo) {
-    return (
-      <div className="py-12 text-center">
-        <p className="text-muted-foreground">Prestamo no encontrado</p>
-        <button
-          onClick={() => router.back()}
-          className="mt-4 text-sm text-primary underline"
-        >
-          Volver
-        </button>
-      </div>
-    );
+    return <ErrorState message={error?.message ?? "Prestamo no encontrado"} onRetry={() => router.back()} />;
   }
 
   const cuotasPagadas = prestamo.prestamo_saldos[0]?.cuotas_pagadas ?? 0;
@@ -362,11 +348,11 @@ function CancelarButton({ prestamoId }: { prestamoId: string }) {
             </Button>
           <Button
             type="submit"
-            disabled={isSubmitting}
+            loading={isSubmitting}
             className="flex-1 bg-danger text-white hover:bg-danger/90"
           >
-              Cancelar prestamo
-            </Button>
+            Cancelar prestamo
+          </Button>
           </div>
         </form>
       </Dialog>

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { loginSchema, type LoginInput } from "@/lib/schemas/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Separator } from "@/components/ui/separator";
 import { LogIn, Loader2 } from "lucide-react";
 import Link from "next/link";
@@ -53,69 +53,64 @@ export function LoginForm() {
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle>{es.auth.login}</CardTitle>
-        <CardDescription>
+    <>
+      <div className="mb-6 text-center">
+        <h1 className="text-xl font-bold text-foreground">{es.auth.login}</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           Ingresa a tu cuenta de CrediControl
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-          <Input
-            label={es.auth.email}
-            type="email"
-            autoComplete="email"
-            placeholder="tu@correo.com"
-            error={errors.email?.message}
-            {...register("email")}
-          />
-
-          <Input
-            label={es.auth.password}
-            type="password"
-            autoComplete="current-password"
-            placeholder="********"
-            error={errors.password?.message}
-            {...register("password")}
-          />
-
-          {serverError && (
-            <p className="rounded-lg bg-danger/10 p-3 text-sm text-danger" role="alert">
-              {serverError}
-            </p>
-          )}
-
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <LogIn className="h-4 w-4" />
-            )}
-            {es.auth.loginAction}
-          </Button>
-        </form>
-      </CardContent>
-
-      <Separator />
-
-      <CardFooter className="justify-center">
-        <p className="text-sm text-muted-foreground">
-          {es.auth.noAccount}{" "}
-          <Link
-            href="/register"
-            className="font-medium text-primary hover:underline"
-          >
-            {es.auth.createAccount}
-          </Link>
         </p>
-      </CardFooter>
-    </Card>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
+        <Input
+          label={es.auth.email}
+          type="email"
+          autoComplete="email"
+          placeholder="tu@correo.com"
+          error={errors.email?.message}
+          {...register("email")}
+        />
+
+        <PasswordInput
+          label={es.auth.password}
+          autoComplete="current-password"
+          placeholder="********"
+          error={errors.password?.message}
+          {...register("password")}
+        />
+
+        {serverError && (
+          <p className="rounded-lg bg-danger/10 p-3 text-sm text-danger" role="alert">
+            {serverError}
+          </p>
+        )}
+
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <LogIn className="h-4 w-4" />
+          )}
+          {es.auth.loginAction}
+        </Button>
+      </form>
+
+      <Separator className="my-6" />
+
+      <p className="text-center text-sm text-muted-foreground">
+        {es.auth.noAccount}{" "}
+        <Link
+          href="/register"
+          className="font-medium text-primary hover:underline"
+        >
+          {es.auth.createAccount}
+        </Link>
+      </p>
+    </>
   );
 }

@@ -24,7 +24,11 @@ export default function CajaPage() {
   const { data: resumen, isLoading, refetch } = useCajaResumen(today);
 
   if (isLoading) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">Cargando caja...</p>;
+    return (
+      <Card padding="md" className="py-10 text-center">
+        <p className="text-sm text-muted-foreground">Cargando caja...</p>
+      </Card>
+    );
   }
 
   const breakdown = resumen?.breakdown ?? {};
@@ -158,8 +162,8 @@ function CerrarRutaButton({ fecha, onSuccess }: { fecha: string; onSuccess: () =
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Registrando..." : "Cerrar ruta"}
+            <Button type="submit" loading={isSubmitting} className="flex-1">
+              Cerrar ruta
             </Button>
           </div>
         </form>
@@ -226,8 +230,8 @@ function CierreGeneralButton({ fecha, resumen, onSuccess }: CierreGeneralButtonP
             <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancelar
             </Button>
-            <Button type="button" variant="danger" onClick={handleCierre} disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Cerrando..." : "Cerrar caja general"}
+            <Button type="button" variant="danger" onClick={handleCierre} loading={isSubmitting} className="flex-1">
+              Cerrar caja general
             </Button>
           </div>
         </div>

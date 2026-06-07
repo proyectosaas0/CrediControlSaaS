@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { RouteCard } from "@/components/domain/route-card";
+import { Card } from "@/components/ui/card";
 import { PaymentSheet } from "@/components/domain/payment-sheet";
 import { AdminRutaView } from "@/components/domain/admin-ruta-view";
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -88,7 +89,11 @@ function CobradorRutaView() {
   }
 
   if (isLoading) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">Cargando ruta...</p>;
+    return (
+      <Card padding="md" className="py-10 text-center">
+        <p className="text-sm text-muted-foreground">Cargando ruta...</p>
+      </Card>
+    );
   }
 
   return (

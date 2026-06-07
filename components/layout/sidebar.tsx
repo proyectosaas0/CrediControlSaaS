@@ -66,19 +66,18 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-sidebar-border bg-sidebar-bg transition-transform duration-300 lg:static lg:w-60 lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-72 flex-col border-r border-sidebar-border bg-sidebar-bg transition-transform duration-300 lg:static lg:w-[230px] lg:translate-x-0",
           open ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
+        )}>
         {/* Brand */}
-        <div className="flex h-14 shrink-0 items-center gap-3 border-b border-sidebar-border px-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-            <span className="text-sm font-bold text-primary-foreground">C</span>
+        <div className="flex h-14 shrink-0 items-center gap-3 border-b border-sidebar-border px-5 lg:px-4">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary lg:h-7 lg:w-7">
+            <span className="text-sm font-bold text-primary-foreground lg:text-xs">C</span>
           </div>
           <Link
             href="/app"
             onClick={onClose}
-            className="text-base font-semibold tracking-tight text-sidebar-foreground"
+            className="text-base font-semibold tracking-tight text-sidebar-foreground lg:text-sm"
           >
             {orgName}
           </Link>
@@ -93,8 +92,8 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <ul className="space-y-1">
+        <nav className="flex-1 overflow-y-auto px-3 py-4 lg:px-2.5 lg:py-3">
+          <ul className="space-y-1 lg:space-y-0">
             {items.map((item) => {
               const Icon = item.icon;
               const isActive =
@@ -107,18 +106,16 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
                     href={item.href}
                     onClick={onClose}
                     className={cn(
-                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150",
+                      "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 lg:gap-2.5 lg:px-2.5 lg:py-1.5 lg:text-[13px]",
                       isActive
-                        ? "bg-primary/10 text-primary shadow-[0_0_8px_-3px_rgba(99,102,241,0.3)] ring-1 ring-primary/10"
+                        ? "bg-indigo-500/10 text-indigo-400 shadow-[0_0_12px_-4px_rgba(99,102,241,0.4)] ring-1 ring-indigo-500/20"
                         : "text-sidebar-foreground hover:bg-white/[0.04] hover:text-foreground",
-                    )}
-                  >
+                    )}>
                     <Icon
                       className={cn(
                         "h-4 w-4 shrink-0 transition-colors",
                         isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
-                      )}
-                    />
+                      )}/>
                     {item.label}
                     {isActive && (
                       <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary" />
@@ -131,14 +128,14 @@ export function Sidebar({ open, onClose, role, userName = "Usuario", orgName = "
         </nav>
 
         {/* Footer */}
-        <div className="shrink-0 border-t border-sidebar-border px-3 py-3">
-          <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+        <div className="shrink-0 border-t border-sidebar-border px-3 py-3 lg:px-2.5 lg:py-2.5">
+          <div className="flex items-center gap-3 rounded-lg px-3 py-2 lg:gap-2.5 lg:px-2 lg:py-1.5">
             <Avatar initials={userName.slice(0, 2).toUpperCase()} size="sm" />
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-medium text-sidebar-foreground">
+              <p className="truncate text-sm font-medium text-sidebar-foreground lg:text-[13px]">
                 {userName}
               </p>
-              <p className="truncate text-xs text-muted-foreground capitalize">
+              <p className="truncate text-xs text-muted-foreground capitalize lg:text-[11px]">
                 {role.replace("_", " ")}
               </p>
             </div>

@@ -6,12 +6,14 @@ import { useAuth } from "@/providers/auth-provider";
 import { OnboardingTutorial } from "@/components/auth/onboarding-tutorial";
 import { CobradorDashboard } from "@/components/domain/cobrador-dashboard";
 import { Card } from "@/components/ui/card";
+import { SkeletonGrid, SkeletonList } from "@/components/ui/skeleton";
+import { EmptyState } from "@/components/ui/empty-state";
 import { formatCop } from "@/lib/domain/money";
 import { useReportesResumen } from "@/hooks/queries/use-reportes";
 import { usePrestamos } from "@/hooks/queries/use-prestamos";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { buttonClasses } from "@/components/ui/button";
-import { TrendingUp, AlertTriangle, Wallet, ArrowRight } from "lucide-react";
+import { TrendingUp, AlertTriangle, Wallet, ArrowRight, FileText } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, role } = useAuth();
@@ -52,47 +54,45 @@ function AdminDashboard({ userName }: { userName: string }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <Card padding="md" className="transition-all duration-200 hover:border-primary/20 hover:shadow-md hover:shadow-black/30">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10 ring-1 ring-success/10">
-              <Wallet className="h-5 w-5 text-success" />
+      {(loadingResumen || loadingPrestamos) ? (
+        <SkeletonGrid count={3} cols={2} />
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <Card padding="md">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-success/10">
+                <Wallet className="h-5 w-5 text-success" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Recaudo hoy</p>
+                <p className="text-lg font-bold text-foreground">{formatCop(resumen?.recaudoTotal ?? 0)}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Recaudo hoy</p>
-              <p className="text-lg font-bold text-foreground">
-                {loadingResumen ? "—" : formatCop(resumen?.recaudoTotal ?? 0)}
-              </p>
+          </Card>
+          <Card padding="md">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <TrendingUp className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Prestamos activos</p>
+                <p className="text-lg font-bold text-foreground">{prestamosActivos}</p>
+              </div>
             </div>
-          </div>
-        </Card>
-        <Card padding="md" className="transition-all duration-200 hover:border-primary/20 hover:shadow-md hover:shadow-black/30">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 ring-1 ring-primary/10">
-              <TrendingUp className="h-5 w-5 text-primary" />
+          </Card>
+          <Card padding="md">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-danger/10">
+                <AlertTriangle className="h-5 w-5 text-danger" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">En mora</p>
+                <p className="text-lg font-bold text-foreground">{enMora}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Prestamos activos</p>
-              <p className="text-lg font-bold text-foreground">
-                {loadingPrestamos ? "—" : prestamosActivos}
-              </p>
-            </div>
-          </div>
-        </Card>
-        <Card padding="md" className="transition-all duration-200 hover:border-danger/20 hover:shadow-md hover:shadow-black/30">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-danger/10 ring-1 ring-danger/10">
-              <AlertTriangle className="h-5 w-5 text-danger" />
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">En mora</p>
-              <p className="text-lg font-bold text-foreground">
-                {loadingPrestamos ? "—" : enMora}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <Link href="/app/clientes" className={buttonClasses("outline", "sm") + " w-full"}>
@@ -116,25 +116,29 @@ function AdminDashboard({ userName }: { userName: string }) {
             <ArrowRight className="h-3 w-3" />
           </Link>
         </div>
-        <div className="space-y-3">
-          {recentPrestamos.map((p) => (
-            <Link key={p.id} href={`/app/prestamos/${p.id}`}>
-              <Card padding="md" className="transition-all duration-200 hover:border-primary/20 hover:shadow-md hover:shadow-black/30 cursor-pointer">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {p.clientes?.nombre ?? "—"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatCop(p.capital)} · {p.modelo_interes.replace("_", " ")}
-                    </p>
+        {loadingPrestamos ? (
+          <SkeletonList count={3} />
+        ) : recentPrestamos.length === 0 ? (
+          <EmptyState icon={FileText} title="Sin prestamos aun" description="Crea el primer prestamo para verlo aquí." />
+        ) : (
+          <div className="space-y-3">
+            {recentPrestamos.map((p) => (
+              <Link key={p.id} href={`/app/prestamos/${p.id}`}>
+                <Card padding="md" className="mb-3 hover:border-primary/30 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">{p.clientes?.nombre ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatCop(p.capital)} · {p.modelo_interes.replace("_", " ")}
+                      </p>
+                    </div>
+                    <LoanStatusBadge estado={p.estado} />
                   </div>
-                  <LoanStatusBadge estado={p.estado} />
-                </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
