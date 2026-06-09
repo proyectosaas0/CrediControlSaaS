@@ -114,16 +114,16 @@ export default function TenantsPage() {
       </div>
 
       {isLoading ? (
-        <div className="py-12 text-center">
+        <Card padding="md" className="py-10 text-center">
           <p className="text-muted-foreground">Cargando...</p>
-        </div>
+        </Card>
       ) : filtered.length === 0 ? (
-        <div className="py-12 text-center">
-          <p className="text-muted-foreground">No se encontraron tenants</p>
-          <p className="text-xs text-muted-foreground mt-1">
+        <Card padding="md" className="py-10 text-center">
+          <p className="text-sm font-semibold text-foreground">No se encontraron tenants</p>
+          <p className="mt-1 text-xs text-muted-foreground">
             No hay tenants con el filtro seleccionado.
           </p>
-        </div>
+        </Card>
       ) : (
         <div className="space-y-3">
           {filtered.map((t) => {

@@ -37,7 +37,11 @@ export default function CajaPage() {
   }
 
   if (isLoading) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">Cargando caja...</p>;
+    return (
+      <Card padding="md" className="py-10 text-center">
+        <p className="text-sm text-muted-foreground">Cargando caja...</p>
+      </Card>
+    );
   }
 
   const breakdown = resumen?.breakdown ?? {};

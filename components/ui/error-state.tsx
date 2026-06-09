@@ -1,4 +1,5 @@
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 type ErrorStateProps = {
@@ -6,9 +7,9 @@ type ErrorStateProps = {
   onRetry?: () => void;
 };
 
-export function ErrorState({ message = "Algo salió mal", onRetry }: ErrorStateProps) {
+export function ErrorState({ message = "Algo salio mal", onRetry }: ErrorStateProps) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-center">
+    <Card padding="md" className="flex flex-col items-center justify-center py-10 text-center">
       <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-danger/10 mb-4">
         <AlertCircle className="h-7 w-7 text-danger" />
       </div>
@@ -20,6 +21,6 @@ export function ErrorState({ message = "Algo salió mal", onRetry }: ErrorStateP
           Reintentar
         </Button>
       )}
-    </div>
+    </Card>
   );
 }

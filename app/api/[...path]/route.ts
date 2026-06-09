@@ -1,15 +1,18 @@
 import { apiError } from "@/lib/api/errors";
 
 type RouteContext = { params: Promise<{ path: string[] }> };
-type RouteModule = Record<string, ((request: Request, context?: unknown) => Promise<Response>) | undefined>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RouteHandler = (request: Request, context?: any) => Promise<Response>;
+type RouteModule = Record<string, RouteHandler | undefined>;
 
 async function invokeRoute(
   loadModule: () => Promise<RouteModule>,
   request: Request,
   context?: unknown,
 ) {
-  const module = await loadModule();
-  const handler = module[request.method];
+  const routeModule = await loadModule();
+  const handler = routeModule[request.method];
   if (!handler) return apiError("NOT_FOUND", "Ruta no encontrada", 404);
   return handler(request, context);
 }
