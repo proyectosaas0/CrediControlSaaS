@@ -9,7 +9,7 @@ export type CajaResumen = {
   breakdown: Record<string, number>;
 };
 
-export function useCajaResumen(fecha?: string) {
+export function useCajaResumen(fecha?: string, options?: { enabled?: boolean }) {
   const today = new Date().toISOString().slice(0, 10);
   return useQuery({
     queryKey: ["caja", "resumen", fecha ?? today],
@@ -17,5 +17,6 @@ export function useCajaResumen(fecha?: string) {
       fetchApi<CajaResumen>("/api/caja/resumen", {
         fecha: fecha ?? today,
       }),
+    enabled: options?.enabled ?? true,
   });
 }

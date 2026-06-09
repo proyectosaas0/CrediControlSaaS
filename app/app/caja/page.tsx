@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useAuth } from "@/providers/auth-provider";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -21,7 +22,19 @@ const MEDIO_LABELS: Record<string, { label: string; Icon: React.ElementType }> =
 
 export default function CajaPage() {
   const today = new Date().toISOString().slice(0, 10);
-  const { data: resumen, isLoading, refetch } = useCajaResumen(today);
+  const { orgId } = useAuth();
+  const { data: resumen, isLoading, refetch } = useCajaResumen(today, { enabled: !!orgId });
+
+  if (!orgId) {
+    return (
+      <div className="space-y-5">
+        <h1 className="text-2xl font-bold text-foreground">Caja Diaria</h1>
+        <p className="text-sm text-muted-foreground">
+          Esta vista requiere una organización seleccionada.
+        </p>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return <p className="py-8 text-center text-sm text-muted-foreground">Cargando caja...</p>;

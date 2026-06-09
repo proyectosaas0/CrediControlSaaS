@@ -121,7 +121,7 @@ export default function PrestamosPage() {
                   <span>Capital: {formatCop(prestamo.capital)}</span>
                   <span>Cuota: {formatCop(prestamo.cuota_diaria ?? 0)}/dia</span>
                   <span>Total: {formatCop(prestamo.total_pagar ?? 0)}</span>
-                  <span>Cuota {prestamo.prestamo_saldos[0]?.cuotas_pagadas ?? 0}/{prestamo.prestamo_saldos[0]?.cuotas_totales ?? 0}</span>
+                  <span>Cuota {prestamo.prestamo_saldos?.[0]?.cuotas_pagadas ?? 0}/{prestamo.prestamo_saldos?.[0]?.cuotas_totales ?? 0}</span>
                 </div>
               </Card>
             </Link>

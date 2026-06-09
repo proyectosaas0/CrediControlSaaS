@@ -25,7 +25,7 @@ export type Prestamo = {
   fecha_fin: string | null;
   created_at: string;
   clientes: { nombre: string } | null;
-  prestamo_saldos: PrestamoSaldo[];
+  prestamo_saldos: PrestamoSaldo[] | null;
 };
 
 export function usePrestamos(params?: {

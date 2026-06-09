@@ -164,9 +164,9 @@ export default function ClienteDetailPage() {
                     <LoanStatusBadge estado={prestamo.estado} />
                   </div>
                   <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Cuota {prestamo.prestamo_saldos[0]?.cuotas_pagadas ?? 0}/{prestamo.prestamo_saldos[0]?.cuotas_totales ?? 0}</span>
+                    <span>Cuota {prestamo.prestamo_saldos?.[0]?.cuotas_pagadas ?? 0}/{prestamo.prestamo_saldos?.[0]?.cuotas_totales ?? 0}</span>
                     <span>·</span>
-                    <span>{formatCop(prestamo.prestamo_saldos[0]?.saldo_pendiente ?? 0)} pendiente</span>
+                    <span>{formatCop(prestamo.prestamo_saldos?.[0]?.saldo_pendiente ?? 0)} pendiente</span>
                   </div>
                 </Card>
               </Link>

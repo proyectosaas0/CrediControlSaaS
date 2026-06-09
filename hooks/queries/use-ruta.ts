@@ -23,7 +23,7 @@ export type CuotaRuta = {
   };
 };
 
-export function useRutaHoy(fecha?: string) {
+export function useRutaHoy(fecha?: string, options?: { enabled?: boolean }) {
   const today = new Date().toISOString().slice(0, 10);
   return useQuery({
     queryKey: ["ruta", fecha ?? today],
@@ -31,5 +31,6 @@ export function useRutaHoy(fecha?: string) {
       fetchApi<CuotaRuta[]>("/api/ruta/hoy", {
         fecha: fecha ?? today,
       }),
+    enabled: options?.enabled ?? true,
   });
 }

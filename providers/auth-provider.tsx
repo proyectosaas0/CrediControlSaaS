@@ -60,7 +60,56 @@ function getServerSnapshot(): AuthState {
   return defaultState;
 }
 
+function parseJwtClaims(token: string): Record<string, unknown> {
+  try {
+    const base64url = token.split('.')[1];
+    const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(base64)) as Record<string, unknown>;
+  } catch {
+    return {};
+  }
+}
+
 let initialized = false;
+
+async function resolveRoleAndOrg(
+  jwtClaims: Record<string, unknown>,
+): Promise<{ role: AppRole | null; orgId: string | null }> {
+  const role = (jwtClaims.rol as AppRole | undefined) ?? null;
+  const orgId = (jwtClaims.organization_id as string | undefined) ?? null;
+  if (role) return { role, orgId };
+
+  const res = await fetch("/api/auth/me");
+  if (!res.ok) return { role: null, orgId: null };
+  const json = await res.json() as { data?: { actor?: { role?: string; organizationId?: string } } };
+  return {
+    role: (json.data?.actor?.role as AppRole | undefined) ?? null,
+    orgId: json.data?.actor?.organizationId ?? null,
+  };
+}
+
+async function applySession(
+  session: { user: { id: string; email?: string }; access_token: string } | null,
+) {
+  try {
+    if (session?.user) {
+      const claims = parseJwtClaims(session.access_token);
+      const { role, orgId } = await resolveRoleAndOrg(claims);
+      authState = {
+        user: { id: session.user.id, email: session.user.email },
+        role,
+        orgId,
+        loading: false,
+      };
+    } else {
+      authState = { user: null, role: null, orgId: null, loading: false };
+    }
+  } catch {
+    authState = { ...authState, loading: false };
+  } finally {
+    emitChange();
+  }
+}
 
 function initAuth() {
   if (initialized) return;
@@ -69,31 +118,11 @@ function initAuth() {
   const supabase = createClient();
 
   supabase.auth.getSession().then(({ data: { session } }) => {
-    if (session?.user) {
-      authState = {
-        user: { id: session.user.id, email: session.user.email },
-        role: (session.user.app_metadata?.rol as AppRole | undefined) ?? null,
-        orgId: (session.user.app_metadata?.organization_id as string | undefined) ?? null,
-        loading: false,
-      };
-    } else {
-      authState = { user: null, role: null, orgId: null, loading: false };
-    }
-    emitChange();
+    void applySession(session);
   });
 
   supabase.auth.onAuthStateChange((_event, session) => {
-    if (session?.user) {
-      authState = {
-        user: { id: session.user.id, email: session.user.email },
-        role: (session.user.app_metadata?.rol as AppRole | undefined) ?? null,
-        orgId: (session.user.app_metadata?.organization_id as string | undefined) ?? null,
-        loading: false,
-      };
-    } else {
-      authState = { user: null, role: null, orgId: null, loading: false };
-    }
-    emitChange();
+    void applySession(session);
   });
 }
 

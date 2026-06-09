@@ -31,9 +31,9 @@ export default function PrestamoDetailPage() {
     return <ErrorState message={error?.message ?? "Prestamo no encontrado"} onRetry={() => router.back()} />;
   }
 
-  const cuotasPagadas = prestamo.prestamo_saldos[0]?.cuotas_pagadas ?? 0;
-  const cuotasTotales = prestamo.prestamo_saldos[0]?.cuotas_totales ?? 0;
-  const saldoPendiente = prestamo.prestamo_saldos[0]?.saldo_pendiente ?? 0;
+  const cuotasPagadas = prestamo.prestamo_saldos?.[0]?.cuotas_pagadas ?? 0;
+  const cuotasTotales = prestamo.prestamo_saldos?.[0]?.cuotas_totales ?? 0;
+  const saldoPendiente = prestamo.prestamo_saldos?.[0]?.saldo_pendiente ?? 0;
 
   const canRefinance =
     prestamo.estado === "activo" || prestamo.estado === "en_mora";

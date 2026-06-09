@@ -19,7 +19,7 @@ export default function DashboardLayout({
 
   const userName = user?.email?.slice(0, 2).toUpperCase() ?? "U";
 
-  const { data: rutaItems } = useRutaHoy();
+  const { data: rutaItems } = useRutaHoy(undefined, { enabled: role === "cobrador" });
   const pendingCount =
     rutaItems?.filter(
       (i) => i.estado === "pendiente" || i.estado === "mora" || i.estado === "parcial",
