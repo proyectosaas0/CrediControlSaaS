@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
   const { actor, response } = await requireApiActor();
+  console.log("[/api/auth/me] actor:", JSON.stringify(actor), "response status:", response?.status);
   if (response) return response;
 
   const supabase = await createClient();

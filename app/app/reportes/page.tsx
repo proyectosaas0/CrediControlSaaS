@@ -248,8 +248,8 @@ export default function ReportesPage() {
           </Card>
         ) : (
           <div className="space-y-2">
-            {rendimientoFiltrado.map((c) => (
-              <Card key={c.cobrador_id} padding="md">
+            {rendimientoFiltrado.map((c, i) => (
+              <Card key={`${c.cobrador_id}-${i}`} padding="md">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold text-foreground">
                     {c.cobrador_id}

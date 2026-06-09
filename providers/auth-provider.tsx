@@ -77,7 +77,7 @@ async function resolveRoleAndOrg(
 ): Promise<{ role: AppRole | null; orgId: string | null }> {
   const role = (jwtClaims.rol as AppRole | undefined) ?? null;
   const orgId = (jwtClaims.organization_id as string | undefined) ?? null;
-  if (role) return { role, orgId };
+  if (role && orgId) return { role, orgId };
 
   const res = await fetch("/api/auth/me");
   if (!res.ok) return { role: null, orgId: null };
