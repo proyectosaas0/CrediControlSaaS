@@ -28,15 +28,19 @@ export async function updateSession(request: NextRequest) {
 
   // IMPORTANT (Supabase SSR pattern): do NOT run code between createServerClient
   // and getClaims. getClaims() verifies/refreshes the token.
-  const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims ?? null;
+  const claimsResult = await supabase.auth.getClaims().catch(() => ({ data: null, error: null }));
+  const claims = claimsResult.data?.claims ?? null;
   const isAuthenticated = Boolean(claims?.sub);
   const role = ((claims?.rol as RouteRole | undefined) ?? null) as RouteRole;
   const orgId = (claims?.organization_id as string | undefined) ?? null;
 
   // Subscription status only matters for admin/cobrador on /app routes
+  const isAppPathname =
+    request.nextUrl.pathname === "/app" ||
+    request.nextUrl.pathname.startsWith("/app/");
+
   let subscriptionActive = true;
-  if (isAuthenticated && role !== "super_admin") {
+  if (isAuthenticated && role !== "super_admin" && isAppPathname) {
     if (orgId) {
       const { data: org } = await supabase
         .from("organizations")
@@ -63,7 +67,12 @@ export async function updateSession(request: NextRequest) {
     const [path, query = ""] = decision.to.split("?");
     url.pathname = path;
     url.search = query ? `?${query}` : "";
-    return NextResponse.redirect(url);
+    const redirectResponse = NextResponse.redirect(url);
+    // Carry over any refreshed session cookies from supabaseResponse
+    supabaseResponse.cookies.getAll().forEach((c) =>
+      redirectResponse.cookies.set(c.name, c.value),
+    );
+    return redirectResponse;
   }
 
   return supabaseResponse;
