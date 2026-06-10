@@ -22,19 +22,8 @@ const MEDIO_LABELS: Record<string, { label: string; Icon: React.ElementType }> =
 
 export default function CajaPage() {
   const today = new Date().toISOString().slice(0, 10);
-  const { orgId } = useAuth();
-  const { data: resumen, isLoading, refetch } = useCajaResumen(today, { enabled: !!orgId });
-
-  if (!orgId) {
-    return (
-      <div className="space-y-5">
-        <h1 className="text-2xl font-bold text-foreground">Caja Diaria</h1>
-        <p className="text-sm text-muted-foreground">
-          Esta vista requiere una organización seleccionada.
-        </p>
-      </div>
-    );
-  }
+  const { effectiveOrgId } = useAuth();
+  const { data: resumen, isLoading, refetch } = useCajaResumen(today, { enabled: !!effectiveOrgId });
 
   if (isLoading) {
     return (
