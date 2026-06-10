@@ -5,31 +5,29 @@ import Link from "next/link";
 import { useAuth } from "@/providers/auth-provider";
 import { OnboardingTutorial } from "@/components/auth/onboarding-tutorial";
 import { CobradorDashboard } from "@/components/domain/cobrador-dashboard";
-import { Card } from "@/components/ui/card";
-import { SkeletonList } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/ui/empty-state";
+import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { formatCop } from "@/lib/domain/money";
 import { useReportesResumen } from "@/hooks/queries/use-reportes";
-import { usePrestamos } from "@/hooks/queries/use-prestamos";
-import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
+import { usePrestamos, type Prestamo } from "@/hooks/queries/use-prestamos";
+import { useRutaHoy, type CuotaRuta } from "@/hooks/queries/use-ruta";
 import { buttonClasses } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import {
+  Wallet,
   TrendingUp,
   AlertTriangle,
-  Wallet,
-  ArrowRight,
-  FileText,
-  Users,
-  Building2,
+  MapPin,
   Plus,
-  BarChart3,
+  Banknote,
+  ArrowRight,
+  type LucideIcon,
+  FileText,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function DashboardPage() {
   const { user, role } = useAuth();
   const [showOnboarding, setShowOnboarding] = useState(true);
-
   const userName = user?.email?.split("@")[0] ?? "Usuario";
 
   if (role === "cobrador") {
@@ -46,12 +44,28 @@ export default function DashboardPage() {
   return <AdminDashboard userName={userName} />;
 }
 
+/* ─────────────────────────── Admin dashboard ─────────────────────────── */
+
 function AdminDashboard({ userName }: { userName: string }) {
   const { data: resumen, isLoading: loadingResumen } = useReportesResumen();
   const { data: prestamos, isLoading: loadingPrestamos } = usePrestamos();
+  const { data: rutaItems, isLoading: loadingRuta } = useRutaHoy();
 
-  const prestamosActivos = prestamos?.filter((p) => p.estado === "activo").length ?? 0;
-  const enMora = prestamos?.filter((p) => p.estado === "en_mora").length ?? 0;
+  const cartaActiva = prestamos
+    ?.filter((p) => p.estado === "activo")
+    .reduce((acc, p) => acc + p.capital, 0) ?? 0;
+
+  const pendingCobros = rutaItems?.filter(
+    (i) => i.estado === "pendiente" || i.estado === "parcial" || i.estado === "mora",
+  ) ?? [];
+  const completedCobros = rutaItems?.filter((i) => i.estado === "pagado").length ?? 0;
+  const totalCobros = rutaItems?.length ?? 0;
+
+  // meta = suma de cuotas esperadas hoy
+  const metaDia = rutaItems?.reduce((acc, i) => acc + i.monto_esperado, 0) ?? 0;
+  const progressRecaudo =
+    metaDia > 0 ? Math.min(((resumen?.recaudoTotal ?? 0) / metaDia) * 100, 100) : 0;
+
   const recentPrestamos = prestamos?.slice(0, 5) ?? [];
 
   const today = new Date().toLocaleDateString("es-CO", {
@@ -60,226 +74,369 @@ function AdminDashboard({ userName }: { userName: string }) {
     month: "long",
   });
 
-  return (
-    <div className="space-y-5">
+  const loading = loadingResumen || loadingPrestamos || loadingRuta;
 
-      {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+  return (
+    <div className="space-y-7">
+
+      {/* ── Header ── */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-1.5 capitalize">
+          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground capitalize">
             {today}
           </p>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-semibold tracking-tight text-foreground">
             Hola,{" "}
             <span className="bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">
               {userName}
-            </span>
+            </span>{" "}
+            👋
           </h1>
+          <p className="mt-1 text-sm text-muted-foreground">Resumen de tu cartera</p>
         </div>
-        <Link
-          href="/app/prestamos/nuevo"
-          className={cn(buttonClasses("primary", "sm"), "shrink-0 gap-1.5 shadow-lg shadow-primary/25")}
-        >
-          <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-          Nuevo préstamo
-        </Link>
-      </div>
-
-      {/* Hero metric */}
-      {loadingResumen ? (
-        <div className="h-36 rounded-2xl bg-muted animate-pulse" />
-      ) : (
-        <div className="relative overflow-hidden rounded-2xl border border-primary/25 p-6">
-          {/* Background layers */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.13] via-primary/[0.04] to-violet-500/[0.06]" />
-          <div className="absolute -top-16 -right-16 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
-          <div className="absolute -bottom-12 -left-8 h-40 w-40 rounded-full bg-success/8 blur-2xl" />
-
-          <div className="relative">
-            {/* Live indicator + label */}
-            <div className="flex items-center gap-2 mb-4">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-70" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
-              </span>
-              <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                <Wallet className="h-3 w-3" />
-                Recaudo de hoy
-              </span>
-            </div>
-
-            {/* Big number */}
-            <p className="text-5xl font-bold tabular-nums tracking-tight text-foreground sm:text-6xl">
-              {formatCop(resumen?.recaudoTotal ?? 0)}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* Stat grid */}
-      {loadingPrestamos ? (
-        <div className="grid grid-cols-2 gap-3">
-          <div className="h-20 rounded-xl bg-muted animate-pulse" />
-          <div className="h-20 rounded-xl bg-muted animate-pulse" />
-        </div>
-      ) : (
-        <div className="grid grid-cols-2 gap-3">
-          {/* Activos */}
-          <Card padding="none" className="relative overflow-hidden">
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-            <div className="p-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
-                <TrendingUp className="h-4.5 w-4.5 text-primary" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-none mb-2">
-                  Activos
-                </p>
-                <p className="text-3xl font-bold tabular-nums text-foreground leading-none">
-                  {prestamosActivos}
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          {/* En mora */}
-          <Card
-            padding="none"
+        <div className="flex gap-2.5">
+          <Link
+            href="/app/pagos"
             className={cn(
-              "relative overflow-hidden",
-              enMora > 0 ? "border-danger/30" : "",
+              buttonClasses("outline", "sm"),
+              "gap-2",
             )}
           >
-            <div
-              className={cn(
-                "absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent to-transparent",
-                enMora > 0 ? "via-danger/50" : "via-border",
-              )}
-            />
-            <div className="p-4 flex items-center gap-3">
-              <div
-                className={cn(
-                  "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
-                  enMora > 0 ? "bg-danger/10" : "bg-muted",
-                )}
-              >
-                <AlertTriangle
-                  className={cn(
-                    "h-4.5 w-4.5",
-                    enMora > 0 ? "text-danger" : "text-muted-foreground",
-                  )}
-                />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-none mb-2">
-                  En mora
-                </p>
-                <p
-                  className={cn(
-                    "text-3xl font-bold tabular-nums leading-none",
-                    enMora > 0 ? "text-danger" : "text-foreground",
-                  )}
-                >
-                  {enMora}
-                </p>
-              </div>
-            </div>
-          </Card>
+            <Banknote className="h-3.5 w-3.5" />
+            Registrar pago
+          </Link>
+          <Link
+            href="/app/prestamos/nuevo"
+            className={cn(
+              buttonClasses("primary", "sm"),
+              "gap-2 shadow-lg shadow-primary/20",
+            )}
+          >
+            <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+            Nuevo préstamo
+          </Link>
+        </div>
+      </div>
+
+      {/* ── KPI grid ── */}
+      {loading ? (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-28 animate-pulse rounded-xl bg-muted" />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <KpiCard
+            icon={Wallet}
+            label="Recaudo hoy"
+            value={formatCop(resumen?.recaudoTotal ?? 0)}
+            foot={metaDia > 0 ? `Meta: ${formatCop(metaDia)}` : undefined}
+            progress={metaDia > 0 ? progressRecaudo : undefined}
+            progressColor="bg-success"
+            iconClass="bg-success/12 text-success"
+          />
+          <KpiCard
+            icon={TrendingUp}
+            label="Cartera activa"
+            value={cartaActiva > 0 ? formatCop(cartaActiva) : `${resumen?.prestamosActivos ?? 0}`}
+            foot={`${resumen?.prestamosActivos ?? 0} préstamos vigentes`}
+            iconClass="bg-primary/12 text-primary"
+          />
+          <KpiCard
+            icon={AlertTriangle}
+            label="En mora"
+            value={resumen?.prestamosEnMora ?? 0}
+            foot={
+              (resumen?.prestamosEnMora ?? 0) === 0
+                ? "✓ Cartera sana"
+                : `${resumen?.prestamosEnMora} en riesgo`
+            }
+            footOk={(resumen?.prestamosEnMora ?? 0) === 0}
+            iconClass={
+              (resumen?.prestamosEnMora ?? 0) > 0
+                ? "bg-danger/12 text-danger"
+                : "bg-muted text-muted-foreground"
+            }
+          />
+          <KpiCard
+            icon={MapPin}
+            label="Ruta de hoy"
+            value={
+              totalCobros > 0
+                ? `${completedCobros} / ${totalCobros}`
+                : "—"
+            }
+            foot={
+              pendingCobros[0]
+                ? `Próximo: ${pendingCobros[0].prestamos.clientes.nombre.split(" ")[0]}`
+                : totalCobros > 0
+                ? "Ruta completada"
+                : "Sin ruta asignada"
+            }
+            footOk={totalCobros > 0 && pendingCobros.length === 0}
+            iconClass="bg-warning/12 text-warning"
+            progress={totalCobros > 0 ? (completedCobros / totalCobros) * 100 : undefined}
+            progressColor="bg-warning"
+          />
         </div>
       )}
 
-      {/* Quick actions */}
-      <div className="grid grid-cols-3 gap-2.5">
-        <Link
-          href="/app/clientes"
-          className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-3 py-4 text-center transition-all duration-200 hover:border-primary/30 hover:bg-primary/[0.04]"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted transition-colors group-hover:bg-primary/10">
-            <Users className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
+      {/* ── Cobros pendientes hoy ── */}
+      {!loadingRuta && pendingCobros.length > 0 && (
+        <section>
+          <SectionHead title="Cobros pendientes hoy" href="/app/ruta" linkLabel="Ver ruta completa" />
+          <div className="flex flex-col gap-2.5">
+            {pendingCobros.slice(0, 5).map((cuota, i) => (
+              <CobroPendienteRow key={cuota.id} cuota={cuota} index={i} />
+            ))}
           </div>
-          <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
-            Clientes
-          </span>
-        </Link>
+        </section>
+      )}
 
-        <Link
-          href="/app/caja"
-          className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-3 py-4 text-center transition-all duration-200 hover:border-primary/30 hover:bg-primary/[0.04]"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted transition-colors group-hover:bg-primary/10">
-            <Building2 className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
-          </div>
-          <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
-            Caja
-          </span>
-        </Link>
-
-        <Link
-          href="/app/reportes"
-          className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card px-3 py-4 text-center transition-all duration-200 hover:border-primary/30 hover:bg-primary/[0.04]"
-        >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted transition-colors group-hover:bg-primary/10">
-            <BarChart3 className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-primary" />
-          </div>
-          <span className="text-xs font-semibold text-muted-foreground group-hover:text-foreground transition-colors">
-            Reportes
-          </span>
-        </Link>
-      </div>
-
-      {/* Recent loans */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            Últimos préstamos
-          </h2>
-          <Link
-            href="/app/prestamos"
-            className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline underline-offset-4"
-          >
-            Ver todos
-            <ArrowRight className="h-3 w-3" />
-          </Link>
-        </div>
+      {/* ── Últimos préstamos ── */}
+      <section>
+        <SectionHead title="Últimos préstamos" href="/app/prestamos" linkLabel="Ver todos" />
 
         {loadingPrestamos ? (
-          <SkeletonList count={3} />
+          <div className="rounded-xl border border-border overflow-hidden">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-4 border-b border-border p-4 last:border-b-0">
+                <div className="flex-1 space-y-2">
+                  <div className="h-3.5 w-40 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-56 animate-pulse rounded bg-muted" />
+                </div>
+                <div className="hidden h-2 w-24 animate-pulse rounded-full bg-muted sm:block" />
+                <div className="h-6 w-16 animate-pulse rounded-full bg-muted" />
+              </div>
+            ))}
+          </div>
         ) : recentPrestamos.length === 0 ? (
-          <EmptyState
-            icon={FileText}
-            title="Sin préstamos aún"
-            description="Crea el primer préstamo para verlo aquí."
-          />
+          <div className="flex flex-col items-center gap-3 rounded-xl border border-border border-dashed py-12 text-center">
+            <FileText className="h-8 w-8 text-muted-foreground/40" />
+            <div>
+              <p className="text-sm font-medium text-foreground">Sin préstamos aún</p>
+              <p className="text-xs text-muted-foreground mt-1">Crea el primer préstamo para verlo aquí.</p>
+            </div>
+          </div>
         ) : (
-          <div className="space-y-2">
+          <div className="rounded-xl border border-border overflow-hidden bg-card">
             {recentPrestamos.map((p) => (
-              <Link key={p.id} href={`/app/prestamos/${p.id}`}>
-                <Card
-                  padding="sm"
-                  className="group cursor-pointer transition-all duration-200 hover:border-primary/30 hover:shadow-primary/5"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground transition-colors duration-150 group-hover:text-primary">
-                        {p.clientes?.nombre ?? "—"}
-                      </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
-                        {formatCop(p.capital)}{" "}
-                        <span className="opacity-40">·</span>{" "}
-                        {p.modelo_interes.replace("_", " ")}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-2">
-                      <LoanStatusBadge estado={p.estado} />
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 transition-all duration-150 group-hover:translate-x-0.5 group-hover:text-primary" />
-                    </div>
-                  </div>
-                </Card>
-              </Link>
+              <LoanRow key={p.id} prestamo={p} />
             ))}
           </div>
         )}
+      </section>
+    </div>
+  );
+}
+
+/* ─────────────────────────── Sub-components ─────────────────────────── */
+
+function SectionHead({
+  title,
+  href,
+  linkLabel,
+}: {
+  title: string;
+  href: string;
+  linkLabel: string;
+}) {
+  return (
+    <div className="mb-3.5 flex items-center justify-between">
+      <h2 className="text-base font-semibold tracking-tight text-foreground">{title}</h2>
+      <Link
+        href={href}
+        className="flex items-center gap-1 text-sm font-medium text-primary hover:underline underline-offset-4"
+      >
+        {linkLabel}
+        <ArrowRight className="h-3.5 w-3.5" />
+      </Link>
+    </div>
+  );
+}
+
+const AVATAR_COLORS = [
+  "bg-primary/12 text-primary",
+  "bg-success/12 text-success",
+  "bg-warning/12 text-warning",
+  "bg-danger/12 text-danger",
+];
+
+function CobroPendienteRow({
+  cuota,
+  index,
+}: {
+  cuota: CuotaRuta;
+  index: number;
+}) {
+  const initials = cuota.prestamos.clientes.nombre.slice(0, 2).toUpperCase();
+  const avatarColor = AVATAR_COLORS[index % AVATAR_COLORS.length];
+  const modelo = cuota.prestamos.capital;
+
+  return (
+    <Link href="/app/ruta">
+      <div className="group flex items-center gap-3.5 rounded-xl border border-border bg-card px-4 py-3.5 transition-colors hover:border-primary/25 hover:bg-primary/[0.02]">
+        {/* Avatar */}
+        <div
+          className={cn(
+            "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+            avatarColor,
+          )}
+        >
+          {initials}
+        </div>
+
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+            {cuota.prestamos.clientes.nombre}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Cuota {cuota.numero_cuota} · vence hoy
+          </p>
+        </div>
+
+        {/* Amount */}
+        <div className="hidden text-right sm:block mr-1">
+          <p className="text-sm font-semibold tabular-nums text-foreground">
+            {formatCop(cuota.monto_esperado)}
+          </p>
+          <p className="text-xs text-muted-foreground">cuota</p>
+        </div>
+
+        {/* CTA */}
+        <span
+          className={cn(
+            buttonClasses("outline", "sm"),
+            "pointer-events-none shrink-0 text-xs",
+          )}
+        >
+          Cobrar
+        </span>
       </div>
+    </Link>
+  );
+}
+
+function LoanRow({ prestamo }: { prestamo: Prestamo }) {
+  const saldo = prestamo.prestamo_saldos?.[0];
+  const pct =
+    saldo && saldo.cuotas_totales > 0
+      ? Math.round((saldo.cuotas_pagadas / saldo.cuotas_totales) * 100)
+      : 0;
+
+  const fechaInicio = prestamo.fecha_inicio
+    ? new Date(prestamo.fecha_inicio).toLocaleDateString("es-CO", {
+        day: "numeric",
+        month: "short",
+      })
+    : null;
+
+  return (
+    <Link href={`/app/prestamos/${prestamo.id}`}>
+      <div className="group flex items-center gap-4 border-b border-border px-4 py-3.5 transition-colors last:border-b-0 hover:bg-muted/60">
+        {/* Info */}
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+            {prestamo.clientes?.nombre ?? "—"}
+          </p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {formatCop(prestamo.capital)}{" "}
+            <span className="opacity-50">·</span>{" "}
+            {prestamo.modelo_interes.replace("_", " ")}
+            {fechaInicio && (
+              <>
+                {" "}
+                <span className="opacity-50">·</span>{" "}
+                desembolsado {fechaInicio}
+              </>
+            )}
+          </p>
+        </div>
+
+        {/* Progress */}
+        {saldo && (
+          <div className="hidden w-28 shrink-0 sm:block">
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <p className="mt-1 text-right text-[11px] text-muted-foreground">
+              {pct}% pagado
+            </p>
+          </div>
+        )}
+
+        <LoanStatusBadge estado={prestamo.estado} />
+      </div>
+    </Link>
+  );
+}
+
+/* ─────────────────────────── KPI Card ─────────────────────────── */
+
+function KpiCard({
+  icon: Icon,
+  label,
+  value,
+  foot,
+  footOk = false,
+  iconClass,
+  progress,
+  progressColor = "bg-primary",
+}: {
+  icon: LucideIcon;
+  label: string;
+  value: string | number;
+  foot?: string;
+  footOk?: boolean;
+  iconClass: string;
+  progress?: number;
+  progressColor?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="mb-3 flex items-center gap-2.5">
+        <div
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-lg",
+            iconClass,
+          )}
+        >
+          <Icon className="h-3.5 w-3.5" />
+        </div>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </span>
+      </div>
+
+      <div className="text-2xl font-bold tabular-nums tracking-tight text-foreground">
+        {value}
+      </div>
+
+      {progress !== undefined && (
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+          <div
+            className={cn("h-full rounded-full transition-all duration-700", progressColor)}
+            style={{ width: `${Math.min(progress, 100)}%` }}
+          />
+        </div>
+      )}
+
+      {foot && (
+        <p
+          className={cn(
+            "mt-2 text-xs",
+            footOk ? "text-success" : "text-muted-foreground",
+          )}
+        >
+          {footOk && <CheckCircle2 className="mr-1 inline-block h-3 w-3" />}
+          {foot}
+        </p>
+      )}
     </div>
   );
 }
