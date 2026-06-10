@@ -3,57 +3,57 @@
 :root,
 .dark {
   /* ── Base ── */
-  --background: #09090b;
-  --foreground: #fafafa;
+  --background: #060811;
+  --foreground: #edeef5;
 
-  /* ── Primary — Indigo fintech ── */
-  --primary: #6366f1;
+  /* ── Primary — Indigo eléctrico ── */
+  --primary: #818cf8;
   --primary-foreground: #ffffff;
-  --primary-hover: #4f46e5;
+  --primary-hover: #6366f1;
 
   /* ── Semantic ── */
-  --success: #10b981;
-  --success-foreground: #ffffff;
-  --warning: #f59e0b;
-  --warning-foreground: #0c0a09;
-  --danger: #f43f5e;
+  --success: #34d399;
+  --success-foreground: #022c22;
+  --warning: #fbbf24;
+  --warning-foreground: #1c1409;
+  --danger: #fb7185;
   --danger-foreground: #ffffff;
   --info: #38bdf8;
-  --info-foreground: #0c0a09;
+  --info-foreground: #0c1829;
 
   /* ── Surfaces / Glass ── */
-  --card: rgba(255, 255, 255, 0.04);
-  --card-foreground: #fafafa;
+  --card: rgba(8, 12, 30, 0.82);
+  --card-foreground: #edeef5;
   --muted: rgba(255, 255, 255, 0.06);
-  --muted-foreground: #a1a1aa;
-  --border: rgba(255, 255, 255, 0.08);
-  --ring: #6366f1;
+  --muted-foreground: #9096b5;
+  --border: rgba(99, 102, 241, 0.18);
+  --ring: #818cf8;
 
   /* ── Cobrador ── */
-  --cobrador-action: #10b981;
-  --cobrador-action-hover: #059669;
-  --cobrador-pending: #f59e0b;
-  --cobrador-paid: #22c55e;
+  --cobrador-action: #34d399;
+  --cobrador-action-hover: #10b981;
+  --cobrador-pending: #fbbf24;
+  --cobrador-paid: #4ade80;
 
   /* ── Sidebar ── */
-  --sidebar-bg: #0b0b0f;
-  --sidebar-foreground: #a1a1aa;
-  --sidebar-border: rgba(255, 255, 255, 0.04);
-  --sidebar-active: #6366f1;
+  --sidebar-bg: #03040d;
+  --sidebar-foreground: #8087a8;
+  --sidebar-border: rgba(99, 102, 241, 0.09);
+  --sidebar-active: #818cf8;
   --sidebar-active-foreground: #ffffff;
 
   --radius: 0.625rem;
 }
 
 .light {
-  /* ── Base ── */
-  --background: #f8f9fc;
-  --foreground: #0f0f13;
+  /* ── Base — crema cálida ── */
+  --background: #f3f0e8;
+  --foreground: #0c0d1a;
 
-  /* ── Primary ── */
-  --primary: #4f46e5;
+  /* ── Primary — índigo profundo ── */
+  --primary: #4338ca;
   --primary-foreground: #ffffff;
-  --primary-hover: #4338ca;
+  --primary-hover: #3730a3;
 
   /* ── Semantic ── */
   --success: #059669;
@@ -66,12 +66,12 @@
   --info-foreground: #ffffff;
 
   /* ── Surfaces ── */
-  --card: rgba(255, 255, 255, 0.80);
-  --card-foreground: #0f0f13;
+  --card: #ffffff;
+  --card-foreground: #0c0d1a;
   --muted: rgba(0, 0, 0, 0.05);
-  --muted-foreground: #52525b;
+  --muted-foreground: #5a5d78;
   --border: rgba(0, 0, 0, 0.10);
-  --ring: #4f46e5;
+  --ring: #4338ca;
 
   /* ── Cobrador ── */
   --cobrador-action: #059669;
@@ -80,10 +80,10 @@
   --cobrador-paid: #16a34a;
 
   /* ── Sidebar ── */
-  --sidebar-bg: #ffffff;
-  --sidebar-foreground: #52525b;
-  --sidebar-border: rgba(0, 0, 0, 0.06);
-  --sidebar-active: #4f46e5;
+  --sidebar-bg: #faf9f4;
+  --sidebar-foreground: #5a5d78;
+  --sidebar-border: rgba(0, 0, 0, 0.07);
+  --sidebar-active: #4338ca;
   --sidebar-active-foreground: #ffffff;
 }
 
@@ -132,20 +132,21 @@
 
 body {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(16, 185, 129, 0.04), transparent),
+    radial-gradient(ellipse 160% 80% at 50% -15%, rgba(99, 102, 241, 0.22), transparent),
+    radial-gradient(ellipse 80% 60% at 100% 100%, rgba(139, 92, 246, 0.11), transparent),
+    radial-gradient(ellipse 60% 50% at 0% 70%, rgba(16, 185, 129, 0.07), transparent),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-tap-highlight-color: transparent;
   min-height: 100vh;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 .light body {
   background:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(79, 70, 229, 0.05), transparent),
-    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(5, 150, 105, 0.03), transparent),
+    radial-gradient(ellipse 120% 60% at 50% -10%, rgba(67, 56, 202, 0.08), transparent),
+    radial-gradient(ellipse 80% 50% at 90% 80%, rgba(5, 150, 105, 0.05), transparent),
     var(--background);
 }
 
