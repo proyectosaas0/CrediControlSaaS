@@ -92,7 +92,12 @@ describe("requireApiActor — super_admin cookie org injection", () => {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       maybeSingle: vi.fn().mockResolvedValue({
-        data: { organization_id: null, rol: "admin", activo: true },
+        data: {
+          organization_id: null,
+          rol: "admin",
+          activo: true,
+          organizations: { estado_suscripcion: "activo", trial_hasta: null },
+        },
         error: null,
       }),
     });

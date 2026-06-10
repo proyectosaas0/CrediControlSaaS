@@ -8,6 +8,7 @@ export type ApiErrorCode =
   | "CONFLICT"
   | "VALIDATION_ERROR"
   | "RATE_LIMITED"
+  | "SUBSCRIPTION_EXPIRED"
   | "INTERNAL_ERROR";
 
 export function apiOk<TData, TMeta extends Record<string, unknown> = Record<string, never>>(
