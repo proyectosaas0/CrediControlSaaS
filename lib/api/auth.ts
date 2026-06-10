@@ -1,6 +1,7 @@
 import { apiError } from "@/lib/api/errors";
 import type { AppRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { cookies } from "next/headers";
 
 export type ApiActor = {
   userId: string;
@@ -41,6 +42,14 @@ export async function requireApiActor(roles?: AppRole[]) {
 
   if (!actor.role || (roles && !roles.includes(actor.role))) {
     return { actor: null, response: apiError("FORBIDDEN", "Rol no autorizado", 403) };
+  }
+
+  // Super admin can impersonate an org via the active-org-id cookie
+  if (actor.role === "super_admin" && !actor.organizationId) {
+    const cookieStore = await cookies();
+    const activeOrgId = cookieStore.get("active-org-id")?.value ?? null;
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (activeOrgId && UUID_RE.test(activeOrgId)) actor.organizationId = activeOrgId;
   }
 
   return { actor, response: null };
