@@ -5,6 +5,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { SidebarTrigger } from "./sidebar";
 import { useAuth } from "@/providers/auth-provider";
 import { LogOut, ChevronDown } from "lucide-react";
+import { OrgSwitcher } from "./org-switcher";
 
 type HeaderProps = {
   onMenuClick: () => void;
@@ -13,7 +14,7 @@ type HeaderProps = {
 
 export function Header({ onMenuClick, userName = "Usuario" }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, role } = useAuth();
 
   const handleLogout = async () => {
     await signOut();
@@ -24,6 +25,7 @@ export function Header({ onMenuClick, userName = "Usuario" }: HeaderProps) {
     <header className="flex h-14 shrink-0 items-center gap-3 border-b border-white/[0.06] bg-background/70 backdrop-blur-xl px-4">
       <SidebarTrigger onClick={onMenuClick} />
       <div className="flex-1" />
+      {role === "super_admin" && <OrgSwitcher />}
       <div className="relative flex items-center gap-2">
         <button
           onClick={() => setMenuOpen(!menuOpen)}
