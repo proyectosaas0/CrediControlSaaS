@@ -21,9 +21,13 @@ export function evaluateRouteAccess(params: {
   );
   const isAuthPage = AUTH_PAGES.includes(pathname);
 
-  // Usuario autenticado en páginas de auth → a su home
+  // Usuario autenticado en páginas de auth → a su home solo si tiene rol conocido.
+  // Si role es null (JWT aún sin custom claim) se permite la página de auth
+  // para evitar el loop /login ↔ /app.
   if (isAuthenticated && isAuthPage) {
-    return { action: "redirect", to: role === "super_admin" ? "/dashboard" : "/app" };
+    if (role === "super_admin") return { action: "redirect", to: "/dashboard" };
+    if (role === "admin" || role === "cobrador") return { action: "redirect", to: "/app" };
+    return { action: "allow" };
   }
 
   if (isAppRoute) {
@@ -34,7 +38,7 @@ export function evaluateRouteAccess(params: {
       return { action: "redirect", to: "/dashboard" };
     }
     if (role !== "admin" && role !== "cobrador") {
-      return { action: "redirect", to: "/login" };
+      return { action: "redirect", to: "/login?error=no-access" };
     }
     if (!subscriptionActive) {
       return { action: "redirect", to: "/suscripcion-vencida" };

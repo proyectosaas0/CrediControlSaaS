@@ -18,7 +18,10 @@ export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/app";
-  const [serverError, setServerError] = useState<string | null>(null);
+  const errorParam = searchParams.get("error");
+  const [serverError, setServerError] = useState<string | null>(
+    errorParam === "no-access" ? "Tu cuenta no tiene permisos para acceder. Contacta al administrador." : null
+  );
 
   const {
     register,
@@ -48,8 +51,9 @@ export function LoginForm() {
       return;
     }
 
-    router.push(redirectTo);
-    router.refresh();
+    // Full-page navigation guarantees the session cookie is included in the request.
+    // Using router.push() alone can race against Supabase's async cookie-set step.
+    window.location.href = redirectTo;
   }
 
   return (

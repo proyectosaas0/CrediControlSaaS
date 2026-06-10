@@ -1,10 +1,27 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 :root,
 .dark {
   /* ── Base ── */
   --background: #060811;
   --foreground: #edeef5;
+
+  /* ── shadcn semantic aliases ── */
+  --secondary: rgba(99, 102, 241, 0.12);
+  --secondary-foreground: #818cf8;
+  --accent: rgba(99, 102, 241, 0.08);
+  --accent-foreground: #edeef5;
+  --destructive: #fb7185;
+  --input: rgba(99, 102, 241, 0.2);
+  --popover: #080c1e;
+  --popover-foreground: #edeef5;
+  --chart-1: #818cf8;
+  --chart-2: #34d399;
+  --chart-3: #fbbf24;
+  --chart-4: #38bdf8;
+  --chart-5: #fb7185;
 
   /* ── Primary — Indigo eléctrico ── */
   --primary: #818cf8;
@@ -49,6 +66,21 @@
   /* ── Base — crema cálida ── */
   --background: #f3f0e8;
   --foreground: #0c0d1a;
+
+  /* ── shadcn semantic aliases ── */
+  --secondary: rgba(67, 56, 202, 0.08);
+  --secondary-foreground: #4338ca;
+  --accent: rgba(67, 56, 202, 0.06);
+  --accent-foreground: #0c0d1a;
+  --destructive: #e11d48;
+  --input: rgba(0, 0, 0, 0.12);
+  --popover: #ffffff;
+  --popover-foreground: #0c0d1a;
+  --chart-1: #4338ca;
+  --chart-2: #059669;
+  --chart-3: #d97706;
+  --chart-4: #0284c7;
+  --chart-5: #e11d48;
 
   /* ── Primary — índigo profundo ── */
   --primary: #4338ca;
@@ -122,8 +154,30 @@
   --radius-xl: calc(var(--radius) + 0.375rem);
   --radius-2xl: calc(var(--radius) + 0.75rem);
   --radius-full: 9999px;
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-input: var(--input);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 * {
@@ -136,7 +190,6 @@ body {
     radial-gradient(ellipse 80% 60% at 100% 100%, rgba(139, 92, 246, 0.11), transparent),
     radial-gradient(ellipse 60% 50% at 0% 70%, rgba(16, 185, 129, 0.07), transparent),
     var(--background);
-  color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-tap-highlight-color: transparent;
   min-height: 100vh;
@@ -153,5 +206,11 @@ body {
 @media (max-width: 767px) {
   body {
     -webkit-overflow-scrolling: touch;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
   }
 }

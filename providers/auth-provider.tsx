@@ -159,7 +159,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     emitChange();
     forceUpdate((n) => n + 1);
     router.push("/login");
-    router.refresh();
   }, [router]);
 
   if (state.loading) {
