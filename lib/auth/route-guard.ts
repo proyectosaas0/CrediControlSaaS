@@ -30,8 +30,11 @@ export function evaluateRouteAccess(params: {
     if (!isAuthenticated) {
       return { action: "redirect", to: `/login?redirect=${encodeURIComponent(pathname)}` };
     }
-    if (role !== "admin" && role !== "cobrador") {
+    if (role === "super_admin") {
       return { action: "redirect", to: "/dashboard" };
+    }
+    if (role !== "admin" && role !== "cobrador") {
+      return { action: "redirect", to: "/login" };
     }
     if (!subscriptionActive) {
       return { action: "redirect", to: "/suscripcion-vencida" };

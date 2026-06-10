@@ -70,7 +70,7 @@ export async function updateSession(request: NextRequest) {
     const redirectResponse = NextResponse.redirect(url);
     // Carry over any refreshed session cookies from supabaseResponse
     supabaseResponse.cookies.getAll().forEach((c) =>
-      redirectResponse.cookies.set(c.name, c.value),
+      redirectResponse.cookies.set(c.name, c.value, c),
     );
     return redirectResponse;
   }
