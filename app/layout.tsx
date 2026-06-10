@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { QueryProvider } from "@/providers/query-provider";
 import { OnlineProvider } from "@/providers/online-provider";
 import { AuthProvider } from "@/providers/auth-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
 import { logger } from "@/lib/logger";
 import { initSentry } from "@/lib/monitoring/sentry";
 import "./globals.css";
@@ -43,16 +44,19 @@ export default function RootLayout({
     <html
       lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <QueryProvider>
-          <AuthProvider>
-            <OnlineProvider>
-              {children}
-              <Toaster />
-            </OnlineProvider>
-          </AuthProvider>
-        </QueryProvider>
+        <ThemeProvider>
+          <QueryProvider>
+            <AuthProvider>
+              <OnlineProvider>
+                {children}
+                <Toaster />
+              </OnlineProvider>
+            </AuthProvider>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

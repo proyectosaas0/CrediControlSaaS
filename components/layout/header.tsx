@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Avatar } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { SidebarTrigger } from "./sidebar";
 import { useAuth } from "@/providers/auth-provider";
 import { LogOut, ChevronDown } from "lucide-react";
@@ -26,6 +27,7 @@ export function Header({ onMenuClick, userName = "Usuario" }: HeaderProps) {
       <SidebarTrigger onClick={onMenuClick} />
       <div className="flex-1" />
       {role === "super_admin" && <OrgSwitcher />}
+      <ThemeToggle />
       <div className="relative flex items-center gap-2">
         <button
           onClick={() => setMenuOpen(!menuOpen)}

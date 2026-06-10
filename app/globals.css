@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-:root {
+:root,
+.dark {
   /* ── Base ── */
   --background: #09090b;
   --foreground: #fafafa;
@@ -42,6 +43,48 @@
   --sidebar-active-foreground: #ffffff;
 
   --radius: 0.625rem;
+}
+
+.light {
+  /* ── Base ── */
+  --background: #f8f9fc;
+  --foreground: #0f0f13;
+
+  /* ── Primary ── */
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --primary-hover: #4338ca;
+
+  /* ── Semantic ── */
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --danger: #e11d48;
+  --danger-foreground: #ffffff;
+  --info: #0284c7;
+  --info-foreground: #ffffff;
+
+  /* ── Surfaces ── */
+  --card: rgba(255, 255, 255, 0.80);
+  --card-foreground: #0f0f13;
+  --muted: rgba(0, 0, 0, 0.05);
+  --muted-foreground: #52525b;
+  --border: rgba(0, 0, 0, 0.10);
+  --ring: #4f46e5;
+
+  /* ── Cobrador ── */
+  --cobrador-action: #059669;
+  --cobrador-action-hover: #047857;
+  --cobrador-pending: #d97706;
+  --cobrador-paid: #16a34a;
+
+  /* ── Sidebar ── */
+  --sidebar-bg: #ffffff;
+  --sidebar-foreground: #52525b;
+  --sidebar-border: rgba(0, 0, 0, 0.06);
+  --sidebar-active: #4f46e5;
+  --sidebar-active-foreground: #ffffff;
 }
 
 @theme inline {
@@ -88,8 +131,6 @@
 }
 
 body {
-  --dot-size: 1px;
-  --dot-color: rgba(99, 102, 241, 0.06);
   background:
     radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.08), transparent),
     radial-gradient(ellipse 60% 40% at 80% 80%, rgba(16, 185, 129, 0.04), transparent),
@@ -98,6 +139,14 @@ body {
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
   -webkit-tap-highlight-color: transparent;
   min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.light body {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(79, 70, 229, 0.05), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(5, 150, 105, 0.03), transparent),
+    var(--background);
 }
 
 @media (max-width: 767px) {
