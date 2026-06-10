@@ -16,6 +16,9 @@ type AuthState = {
 
 type AuthContextValue = AuthState & {
   signOut: () => Promise<void>;
+  activeOrgId: string | null;
+  effectiveOrgId: string | null;
+  setActiveOrgId: (id: string) => void;
 };
 
 const AuthContext = createContext<AuthContextValue>({
@@ -24,6 +27,9 @@ const AuthContext = createContext<AuthContextValue>({
   orgId: null,
   loading: true,
   signOut: async () => {},
+  activeOrgId: null,
+  effectiveOrgId: null,
+  setActiveOrgId: () => {},
 });
 
 let authState: AuthState = {
@@ -135,6 +141,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [, forceUpdate] = useState(0);
 
+  const [activeOrgId, setActiveOrgIdState] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("active-org-id") ?? null;
+  });
+
+  const setActiveOrgId = useCallback((id: string) => {
+    setActiveOrgIdState(id);
+    localStorage.setItem("active-org-id", id);
+    document.cookie = `active-org-id=${id}; path=/; max-age=604800; SameSite=Strict`;
+  }, []);
+
   const signOut = useCallback(async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
@@ -153,8 +170,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }
 
+  const effectiveOrgId = state.orgId ?? activeOrgId;
+
   return (
-    <AuthContext.Provider value={{ ...state, signOut }}>
+    <AuthContext.Provider value={{ ...state, signOut, activeOrgId, effectiveOrgId, setActiveOrgId }}>
       {children}
     </AuthContext.Provider>
   );
