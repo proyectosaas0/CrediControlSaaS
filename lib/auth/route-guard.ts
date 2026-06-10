@@ -1,4 +1,6 @@
-export type RouteRole = "super_admin" | "admin" | "cobrador" | null;
+import type { AppRole } from "@/lib/auth";
+
+export type RouteRole = AppRole | null;
 export type RouteDecision = { action: "allow" } | { action: "redirect"; to: string };
 
 // Rutas del grupo (super-admin): los route groups NO añaden segmento a la URL.
@@ -29,7 +31,7 @@ export function evaluateRouteAccess(params: {
       return { action: "redirect", to: `/login?redirect=${encodeURIComponent(pathname)}` };
     }
     if (role !== "admin" && role !== "cobrador") {
-      return { action: "redirect", to: "/login" };
+      return { action: "redirect", to: "/dashboard" };
     }
     if (!subscriptionActive) {
       return { action: "redirect", to: "/suscripcion-vencida" };

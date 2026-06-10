@@ -43,4 +43,21 @@ describe("evaluateRouteAccess", () => {
     const d = evaluateRouteAccess({ pathname: "/", isAuthenticated: false, role: null, subscriptionActive: false });
     expect(d).toEqual({ action: "allow" });
   });
+
+  it("redirige a /dashboard si super_admin intenta entrar a /app", () => {
+    const d = evaluateRouteAccess({ pathname: "/app/prestamos", isAuthenticated: true, role: "super_admin", subscriptionActive: true });
+    expect(d).toEqual({ action: "redirect", to: "/dashboard" });
+  });
+
+  it("redirige a /login si usuario no autenticado intenta ruta de super-admin", () => {
+    const d = evaluateRouteAccess({ pathname: "/tenants", isAuthenticated: false, role: null, subscriptionActive: false });
+    expect(d).toEqual({ action: "redirect", to: "/login" });
+  });
+
+  it("redirige usuario autenticado fuera de /register según su rol", () => {
+    expect(evaluateRouteAccess({ pathname: "/register", isAuthenticated: true, role: "admin", subscriptionActive: true }))
+      .toEqual({ action: "redirect", to: "/app" });
+    expect(evaluateRouteAccess({ pathname: "/register", isAuthenticated: true, role: "super_admin", subscriptionActive: true }))
+      .toEqual({ action: "redirect", to: "/dashboard" });
+  });
 });
