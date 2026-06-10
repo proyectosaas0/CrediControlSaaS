@@ -1,13 +1,14 @@
 import { apiError } from "@/lib/api/errors";
 import { checkRateLimit, apiRateLimit } from "@/lib/api/rate-limit";
-import type { NextRequest } from "next/server";
+import type { Ratelimit } from "@upstash/ratelimit";
 
 export async function withRateLimit(
-  request: NextRequest,
-  handler: (request: NextRequest) => Promise<Response>,
+  request: Request,
+  handler: (request: Request) => Promise<Response>,
+  limiter: Ratelimit | null = apiRateLimit,
 ) {
   const ip = request.headers.get("x-forwarded-for") || "unknown";
-  const result = await checkRateLimit(ip, apiRateLimit);
+  const result = await checkRateLimit(ip, limiter);
 
   if (!result.allowed) {
     return apiError(

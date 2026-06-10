@@ -1,4 +1,5 @@
 import { apiError } from "@/lib/api/errors";
+import { withRateLimit } from "@/lib/api/with-rate-limit";
 
 type RouteContext = { params: Promise<{ path: string[] }> };
 
@@ -25,7 +26,7 @@ async function invokeIdRoute(
   return invokeRoute(loadModule, request, { params: Promise.resolve({ id }) });
 }
 
-export async function GET(request: Request, context: RouteContext) {
+async function dispatchGet(request: Request, context: RouteContext) {
   const { path } = await context.params;
 
   switch (path[0]) {
@@ -106,7 +107,7 @@ export async function GET(request: Request, context: RouteContext) {
   return apiError("NOT_FOUND", "Ruta no encontrada", 404);
 }
 
-export async function POST(request: Request, context: RouteContext) {
+async function dispatchPost(request: Request, context: RouteContext) {
   const { path } = await context.params;
 
   switch (path[0]) {
@@ -152,7 +153,7 @@ export async function POST(request: Request, context: RouteContext) {
   return apiError("NOT_FOUND", "Ruta no encontrada", 404);
 }
 
-export async function PUT(request: Request, context: RouteContext) {
+async function dispatchPut(request: Request, context: RouteContext) {
   const { path } = await context.params;
   if (path[0] === "usuarios" && path.length === 2) {
     return invokeIdRoute(() => import("../usuarios/[id]/route"), request, path[1]);
@@ -166,7 +167,7 @@ export async function PUT(request: Request, context: RouteContext) {
   return apiError("NOT_FOUND", "Ruta no encontrada", 404);
 }
 
-export async function DELETE(request: Request, context: RouteContext) {
+async function dispatchDelete(request: Request, context: RouteContext) {
   const { path } = await context.params;
   if (path[0] === "usuarios" && path.length === 2) {
     return invokeIdRoute(() => import("../usuarios/[id]/route"), request, path[1]);
@@ -178,4 +179,17 @@ export async function DELETE(request: Request, context: RouteContext) {
     return invokeIdRoute(() => import("../prestamos/[id]/route"), request, path[1]);
   }
   return apiError("NOT_FOUND", "Ruta no encontrada", 404);
+}
+
+export async function GET(request: Request, context: RouteContext) {
+  return withRateLimit(request, () => dispatchGet(request, context));
+}
+export async function POST(request: Request, context: RouteContext) {
+  return withRateLimit(request, () => dispatchPost(request, context));
+}
+export async function PUT(request: Request, context: RouteContext) {
+  return withRateLimit(request, () => dispatchPut(request, context));
+}
+export async function DELETE(request: Request, context: RouteContext) {
+  return withRateLimit(request, () => dispatchDelete(request, context));
 }

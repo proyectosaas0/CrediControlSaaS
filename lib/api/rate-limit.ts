@@ -1,10 +1,18 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { logger } from "@/lib/logger";
 
 function createRedis(): Redis | null {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return null;
+  if (!url || !token) {
+    if (process.env.NODE_ENV === "production") {
+      logger.error(
+        "Rate limiting DISABLED: missing UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN in production",
+      );
+    }
+    return null;
+  }
   return new Redis({ url, token });
 }
 
