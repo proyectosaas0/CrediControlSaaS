@@ -9,15 +9,15 @@ const variantStyles: Record<ButtonVariant, string> = {
   primary:
     "bg-gradient-to-b from-indigo-500 to-indigo-600 text-white shadow-lg shadow-indigo-500/20 hover:from-indigo-400 hover:to-indigo-500 focus-visible:ring-primary",
   secondary:
-    "bg-white/[0.06] text-foreground hover:bg-white/[0.1] focus-visible:ring-ring",
+    "bg-muted text-foreground hover:bg-muted/80 focus-visible:ring-ring",
   danger:
     "bg-gradient-to-b from-rose-500 to-rose-600 text-white shadow-lg shadow-rose-500/20 hover:from-rose-400 hover:to-rose-500 focus-visible:ring-danger",
   success:
     "bg-gradient-to-b from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/20 hover:from-emerald-400 hover:to-emerald-500 focus-visible:ring-success",
   ghost:
-    "text-foreground hover:bg-white/[0.06] focus-visible:ring-ring",
+    "text-foreground hover:bg-muted focus-visible:ring-ring",
   outline:
-    "border border-white/[0.08] bg-transparent text-foreground hover:bg-white/[0.04] focus-visible:ring-ring",
+    "border border-border bg-transparent text-foreground hover:bg-muted focus-visible:ring-ring",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

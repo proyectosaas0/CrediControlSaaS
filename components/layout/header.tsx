@@ -23,7 +23,7 @@ export function Header({ onMenuClick, userName = "Usuario" }: HeaderProps) {
   };
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-white/[0.06] bg-background/70 backdrop-blur-xl px-4">
+    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/80 backdrop-blur-xl px-4">
       <SidebarTrigger onClick={onMenuClick} />
       <div className="flex-1" />
       {role === "super_admin" && <OrgSwitcher />}
