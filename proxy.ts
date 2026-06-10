@@ -2,15 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 import { addSecurityHeaders, getCorsHeaders } from "@/lib/api/security";
 
-const PUBLIC_PREFIXES = ["/login", "/register", "/verify", "/_next", "/favicon.ico", "/api"];
-
-// Paths a los que un cobrador SÍ puede acceder.
-const COBRADOR_ALLOWED = ["/app", "/app/ruta", "/app/pagos", "/app/perfil"];
-
-function isCobradoresAllowed(path: string): boolean {
-  return COBRADOR_ALLOWED.some((p) => path === p || path.startsWith(p + "/"));
-}
-
 export async function proxy(request: NextRequest) {
   // Handle CORS preflight requests
   if (request.method === "OPTIONS") {
@@ -23,7 +14,8 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  const { response, user, role } = await updateSession(request);
+  // updateSession handles auth/route decisions and returns the appropriate NextResponse.
+  const response = await updateSession(request);
 
   // Add security headers
   addSecurityHeaders(response);
@@ -34,45 +26,6 @@ export async function proxy(request: NextRequest) {
   Object.entries(corsHeaders).forEach(([key, value]) => {
     if (value) response.headers.set(key, value);
   });
-
-  const path = request.nextUrl.pathname;
-  const isPublic = PUBLIC_PREFIXES.some((p) => path.startsWith(p));
-  const isRoot = path === "/";
-
-  function secureRedirect(destination: URL): NextResponse {
-    const r = NextResponse.redirect(destination);
-    addSecurityHeaders(r);
-    return r;
-  }
-
-  if (!user && !isPublic && !isRoot) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirect", path);
-    return secureRedirect(url);
-  }
-
-  if (user) {
-    if (path === "/login" || path === "/register" || path === "/verify") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/app";
-      url.searchParams.delete("redirect");
-      return secureRedirect(url);
-    }
-
-    if (isRoot) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/app";
-      return secureRedirect(url);
-    }
-
-    // Cobradores solo pueden acceder a sus rutas permitidas.
-    if (role === "cobrador" && path.startsWith("/app") && !isCobradoresAllowed(path)) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/app";
-      return secureRedirect(url);
-    }
-  }
 
   return response;
 }
