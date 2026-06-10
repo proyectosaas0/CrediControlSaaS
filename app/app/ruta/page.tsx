@@ -54,8 +54,8 @@ export default function RutaPage() {
 }
 
 function CobradorRutaView() {
-  const { orgId } = useAuth();
-  const { data: rawItems = [], isLoading } = useRutaHoy(undefined, { enabled: !!orgId });
+  const { effectiveOrgId } = useAuth();
+  const { data: rawItems = [], isLoading } = useRutaHoy(undefined, { enabled: !!effectiveOrgId });
   const queryClient = useQueryClient();
   const [selectedItem, setSelectedItem] = useState<RouteItem | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
