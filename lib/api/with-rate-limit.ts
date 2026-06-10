@@ -4,7 +4,7 @@ import type { Ratelimit } from "@upstash/ratelimit";
 
 export async function withRateLimit(
   request: Request,
-  handler: (request: Request) => Promise<Response>,
+  handler: () => Promise<Response>,
   limiter: Ratelimit | null = apiRateLimit,
 ) {
   const ip = request.headers.get("x-forwarded-for") || "unknown";
@@ -19,7 +19,7 @@ export async function withRateLimit(
     );
   }
 
-  const response = await handler(request);
+  const response = await handler();
   response.headers.set("X-RateLimit-Remaining", String(result.remaining));
   response.headers.set("X-RateLimit-Reset", String(result.resetAfter));
   return response;
