@@ -19,3 +19,11 @@ export function useCobradores(params?: { search?: string; activo?: boolean }) {
       }),
   });
 }
+
+export function useCobrador(id: string) {
+  return useQuery({
+    queryKey: ["cobradores", id],
+    queryFn: () => fetchApi<Cobrador>(`/api/cobradores/${id}`),
+    enabled: !!id,
+  });
+}

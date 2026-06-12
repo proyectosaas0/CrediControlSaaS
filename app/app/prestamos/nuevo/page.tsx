@@ -74,7 +74,7 @@ export default function NuevoPrestamoPage() {
   }, [step1Data, step2Data, router]);
 
   return (
-    <div className="mx-auto max-w-lg space-y-4">
+    <div className="mx-auto max-w-lg lg:max-w-xl space-y-4">
       <button
         onClick={() => {
           if (step === 1) router.push("/app/prestamos");
@@ -169,8 +169,9 @@ function Step1({
       <Select
         label="Cliente"
         options={clienteOptions}
-        placeholder="Selecciona un cliente"
+        placeholder="Buscar cliente..."
         error={errors.clienteId?.message}
+        searchable
         {...register("clienteId")}
       />
 
@@ -282,6 +283,7 @@ function Step2({
         label="Cobrador"
         options={cobradorOptions}
         error={errors.cobradorId?.message}
+        searchable
         {...register("cobradorId")}
       />
 

@@ -51,11 +51,11 @@ export function Dialog({ open, onClose, children, title, className }: DialogProp
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "relative z-50 w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-2xl",
+          "relative z-50 w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl flex flex-col max-h-[90vh]",
           className,
         )}
       >
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
           {title && (
             <h2 className="text-lg font-semibold text-card-foreground">
               {title}
@@ -70,7 +70,9 @@ export function Dialog({ open, onClose, children, title, className }: DialogProp
             <X className="h-5 w-5" />
           </button>
         </div>
-        {children}
+        <div className="overflow-y-auto px-6 pb-6 flex-1 min-h-0">
+          {children}
+        </div>
       </div>
     </div>
   );

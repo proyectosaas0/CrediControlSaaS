@@ -51,7 +51,9 @@ export default function UsuariosPage() {
             <Shield className="h-4 w-4" />
             Administradores
           </h2>
-          {admins.map((u) => <UsuarioCard key={u.id} usuario={u} />)}
+          <div className="grid gap-3 lg:grid-cols-2">
+            {admins.map((u) => <UsuarioCard key={u.id} usuario={u} />)}
+          </div>
         </section>
       )}
 
@@ -63,7 +65,9 @@ export default function UsuariosPage() {
         {cobradores.length === 0 ? (
           <EmptyState icon={UsersRound} title="Sin cobradores" description="Crea cobradores desde el módulo Cobradores." />
         ) : (
-          cobradores.map((u) => <UsuarioCard key={u.id} usuario={u} />)
+          <div className="grid gap-3 lg:grid-cols-2">
+            {cobradores.map((u) => <UsuarioCard key={u.id} usuario={u} />)}
+          </div>
         )}
       </section>
     </div>

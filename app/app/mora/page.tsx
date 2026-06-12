@@ -154,7 +154,7 @@ export default function MoraPage() {
           description={search || filtroEstado !== "todos" || filtroDias !== "todos" ? "Intenta con otros filtros." : "Todos los clientes están al día."}
         />
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-3 lg:grid-cols-2">
           {filtered.map((mora) => (
             <MoraCard key={mora.id} mora={mora} />
           ))}

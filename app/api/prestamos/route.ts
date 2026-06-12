@@ -45,6 +45,8 @@ export async function GET(request: Request) {
   if (estado.success) query = query.eq("estado", estado.data);
   const clienteId = url.searchParams.get("cliente_id");
   if (clienteId) query = query.eq("cliente_id", clienteId);
+  const cobradorId = url.searchParams.get("cobrador_id");
+  if (cobradorId) query = query.eq("cobrador_id", cobradorId);
 
   const { count, data, error } = await query;
   if (error) return apiError("INTERNAL_ERROR", error.message, 500);

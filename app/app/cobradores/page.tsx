@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { Plus, Phone, CheckCircle, XCircle, UserCircle } from "lucide-react";
 import { cobradorSchema, type CobradorFormData } from "@/lib/schemas/admin";
 import { useCobradores, type Cobrador } from "@/hooks/queries/use-cobradores";
@@ -44,7 +45,7 @@ export default function CobradoresPage() {
           action={<Button size="sm" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" />Agregar cobrador</Button>}
         />
       ) : (
-        <div className="space-y-3">
+        <div className="grid gap-3 lg:grid-cols-2">
           {cobradores.map((cobrador) => (
             <CobradorCard key={cobrador.id} cobrador={cobrador} />
           ))}
@@ -67,46 +68,60 @@ export default function CobradoresPage() {
 
 function CobradorCard({ cobrador }: { cobrador: Cobrador }) {
   return (
-    <Card padding="md">
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold text-foreground">
-              {cobrador.nombre_completo}
-            </p>
-            <Badge variant={cobrador.activo ? "success" : "muted"}>
-              {cobrador.activo ? "Activo" : "Inactivo"}
-            </Badge>
+    <Link href={`/app/cobradores/${cobrador.id}`}>
+      <Card padding="md" className="cursor-pointer hover:border-primary/30 transition-colors">
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-foreground">
+                {cobrador.nombre_completo}
+              </p>
+              <Badge variant={cobrador.activo ? "success" : "muted"}>
+                {cobrador.activo ? "Activo" : "Inactivo"}
+              </Badge>
+            </div>
+            {cobrador.telefono && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                <Phone className="h-3 w-3" />
+                {cobrador.telefono}
+              </p>
+            )}
           </div>
-          <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-            <Phone className="h-3 w-3" />
-            {cobrador.telefono}
-          </p>
+          <ToggleActiveButton cobradorId={cobrador.id} activo={cobrador.activo} />
         </div>
-        <ToggleActiveButton
-          cobradorId={cobrador.id}
-          activo={cobrador.activo}
-        />
-      </div>
-
-    </Card>
+      </Card>
+    </Link>
   );
 }
 
 function ToggleActiveButton({
+  cobradorId,
   activo,
 }: {
   cobradorId: string;
   activo: boolean;
 }) {
+  const queryClient = useQueryClient();
+
+  async function handleClick(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const res = await fetch(`/api/cobradores/${cobradorId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ activo: !activo }),
+    });
+    if (!res.ok) {
+      toast.error("No se pudo cambiar el estado del cobrador");
+      return;
+    }
+    toast.success(activo ? "Cobrador desactivado" : "Cobrador activado");
+    void queryClient.invalidateQueries({ queryKey: ["cobradores"] });
+  }
+
   return (
     <button
-      onClick={() => {
-        // TODO: Reemplazar por PATCH /api/cobradores/[id]
-        toast.success(
-          activo ? "Cobrador desactivado" : "Cobrador activado",
-        );
-      }}
+      onClick={handleClick}
       className={cn(
         "flex min-h-11 min-w-11 items-center justify-center rounded-lg transition-colors",
         activo

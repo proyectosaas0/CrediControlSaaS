@@ -102,7 +102,10 @@ export default function ConfiguracionPage() {
         </Button>
       </div>
 
-      <form id="form-configuracion" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form id="form-configuracion" onSubmit={handleSubmit(onSubmit)} className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
+        {/* Col 1: Negocio + Mora */}
+        <div className="space-y-6">
+
         {/* Informacion del negocio */}
         <Card padding="md">
           <div className="flex items-center gap-2 mb-4">
@@ -180,6 +183,11 @@ export default function ConfiguracionPage() {
             </div>
           </div>
         </Card>
+
+        </div>{/* end col 1 */}
+
+        {/* Col 2: Preferencias + Apariencia */}
+        <div className="space-y-6">
 
         {/* Preferencias operativas */}
         <Card padding="md">
@@ -269,8 +277,11 @@ export default function ConfiguracionPage() {
           </div>
         </Card>
 
+        </div>{/* end col 2 */}
+
+        {/* WhatsApp — full width */}
         {/* Plantilla WhatsApp */}
-        <Card padding="md">
+        <Card padding="md" className="lg:col-span-2">
           <div className="flex items-center gap-2 mb-4">
             <MessageSquare className="h-5 w-5 text-success" />
             <CardTitle className="text-base">Plantilla WhatsApp</CardTitle>

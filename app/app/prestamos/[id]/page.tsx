@@ -39,6 +39,8 @@ export default function PrestamoDetailPage() {
     prestamo.estado === "activo" || prestamo.estado === "en_mora";
   const canCancel = prestamo.estado === "activo" || prestamo.estado === "en_mora";
 
+  const progress = cuotasTotales > 0 ? Math.round((cuotasPagadas / cuotasTotales) * 100) : 0;
+
   return (
     <div className="space-y-5">
       <button
@@ -56,97 +58,101 @@ export default function PrestamoDetailPage() {
         <LoanStatusBadge estado={prestamo.estado} />
       </div>
 
-      <Card padding="md">
-        <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Cliente</span>
-            <span className="font-medium text-foreground">
-              {prestamo.clientes?.nombre ?? "—"}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Capital</span>
-            <span className="font-mono text-foreground">
-              {formatCop(prestamo.capital)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Modelo</span>
-            <span className="text-foreground">
-              {prestamo.modelo_interes.replace("_", " ")}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Tasa mensual</span>
-            <span className="text-foreground">{prestamo.tasa_mensual}%</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Plazo</span>
-            <span className="text-foreground">{prestamo.plazo_dias} dias</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Inicio</span>
-            <span className="text-foreground">{prestamo.fecha_inicio ?? ""}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Fin</span>
-            <span className="text-foreground">{prestamo.fecha_fin ?? ""}</span>
-          </div>
+      <div className="grid gap-5 lg:grid-cols-[1fr_260px] lg:items-start">
+        {/* Left: info + cronograma */}
+        <div className="space-y-5">
+          <Card padding="md">
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Cliente</span>
+                <span className="font-medium text-foreground">
+                  {prestamo.clientes?.nombre ?? "—"}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Capital</span>
+                <span className="font-mono text-foreground">
+                  {formatCop(prestamo.capital)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Modelo</span>
+                <span className="text-foreground">
+                  {prestamo.modelo_interes.replace("_", " ")}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Tasa mensual</span>
+                <span className="text-foreground">{prestamo.tasa_mensual}%</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Plazo</span>
+                <span className="text-foreground">{prestamo.plazo_dias} dias</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Inicio</span>
+                <span className="text-foreground">{prestamo.fecha_inicio ?? ""}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Fin</span>
+                <span className="text-foreground">{prestamo.fecha_fin ?? ""}</span>
+              </div>
+            </div>
+
+            <div className="mt-4 border-t border-border pt-4 space-y-1">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Cuota diaria</span>
+                <span className="font-bold font-mono text-primary">
+                  {formatCop(prestamo.cuota_diaria ?? 0)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Total a pagar</span>
+                <span className="font-bold font-mono text-foreground">
+                  {formatCop(prestamo.total_pagar ?? 0)}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Saldo pendiente</span>
+                <span className="font-bold font-mono text-danger">
+                  {formatCop(saldoPendiente)}
+                </span>
+              </div>
+            </div>
+          </Card>
+
+          <CronogramaSection prestamo={prestamo} cuotasPagadas={cuotasPagadas} />
         </div>
 
-        <div className="mt-4 border-t border-border pt-4 space-y-1">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Cuota diaria</span>
-            <span className="font-bold font-mono text-primary">
-              {formatCop(prestamo.cuota_diaria ?? 0)}
-            </span>
+        {/* Right: stats + actions */}
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+            <Card padding="md">
+              <p className="text-xs text-muted-foreground">Cuotas pagadas</p>
+              <p className="text-lg font-bold text-success">
+                {cuotasPagadas}/{cuotasTotales}
+              </p>
+            </Card>
+            <Card padding="md">
+              <p className="text-xs text-muted-foreground">Progreso</p>
+              <p className="text-lg font-bold text-foreground">{progress}%</p>
+              <div className="mt-1 h-2 w-full rounded-full bg-muted">
+                <div
+                  className="h-2 rounded-full bg-primary transition-all"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </Card>
           </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Total a pagar</span>
-            <span className="font-bold font-mono text-foreground">
-              {formatCop(prestamo.total_pagar ?? 0)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Saldo pendiente</span>
-            <span className="font-bold font-mono text-danger">
-              {formatCop(saldoPendiente)}
-            </span>
-          </div>
-        </div>
-      </Card>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Card padding="md">
-          <p className="text-xs text-muted-foreground">Cuotas pagadas</p>
-          <p className="text-lg font-bold text-success">
-            {cuotasPagadas}/{cuotasTotales}
-          </p>
-        </Card>
-        <Card padding="md">
-          <p className="text-xs text-muted-foreground">Progreso</p>
-          <p className="text-lg font-bold text-foreground">
-            {cuotasTotales > 0 ? Math.round((cuotasPagadas / cuotasTotales) * 100) : 0}%
-          </p>
-          <div className="mt-1 h-2 w-full rounded-full bg-muted">
-            <div
-              className="h-2 rounded-full bg-primary transition-all"
-              style={{
-                width: `${cuotasTotales > 0 ? Math.round((cuotasPagadas / cuotasTotales) * 100) : 0}%`,
-              }}
-            />
-          </div>
-        </Card>
+          {(canRefinance || canCancel) && (
+            <div className="flex gap-3 lg:flex-col">
+              {canRefinance && <RefinanciarButton prestamoId={prestamo.id} />}
+              {canCancel && <CancelarButton prestamoId={prestamo.id} />}
+            </div>
+          )}
+        </div>
       </div>
-
-      <CronogramaSection prestamo={prestamo} cuotasPagadas={cuotasPagadas} />
-
-      {(canRefinance || canCancel) && (
-        <div className="flex gap-3 pt-2">
-          {canRefinance && <RefinanciarButton prestamoId={prestamo.id} />}
-          {canCancel && <CancelarButton prestamoId={prestamo.id} />}
-        </div>
-      )}
     </div>
   );
 }

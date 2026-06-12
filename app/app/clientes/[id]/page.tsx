@@ -80,69 +80,71 @@ export default function ClienteDetailPage() {
         Volver
       </button>
 
-      <Card padding="md">
-        <div className="space-y-3">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">{cliente.nombre}</h1>
-              {cliente.cedula && (
-                <p className="text-sm text-muted-foreground">CC {cliente.cedula}</p>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
+      <div className="grid gap-5 lg:grid-cols-[1fr_220px] lg:items-start">
+        {/* Left: info card */}
+        <Card padding="md">
+          <div className="space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <h1 className="text-xl font-bold text-foreground">{cliente.nombre}</h1>
+                {cliente.cedula && (
+                  <p className="text-sm text-muted-foreground">CC {cliente.cedula}</p>
+                )}
+              </div>
               <ScoreBadge score={cliente.score_pago} size="lg" />
             </div>
-          </div>
 
-          <div className="space-y-2 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Phone className="h-4 w-4" />
-              <span>{cliente.telefono}</span>
-            </div>
-            {cliente.direccion && (
+            <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span>{cliente.direccion}{cliente.barrio ? ` · ${cliente.barrio}` : ""}</span>
+                <Phone className="h-4 w-4" />
+                <span>{cliente.telefono}</span>
               </div>
-            )}
-            {cliente.notas && (
-              <div className="flex items-start gap-2 text-muted-foreground">
-                <FileText className="h-4 w-4 mt-0.5" />
-                <span>{cliente.notas}</span>
-              </div>
-            )}
-          </div>
+              {cliente.direccion && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span>{cliente.direccion}{cliente.barrio ? ` · ${cliente.barrio}` : ""}</span>
+                </div>
+              )}
+              {cliente.notas && (
+                <div className="flex items-start gap-2 text-muted-foreground">
+                  <FileText className="h-4 w-4 mt-0.5" />
+                  <span>{cliente.notas}</span>
+                </div>
+              )}
+            </div>
 
-          <div className="flex gap-2 pt-1">
-            <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="flex items-center gap-1">
-              <Pencil className="h-3.5 w-3.5" />
-              Editar
-            </Button>
-            <Button
-              size="sm"
-              variant={cliente.activo ? "danger" : "success"}
-              onClick={handleToggleActivo}
-              disabled={togglingActivo}
-              className="flex items-center gap-1"
-            >
-              {cliente.activo
-                ? <><PowerOff className="h-3.5 w-3.5" /> Desactivar</>
-                : <><Power className="h-3.5 w-3.5" /> Activar</>
-              }
-            </Button>
+            <div className="flex gap-2 pt-1">
+              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="flex items-center gap-1">
+                <Pencil className="h-3.5 w-3.5" />
+                Editar
+              </Button>
+              <Button
+                size="sm"
+                variant={cliente.activo ? "danger" : "success"}
+                onClick={handleToggleActivo}
+                disabled={togglingActivo}
+                className="flex items-center gap-1"
+              >
+                {cliente.activo
+                  ? <><PowerOff className="h-3.5 w-3.5" /> Desactivar</>
+                  : <><Power className="h-3.5 w-3.5" /> Activar</>
+                }
+              </Button>
+            </div>
           </div>
+        </Card>
+
+        {/* Right: stats */}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
+          <Card padding="md">
+            <p className="text-xs text-muted-foreground">Total prestado</p>
+            <p className="text-lg font-bold font-mono text-foreground">{formatCop(totalPrestado)}</p>
+          </Card>
+          <Card padding="md">
+            <p className="text-xs text-muted-foreground">Prestamos activos</p>
+            <p className="text-lg font-bold text-foreground">{prestamosActivos.length}</p>
+          </Card>
         </div>
-      </Card>
-
-      <div className="grid grid-cols-2 gap-3">
-        <Card padding="md">
-          <p className="text-xs text-muted-foreground">Total prestado</p>
-          <p className="text-lg font-bold font-mono text-foreground">{formatCop(totalPrestado)}</p>
-        </Card>
-        <Card padding="md">
-          <p className="text-xs text-muted-foreground">Prestamos activos</p>
-          <p className="text-lg font-bold text-foreground">{prestamosActivos.length}</p>
-        </Card>
       </div>
 
       <div>
