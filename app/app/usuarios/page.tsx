@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   UserCheck,
@@ -12,17 +15,26 @@ import {
   Shield,
   User,
   UsersRound,
+  Plus,
 } from "lucide-react";
 import { useUsuarios, type Usuario } from "@/hooks/queries/use-usuarios";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { toast } from "sonner";
 import { cn } from "@/components/ui/cn";
+
+const createAdminSchema = z.object({
+  nombre: z.string().trim().min(1, "El nombre es obligatorio"),
+  email: z.email("Ingresa un correo válido"),
+  telefono: z.string().trim().optional(),
+});
+type CreateAdminFormData = z.infer<typeof createAdminSchema>;
 
 const ROL_CONFIG: Record<string, { label: string; variant: "primary" | "muted" }> = {
   admin: { label: "Admin", variant: "primary" },
@@ -31,6 +43,8 @@ const ROL_CONFIG: Record<string, { label: string; variant: "primary" | "muted" }
 
 export default function UsuariosPage() {
   const { data: usuarios = [], isPending, error, refetch } = useUsuarios();
+  const queryClient = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
 
   const admins = usuarios.filter((u) => u.rol === "admin");
   const cobradores = usuarios.filter((u) => u.rol === "cobrador");
@@ -42,7 +56,10 @@ export default function UsuariosPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Usuarios</h1>
-        <p className="text-sm text-muted-foreground">{usuarios.length} usuario{usuarios.length !== 1 ? "s" : ""}</p>
+        <Button size="sm" onClick={() => setCreateOpen(true)}>
+          <Plus className="h-4 w-4" />
+          <span className="hidden sm:inline ml-1">Nuevo admin</span>
+        </Button>
       </div>
 
       {admins.length > 0 && (
@@ -70,6 +87,16 @@ export default function UsuariosPage() {
           </div>
         )}
       </section>
+
+      <Dialog open={createOpen} onClose={() => setCreateOpen(false)} title="Nuevo administrador">
+        <CreateAdminForm
+          onSuccess={() => {
+            setCreateOpen(false);
+            void queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+          }}
+          onCancel={() => setCreateOpen(false)}
+        />
+      </Dialog>
     </div>
   );
 }
@@ -231,5 +258,74 @@ function UsuarioCard({ usuario }: { usuario: Usuario }) {
         </div>
       </Dialog>
     </Card>
+  );
+}
+
+function CreateAdminForm({
+  onSuccess,
+  onCancel,
+}: {
+  onSuccess: () => void;
+  onCancel: () => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<CreateAdminFormData>({
+    resolver: zodResolver(createAdminSchema),
+    defaultValues: { nombre: "", email: "", telefono: "" },
+  });
+
+  async function onSubmit(data: CreateAdminFormData) {
+    const res = await fetch("/api/usuarios", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(json.error?.message ?? "Error al crear administrador");
+      return;
+    }
+    toast.success("Administrador creado correctamente");
+    onSuccess();
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <Input
+        label="Nombre completo"
+        placeholder="Ana García"
+        error={errors.nombre?.message}
+        required
+        {...register("nombre")}
+      />
+      <Input
+        label="Correo electrónico"
+        type="email"
+        placeholder="admin@ejemplo.com"
+        error={errors.email?.message}
+        required
+        {...register("email")}
+      />
+      <Input
+        label="Teléfono"
+        placeholder="+573001234567"
+        error={errors.telefono?.message}
+        {...register("telefono")}
+      />
+      <p className="text-xs text-muted-foreground">
+        Se creará una cuenta con rol Administrador. El usuario podrá iniciar sesión con este correo.
+      </p>
+      <div className="flex gap-3 pt-2">
+        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+          Cancelar
+        </Button>
+        <Button type="submit" loading={isSubmitting} className="flex-1">
+          Crear administrador
+        </Button>
+      </div>
+    </form>
   );
 }

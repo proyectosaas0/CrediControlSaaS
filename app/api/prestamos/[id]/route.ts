@@ -31,7 +31,9 @@ export async function GET(_request: Request, context: RouteContext) {
 
   const cuotasTotales = cuotas?.length ?? 0;
   const cuotasPagadas = cuotas?.filter((c) => c.estado === "pagado").length ?? 0;
-  const saldoRow = data.prestamo_saldos?.[0] ?? null;
+  const saldoRow = Array.isArray(data.prestamo_saldos)
+    ? (data.prestamo_saldos[0] ?? null)
+    : (data.prestamo_saldos ?? null);
 
   return apiOk({
     ...data,
