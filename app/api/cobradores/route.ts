@@ -55,7 +55,9 @@ export async function POST(request: Request) {
   const { data: userData, error: createError } = await admin.auth.admin.createUser({
     email,
     email_confirm: true,
-    user_metadata: { nombre_completo: nombre },
+    // app_created tells handle_new_user to skip org/profile auto-provisioning;
+    // this route inserts the profile in the correct org below.
+    user_metadata: { nombre_completo: nombre, app_created: true },
   });
   if (createError) {
     const isDuplicate = createError.message.toLowerCase().includes("already registered") ||

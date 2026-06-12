@@ -7,7 +7,11 @@ import { OnboardingTutorial } from "@/components/auth/onboarding-tutorial";
 import { CobradorDashboard } from "@/components/domain/cobrador-dashboard";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { formatCop } from "@/lib/domain/money";
-import { useReportesResumen } from "@/hooks/queries/use-reportes";
+import {
+  useReportesResumen,
+  useRecaudoDiario,
+  type RecaudoDiario,
+} from "@/hooks/queries/use-reportes";
 import { usePrestamos, type Prestamo } from "@/hooks/queries/use-prestamos";
 import { useRutaHoy, type CuotaRuta } from "@/hooks/queries/use-ruta";
 import { buttonClasses } from "@/components/ui/button";
@@ -28,9 +32,9 @@ import {
   Plus,
   Banknote,
   ArrowRight,
+  ArrowUpRight,
   FileText,
   CheckCircle2,
-  ChevronRight,
   type LucideIcon,
 } from "lucide-react";
 
@@ -59,8 +63,9 @@ function AdminDashboard({ userName }: { userName: string }) {
   const { data: resumen, isLoading: loadingResumen } = useReportesResumen();
   const { data: prestamos, isLoading: loadingPrestamos } = usePrestamos();
   const { data: rutaItems, isLoading: loadingRuta } = useRutaHoy();
+  const { data: recaudoSemana } = useRecaudoDiario();
 
-  const cartaActiva =
+  const carteraActiva =
     prestamos
       ?.filter((p) => p.estado === "activo")
       .reduce((acc, p) => acc + p.capital, 0) ?? 0;
@@ -76,13 +81,13 @@ function AdminDashboard({ userName }: { userName: string }) {
     rutaItems?.filter((i) => i.estado === "pagado").length ?? 0;
   const totalCobros = rutaItems?.length ?? 0;
 
+  const recaudoHoy = resumen?.recaudoTotal ?? 0;
   const metaDia =
     rutaItems?.reduce((acc, i) => acc + i.monto_esperado, 0) ?? 0;
   const progressRecaudo =
-    metaDia > 0
-      ? Math.min(((resumen?.recaudoTotal ?? 0) / metaDia) * 100, 100)
-      : 0;
+    metaDia > 0 ? Math.min((recaudoHoy / metaDia) * 100, 100) : 0;
 
+  const enMora = resumen?.prestamosEnMora ?? 0;
   const recentPrestamos = prestamos?.slice(0, 6) ?? [];
 
   const today = new Date().toLocaleDateString("es-CO", {
@@ -94,25 +99,29 @@ function AdminDashboard({ userName }: { userName: string }) {
   const loading = loadingResumen || loadingPrestamos || loadingRuta;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* ── Header ── */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="dash-rise flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.25em] text-muted-foreground capitalize">
-            {today}
-          </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Hola,{" "}
-            <span className="bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">
-              {userName}
+          <p className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-success" />
             </span>
+            <span className="capitalize">{today}</span>
+          </p>
+          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+            Hola, <span className="text-primary">{userName}</span>
           </h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            Vista general de tu cartera
+          <p className="mt-1.5 text-sm text-muted-foreground">
+            Así amanece tu cartera hoy.
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/app/pagos" className={cn(buttonClasses("outline", "sm"), "gap-1.5")}>
+          <Link
+            href="/app/pagos"
+            className={cn(buttonClasses("outline", "sm"), "gap-1.5")}
+          >
             <Banknote className="h-3.5 w-3.5" />
             Registrar pago
           </Link>
@@ -126,89 +135,85 @@ function AdminDashboard({ userName }: { userName: string }) {
         </div>
       </div>
 
-      {/* ── KPI Grid ── */}
+      {/* ── Bento: hero recaudo + stats ── */}
       {loading ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-32 animate-pulse rounded-2xl bg-muted" />
-          ))}
-        </div>
+        <DashboardSkeleton />
       ) : (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <KpiCard
-            icon={Wallet}
-            label="Recaudo hoy"
-            value={formatCop(resumen?.recaudoTotal ?? 0)}
-            foot={metaDia > 0 ? `Meta: ${formatCop(metaDia)}` : undefined}
-            progress={metaDia > 0 ? progressRecaudo : undefined}
-            accent="indigo"
+        <div className="grid gap-3 lg:grid-cols-12">
+          <HeroRecaudo
+            recaudoHoy={recaudoHoy}
+            metaDia={metaDia}
+            progress={progressRecaudo}
+            semana={recaudoSemana}
           />
-          <KpiCard
-            icon={TrendingUp}
-            label="Cartera activa"
-            value={
-              cartaActiva > 0
-                ? formatCop(cartaActiva)
-                : `${resumen?.prestamosActivos ?? 0}`
-            }
-            foot={`${resumen?.prestamosActivos ?? 0} préstamos vigentes`}
-            accent="emerald"
-          />
-          <KpiCard
-            icon={AlertTriangle}
-            label="En mora"
-            value={resumen?.prestamosEnMora ?? 0}
-            foot={
-              (resumen?.prestamosEnMora ?? 0) === 0
-                ? "Cartera sana"
-                : `${resumen?.prestamosEnMora} en riesgo`
-            }
-            footOk={(resumen?.prestamosEnMora ?? 0) === 0}
-            accent={
-              (resumen?.prestamosEnMora ?? 0) > 0 ? "rose" : "muted"
-            }
-          />
-          <KpiCard
-            icon={MapPin}
-            label="Ruta de hoy"
-            value={totalCobros > 0 ? `${completedCobros}/${totalCobros}` : "—"}
-            foot={
-              pendingCobros[0]
-                ? `Próx: ${pendingCobros[0].prestamos.clientes.nombre.split(" ")[0]}`
-                : totalCobros > 0
-                  ? "Ruta completada"
-                  : "Sin ruta asignada"
-            }
-            footOk={totalCobros > 0 && pendingCobros.length === 0}
-            progress={
-              totalCobros > 0
-                ? (completedCobros / totalCobros) * 100
-                : undefined
-            }
-            accent="amber"
-          />
+
+          <div className="grid gap-3 sm:grid-cols-3 lg:col-span-5 lg:grid-cols-1">
+            <StatTile
+              icon={TrendingUp}
+              label="Cartera activa"
+              value={
+                carteraActiva > 0
+                  ? formatCop(carteraActiva)
+                  : `${resumen?.prestamosActivos ?? 0}`
+              }
+              foot={`${resumen?.prestamosActivos ?? 0} préstamos vigentes`}
+              accent="emerald"
+              delay={120}
+            />
+            <StatTile
+              icon={AlertTriangle}
+              label="En mora"
+              value={enMora}
+              foot={enMora === 0 ? "Cartera sana" : `${enMora} en riesgo`}
+              footOk={enMora === 0}
+              accent={enMora > 0 ? "rose" : "muted"}
+              delay={180}
+              href={enMora > 0 ? "/app/mora" : undefined}
+            />
+            <StatTile
+              icon={MapPin}
+              label="Ruta de hoy"
+              value={totalCobros > 0 ? `${completedCobros}/${totalCobros}` : "—"}
+              foot={
+                pendingCobros[0]
+                  ? `Próximo: ${pendingCobros[0].prestamos.clientes.nombre.split(" ")[0]}`
+                  : totalCobros > 0
+                    ? "Ruta completada"
+                    : "Sin ruta asignada"
+              }
+              footOk={totalCobros > 0 && pendingCobros.length === 0}
+              accent="amber"
+              progress={
+                totalCobros > 0
+                  ? (completedCobros / totalCobros) * 100
+                  : undefined
+              }
+              delay={240}
+              href="/app/ruta"
+            />
+          </div>
         </div>
       )}
 
       {/* ── Cobros pendientes ── */}
       {!loadingRuta && pendingCobros.length > 0 && (
-        <section>
+        <section className="dash-rise" style={{ animationDelay: "300ms" }}>
           <SectionHead
             title="Cobros pendientes hoy"
             href="/app/ruta"
             linkLabel="Ver ruta"
             count={pendingCobros.length}
           />
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2">
             {pendingCobros.slice(0, 4).map((cuota, i) => (
-              <CobroCard key={cuota.id} cuota={cuota} index={i} />
+              <CobroTicket key={cuota.id} cuota={cuota} index={i} />
             ))}
           </div>
         </section>
       )}
 
       {/* ── Últimos préstamos ── */}
-      <section>
+      <section className="dash-rise" style={{ animationDelay: "380ms" }}>
         <SectionHead
           title="Últimos préstamos"
           href="/app/prestamos"
@@ -216,7 +221,7 @@ function AdminDashboard({ userName }: { userName: string }) {
         />
 
         {loadingPrestamos ? (
-          <div className="rounded-2xl border border-border overflow-hidden">
+          <div className="overflow-hidden rounded-2xl border border-border">
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
@@ -235,7 +240,7 @@ function AdminDashboard({ userName }: { userName: string }) {
           <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border py-14 text-center">
             <FileText className="h-9 w-9 text-muted-foreground/30" />
             <div>
-              <p className="text-sm font-medium text-foreground">
+              <p className="font-display text-sm font-semibold text-foreground">
                 Sin préstamos aún
               </p>
               <p className="mt-1 text-xs text-muted-foreground">
@@ -251,26 +256,26 @@ function AdminDashboard({ userName }: { userName: string }) {
             </Link>
           </div>
         ) : (
-          <div className="rounded-2xl border border-border overflow-hidden bg-card backdrop-blur-sm">
+          <div className="overflow-hidden rounded-2xl border border-border bg-card backdrop-blur-sm">
             <Table>
               <TableHeader>
                 <TableRow className="border-border hover:bg-transparent">
-                  <TableHead className="pl-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <TableHead className="pl-4 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     Cliente
                   </TableHead>
-                  <TableHead className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <TableHead className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     Capital
                   </TableHead>
-                  <TableHead className="hidden text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell">
+                  <TableHead className="hidden text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground sm:table-cell">
                     Modalidad
                   </TableHead>
-                  <TableHead className="hidden text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:table-cell">
+                  <TableHead className="hidden text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground lg:table-cell">
                     Inicio
                   </TableHead>
-                  <TableHead className="hidden w-32 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:table-cell">
+                  <TableHead className="hidden w-32 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground sm:table-cell">
                     Avance
                   </TableHead>
-                  <TableHead className="pr-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <TableHead className="pr-4 text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
                     Estado
                   </TableHead>
                 </TableRow>
@@ -288,42 +293,184 @@ function AdminDashboard({ userName }: { userName: string }) {
   );
 }
 
-/* ─────────────────────────── KPI Card ─────────────────────────── */
+/* ─────────────────────────── Hero: recaudo de hoy ─────────────────────────── */
+
+function HeroRecaudo({
+  recaudoHoy,
+  metaDia,
+  progress,
+  semana,
+}: {
+  recaudoHoy: number;
+  metaDia: number;
+  progress: number;
+  semana?: RecaudoDiario[];
+}) {
+  const pct = Math.round(progress);
+
+  return (
+    <section
+      className="dash-rise relative overflow-hidden rounded-3xl border border-primary/25 bg-card p-6 shadow-xl shadow-primary/10 backdrop-blur-sm sm:p-7 lg:col-span-7"
+      style={{ animationDelay: "60ms" }}
+    >
+      {/* Atmosphere: glow + ledger grid */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 70% at 15% 0%, color-mix(in srgb, var(--primary) 14%, transparent), transparent 60%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.35]"
+        style={{
+          backgroundImage:
+            "linear-gradient(color-mix(in srgb, var(--primary) 7%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in srgb, var(--primary) 7%, transparent) 1px, transparent 1px)",
+          backgroundSize: "44px 44px",
+          maskImage:
+            "radial-gradient(ellipse 100% 100% at 50% 0%, black, transparent 80%)",
+        }}
+      />
+
+      <div className="relative flex h-full flex-col gap-6 sm:flex-row sm:items-stretch sm:justify-between">
+        {/* Left: the number */}
+        <div className="flex flex-col">
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary/15 text-primary">
+              <Wallet className="h-4 w-4" />
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
+              Recaudo de hoy
+            </span>
+          </div>
+
+          <p className="mt-4 font-display text-[2.6rem] font-bold leading-none tracking-tight text-foreground tabular-nums sm:text-5xl">
+            {formatCop(recaudoHoy)}
+          </p>
+
+          {metaDia > 0 ? (
+            <div className="mt-5 max-w-xs">
+              <div className="flex items-baseline justify-between gap-4 text-xs">
+                <span className="text-muted-foreground">
+                  Meta del día{" "}
+                  <span className="font-semibold text-foreground tabular-nums">
+                    {formatCop(metaDia)}
+                  </span>
+                </span>
+                <span className="font-display text-sm font-bold text-primary tabular-nums">
+                  {pct}%
+                </span>
+              </div>
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                <div
+                  className="dash-fill h-full rounded-full bg-gradient-to-r from-primary to-violet-400"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
+          ) : (
+            <p className="mt-5 text-xs text-muted-foreground">
+              Sin meta de ruta para hoy.
+            </p>
+          )}
+
+          <Link
+            href="/app/reportes"
+            className="group mt-auto flex w-fit items-center gap-1 pt-5 text-xs font-semibold text-primary"
+          >
+            Ver reportes
+            <ArrowUpRight className="h-3.5 w-3.5 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+
+        {/* Right: 7-day chart */}
+        <WeekChart semana={semana} />
+      </div>
+    </section>
+  );
+}
+
+function WeekChart({ semana }: { semana?: RecaudoDiario[] }) {
+  if (!semana || semana.length === 0) return null;
+
+  const max = Math.max(
+    ...semana.map((d) => Math.max(d.recaudado, d.esperado)),
+    1,
+  );
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  return (
+    <div className="flex shrink-0 flex-col justify-end sm:w-56">
+      <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/70">
+        Últimos 7 días
+      </p>
+      <div className="flex h-24 items-end gap-1.5">
+        {semana.map((d, i) => {
+          const isToday = d.fecha === todayIso;
+          const hRecaudado = Math.max((d.recaudado / max) * 100, 3);
+          const hEsperado = Math.max((d.esperado / max) * 100, 3);
+          const dia = new Date(`${d.fecha}T12:00:00`)
+            .toLocaleDateString("es-CO", { weekday: "narrow" })
+            .toUpperCase();
+
+          return (
+            <div
+              key={d.fecha}
+              className="group/bar relative flex h-full flex-1 flex-col justify-end"
+              title={`${d.fecha}: ${formatCop(d.recaudado)} de ${formatCop(d.esperado)}`}
+            >
+              {/* esperado (ghost) */}
+              <div
+                className="absolute bottom-5 left-0 right-0 rounded-t-[3px] bg-muted"
+                style={{ height: `calc(${hEsperado}% - 1.25rem)` }}
+              />
+              {/* recaudado */}
+              <div
+                className={cn(
+                  "dash-bar relative z-10 mb-1 rounded-t-[3px] transition-colors",
+                  isToday
+                    ? "bg-gradient-to-t from-primary to-violet-400 shadow-[0_0_12px_color-mix(in_srgb,var(--primary)_45%,transparent)]"
+                    : "bg-primary/45 group-hover/bar:bg-primary/70",
+                )}
+                style={{
+                  height: `calc(${hRecaudado}% - 1.25rem)`,
+                  animationDelay: `${250 + i * 70}ms`,
+                }}
+              />
+              <span
+                className={cn(
+                  "text-center text-[9px] font-bold tabular-nums",
+                  isToday ? "text-primary" : "text-muted-foreground/60",
+                )}
+              >
+                {dia}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────── Stat tiles ─────────────────────────── */
 
 type Accent = "indigo" | "emerald" | "amber" | "rose" | "muted";
 
-const accentMap: Record<
-  Accent,
-  { icon: string; progress: string; glow: string }
-> = {
-  indigo: {
-    icon: "bg-primary/15 text-primary",
-    progress: "bg-primary",
-    glow: "shadow-primary/10",
-  },
-  emerald: {
-    icon: "bg-success/15 text-success",
-    progress: "bg-success",
-    glow: "shadow-success/10",
-  },
-  amber: {
-    icon: "bg-warning/15 text-warning",
-    progress: "bg-warning",
-    glow: "shadow-warning/10",
-  },
-  rose: {
-    icon: "bg-danger/15 text-danger",
-    progress: "bg-danger",
-    glow: "shadow-danger/10",
-  },
+const accentMap: Record<Accent, { icon: string; progress: string }> = {
+  indigo: { icon: "bg-primary/15 text-primary", progress: "bg-primary" },
+  emerald: { icon: "bg-success/15 text-success", progress: "bg-success" },
+  amber: { icon: "bg-warning/15 text-warning", progress: "bg-warning" },
+  rose: { icon: "bg-danger/15 text-danger", progress: "bg-danger" },
   muted: {
     icon: "bg-muted text-muted-foreground",
     progress: "bg-muted-foreground",
-    glow: "",
   },
 };
 
-function KpiCard({
+function StatTile({
   icon: Icon,
   label,
   value,
@@ -331,6 +478,8 @@ function KpiCard({
   footOk = false,
   accent,
   progress,
+  delay = 0,
+  href,
 }: {
   icon: LucideIcon;
   label: string;
@@ -339,58 +488,82 @@ function KpiCard({
   footOk?: boolean;
   accent: Accent;
   progress?: number;
+  delay?: number;
+  href?: string;
 }) {
   const a = accentMap[accent];
-  return (
+
+  const body = (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border border-border bg-card p-4 backdrop-blur-sm",
-        "shadow-lg",
-        a.glow && `shadow-lg ${a.glow}`,
-        "transition-shadow hover:shadow-xl",
+        "dash-rise group relative flex h-full items-center gap-4 overflow-hidden rounded-2xl border border-border bg-card px-4 py-4 backdrop-blur-sm transition-all",
+        href && "hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5",
       )}
+      style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="mb-3 flex items-center justify-between">
-        <div
-          className={cn(
-            "flex h-8 w-8 items-center justify-center rounded-xl",
-            a.icon,
-          )}
-        >
-          <Icon className="h-3.5 w-3.5" />
-        </div>
-        <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+      <div
+        className={cn(
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+          a.icon,
+        )}
+      >
+        <Icon className="h-4 w-4" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
           {label}
-        </span>
-      </div>
-
-      <div className="text-[1.65rem] font-bold tabular-nums leading-none tracking-tight text-foreground">
-        {value}
-      </div>
-
-      {progress !== undefined && (
-        <div className="mt-3.5 h-1 overflow-hidden rounded-full bg-muted">
-          <div
-            className={cn(
-              "h-full rounded-full transition-all duration-700",
-              a.progress,
-            )}
-            style={{ width: `${Math.min(progress, 100)}%` }}
-          />
-        </div>
-      )}
-
-      {foot && (
-        <p
-          className={cn(
-            "mt-2 flex items-center gap-1 text-xs",
-            footOk ? "text-success" : "text-muted-foreground",
-          )}
-        >
-          {footOk && <CheckCircle2 className="h-3 w-3 shrink-0" />}
-          {foot}
         </p>
+        <p className="mt-1 font-display text-xl font-bold leading-none tracking-tight text-foreground tabular-nums">
+          {value}
+        </p>
+        {progress !== undefined && (
+          <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+            <div
+              className={cn("dash-fill h-full rounded-full", a.progress)}
+              style={{ width: `${Math.min(progress, 100)}%` }}
+            />
+          </div>
+        )}
+        {foot && (
+          <p
+            className={cn(
+              "mt-1.5 flex items-center gap-1 truncate text-xs",
+              footOk ? "text-success" : "text-muted-foreground",
+            )}
+          >
+            {footOk && <CheckCircle2 className="h-3 w-3 shrink-0" />}
+            {foot}
+          </p>
+        )}
+      </div>
+
+      {href && (
+        <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
       )}
+    </div>
+  );
+
+  return href ? (
+    <Link href={href} className="block h-full">
+      {body}
+    </Link>
+  ) : (
+    body
+  );
+}
+
+/* ─────────────────────────── Skeleton ─────────────────────────── */
+
+function DashboardSkeleton() {
+  return (
+    <div className="grid gap-3 lg:grid-cols-12">
+      <div className="h-64 animate-pulse rounded-3xl bg-muted lg:col-span-7" />
+      <div className="grid gap-3 sm:grid-cols-3 lg:col-span-5 lg:grid-cols-1">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} className="h-20 animate-pulse rounded-2xl bg-muted" />
+        ))}
+      </div>
     </div>
   );
 }
@@ -409,61 +582,82 @@ function SectionHead({
   count?: number;
 }) {
   return (
-    <div className="mb-4 flex items-center justify-between">
-      <div className="flex items-center gap-2.5">
-        <h2 className="text-base font-semibold tracking-tight text-foreground">
+    <div className="mb-4 flex items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-2.5">
+        <h2 className="shrink-0 font-display text-lg font-bold tracking-tight text-foreground">
           {title}
         </h2>
         {count !== undefined && (
-          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/15 px-1.5 text-[11px] font-bold tabular-nums text-primary">
+          <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 px-1.5 text-[11px] font-bold tabular-nums text-primary">
             {count}
           </span>
         )}
+        <span className="hidden h-px flex-1 bg-gradient-to-r from-border to-transparent sm:block" />
       </div>
       <Link
         href={href}
-        className="flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+        className="group flex shrink-0 items-center gap-1 text-xs font-semibold text-muted-foreground transition-colors hover:text-primary"
       >
         {linkLabel}
-        <ArrowRight className="h-3 w-3" />
+        <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
       </Link>
     </div>
   );
 }
 
-/* ─────────────────────────── Cobro card ─────────────────────────── */
+/* ─────────────────────────── Cobro ticket ─────────────────────────── */
 
 const AVATAR_COLORS: Accent[] = ["indigo", "emerald", "amber", "rose"];
 
-function CobroCard({ cuota, index }: { cuota: CuotaRuta; index: number }) {
+function CobroTicket({ cuota, index }: { cuota: CuotaRuta; index: number }) {
   const initials = cuota.prestamos.clientes.nombre.slice(0, 2).toUpperCase();
   const accent = AVATAR_COLORS[index % AVATAR_COLORS.length];
   const a = accentMap[accent];
+  const enMora = cuota.estado === "mora";
 
   return (
-    <Link href="/app/ruta">
-      <div className="group flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-3 backdrop-blur-sm transition-all hover:border-primary/30 hover:shadow-md hover:shadow-primary/5">
-        <div
-          className={cn(
-            "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-            a.icon,
-          )}
-        >
-          {initials}
+    <Link href="/app/ruta" className="block">
+      <div className="group relative flex items-stretch overflow-hidden rounded-xl border border-border bg-card backdrop-blur-sm transition-all hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5">
+        {/* Cliente */}
+        <div className="flex min-w-0 flex-1 items-center gap-3 py-3 pl-3.5 pr-3">
+          <div
+            className={cn(
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+              a.icon,
+            )}
+          >
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+              {cuota.prestamos.clientes.nombre}
+            </p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              Cuota {cuota.numero_cuota}
+              {enMora ? (
+                <span className="font-semibold text-danger"> · en mora</span>
+              ) : (
+                " · vence hoy"
+              )}
+            </p>
+          </div>
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
-            {cuota.prestamos.clientes.nombre}
-          </p>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Cuota {cuota.numero_cuota} · vence hoy
-          </p>
+
+        {/* Línea de corte estilo recibo */}
+        <div className="relative shrink-0 border-l border-dashed border-border">
+          <span className="absolute -left-[5px] -top-[5px] h-2.5 w-2.5 rounded-full border border-border bg-background" />
+          <span className="absolute -bottom-[5px] -left-[5px] h-2.5 w-2.5 rounded-full border border-border bg-background" />
         </div>
-        <div className="text-right">
-          <p className="text-sm font-semibold tabular-nums text-foreground">
+
+        {/* Monto */}
+        <div className="flex w-28 shrink-0 flex-col items-end justify-center gap-0.5 py-3 pr-3.5">
+          <p className="font-display text-sm font-bold tabular-nums text-foreground">
             {formatCop(cuota.monto_esperado)}
           </p>
-          <ChevronRight className="ml-auto mt-0.5 h-3 w-3 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
+          <p className="flex items-center gap-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 transition-colors group-hover:text-primary">
+            Cobrar
+            <ArrowRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" />
+          </p>
         </div>
       </div>
     </Link>
@@ -488,9 +682,9 @@ function LoanTableRow({ prestamo }: { prestamo: Prestamo }) {
     : "—";
 
   return (
-    <TableRow className="border-border cursor-pointer" onClick={() => {}}>
+    <TableRow className="group border-border cursor-pointer transition-colors hover:bg-primary/[0.04]">
       <TableCell className="pl-4">
-        <Link href={`/app/prestamos/${prestamo.id}`} className="block group">
+        <Link href={`/app/prestamos/${prestamo.id}`} className="block">
           <span className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
             {prestamo.clientes?.nombre ?? "—"}
           </span>
@@ -498,13 +692,13 @@ function LoanTableRow({ prestamo }: { prestamo: Prestamo }) {
       </TableCell>
       <TableCell>
         <Link href={`/app/prestamos/${prestamo.id}`} className="block">
-          <span className="text-sm tabular-nums text-foreground">
+          <span className="text-sm font-medium tabular-nums text-foreground">
             {formatCop(prestamo.capital)}
           </span>
         </Link>
       </TableCell>
       <TableCell className="hidden sm:table-cell">
-        <span className="text-xs text-muted-foreground capitalize">
+        <span className="text-xs capitalize text-muted-foreground">
           {prestamo.modelo_interes.replace("_", " ")}
         </span>
       </TableCell>
@@ -514,16 +708,16 @@ function LoanTableRow({ prestamo }: { prestamo: Prestamo }) {
       <TableCell className="hidden sm:table-cell">
         <Link href={`/app/prestamos/${prestamo.id}`} className="block">
           {saldo ? (
-            <div className="w-28">
-              <div className="h-1 overflow-hidden rounded-full bg-muted">
+            <div className="flex w-28 items-center gap-2">
+              <div className="h-1 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-primary transition-all duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-violet-400 transition-all duration-500"
                   style={{ width: `${pct}%` }}
                 />
               </div>
-              <p className="mt-1 text-right text-[10px] text-muted-foreground tabular-nums">
+              <span className="w-7 text-right text-[10px] tabular-nums text-muted-foreground">
                 {pct}%
-              </p>
+              </span>
             </div>
           ) : (
             <span className="text-xs text-muted-foreground">—</span>

@@ -157,6 +157,7 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
+  --font-display: var(--font-bricolage), var(--font-geist-sans), sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-accent: var(--sidebar-accent);
@@ -212,5 +213,60 @@ body {
 @layer base {
   * {
     @apply border-border;
+  }
+}
+
+/* ── Dashboard motion ── */
+@keyframes dash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dash-grow-y {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes dash-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.dash-rise {
+  opacity: 0;
+  animation: dash-rise 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.dash-bar {
+  transform-origin: bottom;
+  animation: dash-grow-y 0.9s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.dash-fill {
+  transform-origin: left;
+  animation: dash-grow-x 1.1s cubic-bezier(0.22, 1, 0.36, 1) 0.35s backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-rise,
+  .dash-bar,
+  .dash-fill {
+    animation: none;
+    opacity: 1;
+    transform: none;
   }
 }
