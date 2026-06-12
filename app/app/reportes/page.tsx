@@ -20,6 +20,11 @@ import { formatCop } from "@/lib/domain/money";
 import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import {
+  PageHeader,
+  SectionHead,
+  FilterPills,
+} from "@/components/ui/page-header";
 import { cn } from "@/components/ui/cn";
 import { toast } from "sonner";
 
@@ -66,50 +71,43 @@ export default function ReportesPage() {
       : cobradoresRendimiento.filter((r) => r.cobrador_id === cobradorFiltro);
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Reportes</h1>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => toast.success("CSV exportado")}
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">CSV</span>
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => toast.success("PDF exportado")}
-          >
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">PDF</span>
-          </Button>
-        </div>
-      </div>
+    <div className="space-y-7">
+      <PageHeader
+        eyebrow="Análisis"
+        title="Reportes"
+        subtitle="Métricas y rendimiento de tu operación"
+        actions={
+          <>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => toast.success("CSV exportado")}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">CSV</span>
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => toast.success("PDF exportado")}
+            >
+              <Download className="h-4 w-4" />
+              <span className="hidden sm:inline">PDF</span>
+            </Button>
+          </>
+        }
+      />
 
       {/* Filtros */}
-      <Card padding="md">
+      <Card padding="md" className="dash-rise" style={{ animationDelay: "60ms" }}>
         <div className="space-y-3">
           <div>
-            <p className="text-xs text-muted-foreground mb-2">Periodo</p>
-            <div className="flex gap-2">
-              {PERIODOS.map((p) => (
-                <button
-                  key={p.value}
-                  onClick={() => setPeriodo(p.value)}
-                  className={cn(
-                    "rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-                    periodo === p.value
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80",
-                  )}
-                >
-                  {p.label}
-                </button>
-              ))}
-            </div>
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Periodo
+            </p>
+            <FilterPills options={PERIODOS} value={periodo} onChange={setPeriodo} />
           </div>
 
           {periodo === "rango" && (
@@ -150,53 +148,43 @@ export default function ReportesPage() {
       </Card>
 
       {/* Metricas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card padding="md">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-success" />
-            <p className="text-xs text-muted-foreground">Recaudo del periodo</p>
-          </div>
-          <p className="text-lg font-bold font-mono text-success mt-1">
-            {formatCop(metricas?.recaudoTotal ?? 0)}
-          </p>
-        </Card>
-        <Card padding="md">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-danger" />
-            <p className="text-xs text-muted-foreground">Mora activa</p>
-          </div>
-          <p className="text-lg font-bold font-mono text-danger mt-1">
-            {formatCop(cartera?.montoTotal ?? 0)}
-          </p>
-        </Card>
-        <Card padding="md">
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" />
-            <p className="text-xs text-muted-foreground">Prestamos activos</p>
-          </div>
-          <p className="text-lg font-bold text-primary mt-1">
-            {metricas?.prestamosActivos ?? 0}
-          </p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            En mora: {metricas?.prestamosEnMora ?? 0}
-          </p>
-        </Card>
-        <Card padding="md">
-          <div className="flex items-center gap-2">
-            <Target className="h-4 w-4 text-primary" />
-            <p className="text-xs text-muted-foreground">Proyeccion 30 dias</p>
-          </div>
-          <p className="text-lg font-bold text-primary mt-1">
-            {formatCop(proyeccion?.total ?? 0)}
-          </p>
-        </Card>
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <ReporteStat
+          icon={TrendingUp}
+          label="Recaudo del periodo"
+          value={formatCop(metricas?.recaudoTotal ?? 0)}
+          chip="bg-success/15 text-success"
+          valueClass="text-success"
+          delay={100}
+        />
+        <ReporteStat
+          icon={AlertTriangle}
+          label="Mora activa"
+          value={formatCop(cartera?.montoTotal ?? 0)}
+          chip="bg-danger/15 text-danger"
+          valueClass={(cartera?.montoTotal ?? 0) > 0 ? "text-danger" : undefined}
+          delay={150}
+        />
+        <ReporteStat
+          icon={Activity}
+          label="Préstamos activos"
+          value={metricas?.prestamosActivos ?? 0}
+          foot={`En mora: ${metricas?.prestamosEnMora ?? 0}`}
+          chip="bg-primary/15 text-primary"
+          delay={200}
+        />
+        <ReporteStat
+          icon={Target}
+          label="Proyección 30 días"
+          value={formatCop(proyeccion?.total ?? 0)}
+          chip="bg-info/15 text-info"
+          delay={250}
+        />
       </div>
 
       {/* Recaudo diario */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-          Recaudo diario
-        </h2>
+      <div className="dash-rise" style={{ animationDelay: "300ms" }}>
+        <SectionHead title="Recaudo diario" />
         <Card padding="md">
           {loadingChart ? (
             <p className="text-center text-sm text-muted-foreground py-4">Cargando...</p>
@@ -238,10 +226,8 @@ export default function ReportesPage() {
       </div>
 
       {/* Rendimiento por cobrador */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-          Rendimiento por cobrador
-        </h2>
+      <div className="dash-rise" style={{ animationDelay: "360ms" }}>
+        <SectionHead title="Rendimiento por cobrador" />
         {rendimientoFiltrado.length === 0 ? (
           <Card padding="md">
             <p className="text-center text-sm text-muted-foreground">Sin datos para el periodo</p>
@@ -265,10 +251,8 @@ export default function ReportesPage() {
       </div>
 
       {/* Cartera en riesgo */}
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">
-          Cartera en riesgo
-        </h2>
+      <div className="dash-rise" style={{ animationDelay: "420ms" }}>
+        <SectionHead title="Cartera en riesgo" />
         <Card padding="md">
           {cartera ? (
             <div className="space-y-2">
@@ -305,6 +289,49 @@ export default function ReportesPage() {
           )}
         </Card>
       </div>
+    </div>
+  );
+}
+
+function ReporteStat({
+  icon: Icon,
+  label,
+  value,
+  foot,
+  chip,
+  valueClass,
+  delay,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string | number;
+  foot?: string;
+  chip: string;
+  valueClass?: string;
+  delay: number;
+}) {
+  return (
+    <div
+      className="dash-rise rounded-2xl border border-border bg-card p-4 backdrop-blur-sm"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className={cn("flex h-8 w-8 items-center justify-center rounded-xl", chip)}>
+          <Icon className="h-3.5 w-3.5" />
+        </span>
+        <span className="text-right text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          {label}
+        </span>
+      </div>
+      <p
+        className={cn(
+          "mt-3 truncate font-display text-xl font-bold leading-none tracking-tight text-foreground tabular-nums",
+          valueClass,
+        )}
+      >
+        {value}
+      </p>
+      {foot && <p className="mt-1.5 text-xs text-muted-foreground">{foot}</p>}
     </div>
   );
 }

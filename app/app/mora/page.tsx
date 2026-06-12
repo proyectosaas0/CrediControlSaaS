@@ -4,7 +4,15 @@ import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Search, Phone, DollarSign, ShieldCheck, Send, AlertOctagon } from "lucide-react";
+import {
+  Phone,
+  DollarSign,
+  ShieldCheck,
+  Send,
+  AlertOctagon,
+  AlertTriangle,
+  Clock,
+} from "lucide-react";
 import { useMoraList, type MoraRegistro } from "@/hooks/queries/use-mora";
 import { formatCop } from "@/lib/domain/money";
 import { Card } from "@/components/ui/card";
@@ -12,6 +20,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { SkeletonGrid, SkeletonList } from "@/components/ui/skeleton";
+import {
+  PageHeader,
+  FilterPills,
+  SearchInput,
+  staggerDelay,
+} from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { cn } from "@/components/ui/cn";
@@ -76,73 +90,61 @@ export default function MoraPage() {
   if (error) return <ErrorState message={error.message} onRetry={() => refetch()} />;
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-foreground">Panel de Mora</h1>
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow="Riesgo"
+        title="Panel de mora"
+        subtitle={
+          isLoading
+            ? "Cargando cartera en riesgo…"
+            : resumen.clientesEnMora === 0
+              ? "Cartera sana: sin moras activas."
+              : `${resumen.clientesEnMora} cliente${resumen.clientesEnMora !== 1 ? "s" : ""} con mora activa`
+        }
+      />
 
       {isLoading ? (
         <SkeletonGrid count={3} cols={3} />
       ) : (
-        <div className="grid grid-cols-3 gap-3">
-          <Card padding="md">
-            <p className="text-xs text-muted-foreground">Clientes en mora</p>
-            <p className="text-lg font-bold text-danger">{resumen.clientesEnMora}</p>
-          </Card>
-          <Card padding="md">
-            <p className="text-xs text-muted-foreground">Monto total</p>
-            <p className="text-lg font-bold font-mono text-danger">
-              {formatCop(resumen.montoTotalMora)}
-            </p>
-          </Card>
-          <Card padding="md">
-            <p className="text-xs text-muted-foreground">Promedio dias</p>
-            <p className="text-lg font-bold text-warning">{resumen.promedioDias}</p>
-          </Card>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <MoraStat
+            icon={AlertTriangle}
+            label="Clientes en mora"
+            value={resumen.clientesEnMora}
+            tone={resumen.clientesEnMora > 0 ? "danger" : "muted"}
+            delay={60}
+          />
+          <MoraStat
+            icon={DollarSign}
+            label="Monto total"
+            value={formatCop(resumen.montoTotalMora)}
+            tone={resumen.montoTotalMora > 0 ? "danger" : "muted"}
+            delay={120}
+          />
+          <MoraStat
+            icon={Clock}
+            label="Promedio días"
+            value={resumen.promedioDias}
+            tone={resumen.promedioDias > 0 ? "warning" : "muted"}
+            delay={180}
+          />
         </div>
       )}
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Buscar por cliente..."
+      <div
+        className="dash-rise flex flex-col gap-3"
+        style={{ animationDelay: "240ms" }}
+      >
+        <SearchInput
+          placeholder="Buscar por cliente…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex h-11 w-full rounded-lg border border-border bg-background pl-10 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         />
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {estados.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => setFiltroEstado(f.value)}
-            className={cn(
-              "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-              filtroEstado === f.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80",
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {diasFiltros.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => setFiltroDias(f.value)}
-            className={cn(
-              "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-              filtroDias === f.value
-                ? "bg-warning text-white"
-                : "bg-muted text-muted-foreground hover:bg-muted/80",
-            )}
-          >
-            {f.label}
-          </button>
-        ))}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <FilterPills options={estados} value={filtroEstado} onChange={setFiltroEstado} />
+          <span className="hidden h-4 w-px bg-border sm:block" />
+          <FilterPills options={diasFiltros} value={filtroDias} onChange={setFiltroDias} />
+        </div>
       </div>
 
       {isLoading ? (
@@ -154,75 +156,122 @@ export default function MoraPage() {
           description={search || filtroEstado !== "todos" || filtroDias !== "todos" ? "Intenta con otros filtros." : "Todos los clientes están al día."}
         />
       ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {filtered.map((mora) => (
-            <MoraCard key={mora.id} mora={mora} />
+        <div className="grid gap-2.5 lg:grid-cols-2">
+          {filtered.map((mora, i) => (
+            <MoraCard key={mora.id} mora={mora} index={i} />
           ))}
         </div>
       )}
-
-      <p className="text-center text-xs text-muted-foreground">
-        {filtered.length} registro{filtered.length !== 1 ? "s" : ""}
-      </p>
     </div>
   );
 }
 
-function MoraCard({ mora }: { mora: MoraRegistro }) {
-  const diasMora = mora.dias_mora ?? 0;
+function MoraStat({
+  icon: Icon,
+  label,
+  value,
+  tone,
+  delay,
+}: {
+  icon: typeof AlertTriangle;
+  label: string;
+  value: string | number;
+  tone: "danger" | "warning" | "muted";
+  delay: number;
+}) {
+  const toneStyles = {
+    danger: "bg-danger/15 text-danger",
+    warning: "bg-warning/15 text-warning",
+    muted: "bg-muted text-muted-foreground",
+  };
+  return (
+    <div
+      className="dash-rise flex items-center gap-4 rounded-2xl border border-border bg-card px-4 py-4 backdrop-blur-sm"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div
+        className={cn(
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+          toneStyles[tone],
+        )}
+      >
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+          {label}
+        </p>
+        <p className="mt-1 truncate font-display text-xl font-bold leading-none tracking-tight text-foreground tabular-nums">
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
 
-  const severityColor =
+function MoraCard({ mora, index }: { mora: MoraRegistro; index: number }) {
+  const diasMora = mora.dias_mora ?? 0;
+  const montoPendiente = (mora.monto_mora ?? 0) - mora.monto_pagado_mora;
+
+  const severity =
     diasMora <= 10
-      ? "border-l-warning"
+      ? { border: "border-l-warning", chip: "bg-warning/15 text-warning" }
       : diasMora <= 20
-        ? "border-l-orange-500"
-        : "border-l-danger";
+        ? { border: "border-l-orange-500", chip: "bg-orange-500/15 text-orange-400" }
+        : { border: "border-l-danger", chip: "bg-danger/15 text-danger" };
 
   return (
-    <Card padding="md" className={cn("border-l-4", severityColor)}>
-      <div className="flex items-start justify-between">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="truncate text-sm font-semibold text-foreground">
-              {mora.prestamos.clientes.nombre}
-            </p>
-          </div>
-
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
+    <Card
+      padding="md"
+      className={cn("dash-rise border-l-4", severity.border)}
+      style={staggerDelay(index)}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-foreground">
+            {mora.prestamos.clientes.nombre}
+          </p>
+          {mora.prestamos.clientes.telefono && (
+            <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
               <Phone className="h-3 w-3" />
-              {mora.prestamos.clientes.telefono ?? ""}
-            </span>
-          </div>
-
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <span
-              className={cn(
-                "rounded-full px-2 py-0.5 text-xs font-medium",
-                mora.estado === "activa"
-                  ? "bg-danger/15 text-danger"
-                  : mora.estado === "pagada"
-                    ? "bg-success/15 text-success"
-                    : "bg-muted text-muted-foreground",
-              )}
-            >
-              {diasMora} dias en mora
-            </span>
-            <span className="text-xs font-mono font-semibold text-danger">
-              {formatCop((mora.monto_mora ?? 0) - mora.monto_pagado_mora)}
-            </span>
-          </div>
-
-          <div className="mt-2 flex gap-1 text-xs text-muted-foreground">
-            <span>Cuota: {formatCop(mora.prestamos.cuota_diaria ?? 0)}</span>
-            <span>·</span>
-            <span>Capital: {formatCop(mora.prestamos.capital)}</span>
-          </div>
+              {mora.prestamos.clientes.telefono}
+            </p>
+          )}
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="font-display text-lg font-bold leading-none tabular-nums text-danger">
+            {formatCop(montoPendiente)}
+          </p>
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
+            Pendiente
+          </p>
         </div>
       </div>
 
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+        <span
+          className={cn(
+            "rounded-full px-2 py-0.5 font-semibold tabular-nums",
+            mora.estado === "activa"
+              ? severity.chip
+              : mora.estado === "pagada"
+                ? "bg-success/15 text-success"
+                : "bg-muted text-muted-foreground",
+          )}
+        >
+          {diasMora} día{diasMora !== 1 ? "s" : ""} en mora
+        </span>
+        <span className="tabular-nums">
+          Cuota {formatCop(mora.prestamos.cuota_diaria ?? 0)}
+        </span>
+        <span aria-hidden>·</span>
+        <span className="tabular-nums">
+          Capital {formatCop(mora.prestamos.capital)}
+        </span>
+      </div>
+
       {mora.estado === "activa" && (
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3.5 flex gap-2 border-t border-dashed border-border pt-3">
           <PagarMoraButton mora={mora} />
           <CondonarMoraButton mora={mora} />
           <WhatsAppButton

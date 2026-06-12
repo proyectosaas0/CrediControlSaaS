@@ -12,8 +12,6 @@ import {
   Phone,
   KeyRound,
   Trash2,
-  Shield,
-  User,
   UsersRound,
   Plus,
 } from "lucide-react";
@@ -28,6 +26,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { toast } from "sonner";
 import { cn } from "@/components/ui/cn";
+import { PageHeader, SectionHead, staggerDelay } from "@/components/ui/page-header";
 
 const createAdminSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio"),
@@ -53,37 +52,36 @@ export default function UsuariosPage() {
   if (error) return <ErrorState message={error.message} onRetry={() => refetch()} />;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Usuarios</h1>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline ml-1">Nuevo admin</span>
-        </Button>
-      </div>
+    <div className="space-y-8">
+      <PageHeader
+        eyebrow="Equipo"
+        title="Usuarios"
+        subtitle={`${usuarios.length} cuenta${usuarios.length !== 1 ? "s" : ""} con acceso al sistema`}
+        actions={
+          <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5">
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            <span className="hidden sm:inline">Nuevo admin</span>
+            <span className="sm:hidden">Nuevo</span>
+          </Button>
+        }
+      />
 
       {admins.length > 0 && (
-        <section className="space-y-3">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-            <Shield className="h-4 w-4" />
-            Administradores
-          </h2>
-          <div className="grid gap-3 lg:grid-cols-2">
-            {admins.map((u) => <UsuarioCard key={u.id} usuario={u} />)}
+        <section className="dash-rise" style={{ animationDelay: "80ms" }}>
+          <SectionHead title="Administradores" count={admins.length} />
+          <div className="grid gap-2.5 lg:grid-cols-2">
+            {admins.map((u, i) => <UsuarioCard key={u.id} usuario={u} index={i} />)}
           </div>
         </section>
       )}
 
-      <section className="space-y-3">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground">
-          <User className="h-4 w-4" />
-          Cobradores
-        </h2>
+      <section className="dash-rise" style={{ animationDelay: "160ms" }}>
+        <SectionHead title="Cobradores" count={cobradores.length} />
         {cobradores.length === 0 ? (
           <EmptyState icon={UsersRound} title="Sin cobradores" description="Crea cobradores desde el módulo Cobradores." />
         ) : (
-          <div className="grid gap-3 lg:grid-cols-2">
-            {cobradores.map((u) => <UsuarioCard key={u.id} usuario={u} />)}
+          <div className="grid gap-2.5 lg:grid-cols-2">
+            {cobradores.map((u, i) => <UsuarioCard key={u.id} usuario={u} index={i} />)}
           </div>
         )}
       </section>
@@ -101,7 +99,7 @@ export default function UsuariosPage() {
   );
 }
 
-function UsuarioCard({ usuario }: { usuario: Usuario }) {
+function UsuarioCard({ usuario, index }: { usuario: Usuario; index: number }) {
   const queryClient = useQueryClient();
   const [confirmEliminar, setConfirmEliminar] = useState(false);
   const [loadingToggle, setLoadingToggle] = useState(false);
@@ -158,7 +156,7 @@ function UsuarioCard({ usuario }: { usuario: Usuario }) {
     : "Nunca";
 
   return (
-    <Card padding="md">
+    <Card padding="md" className="dash-rise" style={staggerDelay(index)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0 space-y-1.5">
           <div className="flex items-center gap-2 flex-wrap">

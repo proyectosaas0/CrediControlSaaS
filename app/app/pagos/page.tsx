@@ -2,14 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search, Banknote, Plus, Calendar, CreditCard } from "lucide-react";
+import { Banknote, Plus, Calendar, CreditCard } from "lucide-react";
 import { usePagos, useCronogramaPrestamo } from "@/hooks/queries/use-pagos";
 import { useClientes } from "@/hooks/queries/use-clientes";
 import { usePrestamos } from "@/hooks/queries/use-prestamos";
 import { useAuth } from "@/providers/auth-provider";
 import { useQueryClient } from "@tanstack/react-query";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  PageHeader,
+  SearchInput,
+  staggerDelay,
+} from "@/components/ui/page-header";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -54,32 +58,40 @@ export default function PagosPage() {
   const totalMonto = filtered.reduce((sum, p) => sum + p.monto, 0);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Pagos</h1>
-        {isAdmin && (
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline ml-1">Registrar</span>
-          </Button>
-        )}
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow="Finanzas"
+        title="Pagos"
+        subtitle={
+          isPending ? (
+            "Cargando pagos…"
+          ) : (
+            <>
+              {filtered.length} pago{filtered.length !== 1 ? "s" : ""} · total{" "}
+              <span className="font-semibold text-foreground tabular-nums">
+                {formatCop(totalMonto)}
+              </span>
+            </>
+          )
+        }
+        actions={
+          isAdmin && (
+            <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5">
+              <Plus className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Registrar pago</span>
+              <span className="sm:hidden">Registrar</span>
+            </Button>
+          )
+        }
+      />
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Buscar por cliente o ID..."
+      <div className="dash-rise" style={{ animationDelay: "60ms" }}>
+        <SearchInput
+          placeholder="Buscar por cliente o ID…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex h-11 w-full rounded-lg border border-border bg-background pl-10 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
         />
       </div>
-
-      <p className="text-xs text-muted-foreground">
-        {filtered.length} pago{filtered.length !== 1 ? "s" : ""} · Total:{" "}
-        {formatCop(totalMonto)}
-      </p>
 
       {isPending ? (
         <SkeletonList count={4} />
@@ -104,32 +116,37 @@ export default function PagosPage() {
           }
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((pago) => (
-            <Link key={pago.id} href={`/app/pagos/${pago.id}`}>
-              <Card
-                padding="md"
-                className="transition-colors hover:border-primary/30 cursor-pointer h-full"
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((pago, i) => (
+            <Link key={pago.id} href={`/app/pagos/${pago.id}`} className="block h-full">
+              <div
+                className="dash-rise group flex h-full items-center gap-3.5 rounded-xl border border-border bg-card px-4 py-3.5 backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5"
+                style={staggerDelay(i)}
               >
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-foreground">
-                    {pago.clientes?.nombre ?? "—"}
-                  </p>
-                  <p className="text-sm font-semibold text-foreground">
-                    {formatCop(pago.monto)}
-                  </p>
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success">
+                  <Banknote className="h-4 w-4" />
                 </div>
-                <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {new Date(pago.created_at).toLocaleDateString("es-CO")}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <CreditCard className="h-3 w-3" />
-                    {pago.medio_pago}
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                      {pago.clientes?.nombre ?? "—"}
+                    </p>
+                    <p className="shrink-0 font-display text-sm font-bold tabular-nums text-success">
+                      +{formatCop(pago.monto)}
+                    </p>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {new Date(pago.created_at).toLocaleDateString("es-CO")}
+                    </span>
+                    <span className="flex items-center gap-1 capitalize">
+                      <CreditCard className="h-3 w-3" />
+                      {pago.medio_pago}
+                    </span>
+                  </div>
                 </div>
-              </Card>
+              </div>
             </Link>
           ))}
         </div>

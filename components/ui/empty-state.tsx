@@ -1,5 +1,4 @@
 import type { LucideIcon } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/components/ui/cn";
 
 type EmptyStateProps = {
@@ -12,15 +11,28 @@ type EmptyStateProps = {
 
 export function EmptyState({ icon: Icon, title, description, action, className }: EmptyStateProps) {
   return (
-    <Card padding="md" className={cn("flex flex-col items-center justify-center py-10 text-center", className)}>
-      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.04] ring-1 ring-white/[0.06] mb-4">
-        <Icon className="h-7 w-7 text-muted-foreground" />
-      </div>
-      <p className="text-sm font-semibold text-foreground">{title}</p>
-      {description && (
-        <p className="mt-1 text-xs text-muted-foreground max-w-xs">{description}</p>
+    <div
+      className={cn(
+        "dash-rise relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-border py-14 text-center",
+        className,
       )}
-      {action && <div className="mt-4">{action}</div>}
-    </Card>
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 50% at 50% 0%, color-mix(in srgb, var(--primary) 5%, transparent), transparent)",
+        }}
+      />
+      <div className="relative mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/[0.07] ring-1 ring-primary/15">
+        <Icon className="h-6 w-6 text-muted-foreground" />
+      </div>
+      <p className="relative font-display text-base font-bold text-foreground">{title}</p>
+      {description && (
+        <p className="relative mt-1 max-w-xs text-xs text-muted-foreground">{description}</p>
+      )}
+      {action && <div className="relative mt-4">{action}</div>}
+    </div>
   );
 }

@@ -12,6 +12,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
+import { PageHeader, SectionHead } from "@/components/ui/page-header";
+import { SkeletonGrid } from "@/components/ui/skeleton";
+import { cn } from "@/components/ui/cn";
 import { toast } from "sonner";
 
 const MEDIO_LABELS: Record<string, { label: string; Icon: React.ElementType }> = {
@@ -25,83 +28,140 @@ export default function CajaPage() {
   const { effectiveOrgId } = useAuth();
   const { data: resumen, isLoading, refetch } = useCajaResumen(today, { enabled: !!effectiveOrgId });
 
-  if (isLoading) {
-    return (
-      <Card padding="md" className="py-10 text-center">
-        <p className="text-sm text-muted-foreground">Cargando caja...</p>
-      </Card>
-    );
-  }
-
   const breakdown = resumen?.breakdown ?? {};
   const mediosConPagos = Object.entries(breakdown).filter(([, v]) => v > 0);
+  const totalRecaudado = resumen?.totalRecaudado ?? 0;
+  const diferencia = resumen?.diferencia ?? 0;
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-bold text-foreground">Caja Diaria</h1>
+    <div className="space-y-7">
+      <PageHeader
+        eyebrow={new Date().toLocaleDateString("es-CO", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        })}
+        title="Caja diaria"
+        subtitle="Consolidado de recaudo y cierres del día"
+      />
 
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Resumen del dia</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          <Card padding="md">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-success" />
-              <p className="text-xs text-muted-foreground">Total esperado</p>
-            </div>
-            <p className="text-lg font-bold font-mono text-foreground mt-1">
-              {formatCop(resumen?.totalEsperado ?? 0)}
-            </p>
-          </Card>
-          <Card padding="md">
-            <div className="flex items-center gap-2">
-              <Wallet className="h-4 w-4 text-primary" />
-              <p className="text-xs text-muted-foreground">Recaudado</p>
-            </div>
-            <p className="text-lg font-bold font-mono text-success mt-1">
-              {formatCop(resumen?.totalRecaudado ?? 0)}
-            </p>
-          </Card>
-          <Card padding="md">
-            <div className="flex items-center gap-2">
-              <TrendingDown className="h-4 w-4 text-danger" />
-              <p className="text-xs text-muted-foreground">Diferencia</p>
-            </div>
-            <p className="text-lg font-bold font-mono text-danger mt-1">
-              {formatCop(resumen?.diferencia ?? 0)}
-            </p>
-          </Card>
+      {isLoading ? (
+        <SkeletonGrid count={3} cols={3} />
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <CajaStat
+            icon={TrendingUp}
+            label="Total esperado"
+            value={formatCop(resumen?.totalEsperado ?? 0)}
+            chip="bg-primary/15 text-primary"
+            delay={60}
+          />
+          <CajaStat
+            icon={Wallet}
+            label="Recaudado"
+            value={formatCop(totalRecaudado)}
+            chip="bg-success/15 text-success"
+            valueClass="text-success"
+            delay={120}
+          />
+          <CajaStat
+            icon={TrendingDown}
+            label="Diferencia"
+            value={formatCop(diferencia)}
+            chip={diferencia > 0 ? "bg-danger/15 text-danger" : "bg-muted text-muted-foreground"}
+            valueClass={diferencia > 0 ? "text-danger" : undefined}
+            delay={180}
+          />
         </div>
-      </div>
+      )}
 
-      <div>
-        <h2 className="text-sm font-semibold text-muted-foreground mb-3">Recaudo por medio de pago</h2>
-        {mediosConPagos.length === 0 ? (
-          <Card padding="md">
-            <p className="text-sm text-muted-foreground text-center">Sin pagos registrados hoy</p>
+      <section className="dash-rise" style={{ animationDelay: "240ms" }}>
+        <SectionHead title="Recaudo por medio de pago" />
+        {!isLoading && mediosConPagos.length === 0 ? (
+          <Card padding="md" className="border-dashed">
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Sin pagos registrados hoy
+            </p>
           </Card>
         ) : (
-          <div className="space-y-2">
+          <Card padding="none" className="divide-y divide-border overflow-hidden">
             {mediosConPagos.map(([medio, monto]) => {
               const config = MEDIO_LABELS[medio] ?? { label: medio, Icon: Wallet };
+              const share = totalRecaudado > 0 ? (monto / totalRecaudado) * 100 : 0;
               return (
-                <Card key={medio} padding="md">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <config.Icon className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">{config.label}</span>
+                <div key={medio} className="px-4 py-3.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <config.Icon className="h-3.5 w-3.5" />
+                      </span>
+                      <span className="text-sm font-semibold text-foreground">{config.label}</span>
                     </div>
-                    <span className="text-sm font-bold font-mono text-foreground">{formatCop(monto)}</span>
+                    <div className="text-right">
+                      <span className="font-display text-sm font-bold tabular-nums text-foreground">
+                        {formatCop(monto)}
+                      </span>
+                      <span className="ml-2 text-[11px] tabular-nums text-muted-foreground">
+                        {Math.round(share)}%
+                      </span>
+                    </div>
                   </div>
-                </Card>
+                  <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="dash-fill h-full rounded-full bg-gradient-to-r from-primary to-violet-400"
+                      style={{ width: `${share}%` }}
+                    />
+                  </div>
+                </div>
               );
             })}
-          </div>
+          </Card>
         )}
-      </div>
+      </section>
 
-      <div className="flex gap-3">
+      <div className="dash-rise flex gap-3" style={{ animationDelay: "320ms" }}>
         <CerrarRutaButton fecha={today} onSuccess={() => refetch()} />
         <CierreGeneralButton fecha={today} resumen={resumen} onSuccess={() => refetch()} />
+      </div>
+    </div>
+  );
+}
+
+function CajaStat({
+  icon: Icon,
+  label,
+  value,
+  chip,
+  valueClass,
+  delay,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  chip: string;
+  valueClass?: string;
+  delay: number;
+}) {
+  return (
+    <div
+      className="dash-rise flex items-center gap-4 rounded-2xl border border-border bg-card px-4 py-4 backdrop-blur-sm"
+      style={{ animationDelay: `${delay}ms` }}
+    >
+      <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", chip)}>
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+          {label}
+        </p>
+        <p
+          className={cn(
+            "mt-1 truncate font-display text-xl font-bold leading-none tracking-tight text-foreground tabular-nums",
+            valueClass,
+          )}
+        >
+          {value}
+        </p>
       </div>
     </div>
   );

@@ -6,11 +6,34 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Building2, Palette, MessageSquare, Percent, Clock } from "lucide-react";
 import { useAuthMe } from "@/hooks/queries/use-auth-me";
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SkeletonList } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/ui/page-header";
+import { cn } from "@/components/ui/cn";
 import { toast } from "sonner";
+
+function ConfigCardTitle({
+  icon: Icon,
+  chip,
+  children,
+}: {
+  icon: React.ElementType;
+  chip: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mb-4 flex items-center gap-2.5">
+      <span className={cn("flex h-8 w-8 items-center justify-center rounded-lg", chip)}>
+        <Icon className="h-4 w-4" />
+      </span>
+      <h3 className="font-display text-base font-bold tracking-tight text-foreground">
+        {children}
+      </h3>
+    </div>
+  );
+}
 
 const configuracionSchema = z.object({
   nombreNegocio: z.string().trim().min(1, "El nombre del negocio es obligatorio"),
@@ -95,23 +118,26 @@ export default function ConfiguracionPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Configuracion</h1>
-        <Button size="sm" type="submit" form="form-configuracion" loading={isSubmitting}>
-          Guardar cambios
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Ajustes"
+        title="Configuración"
+        subtitle="Personaliza la operación de tu negocio"
+        actions={
+          <Button size="sm" type="submit" form="form-configuracion" loading={isSubmitting}>
+            Guardar cambios
+          </Button>
+        }
+      />
 
       <form id="form-configuracion" onSubmit={handleSubmit(onSubmit)} className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
         {/* Col 1: Negocio + Mora */}
         <div className="space-y-6">
 
         {/* Informacion del negocio */}
-        <Card padding="md">
-          <div className="flex items-center gap-2 mb-4">
-            <Building2 className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base">Informacion del negocio</CardTitle>
-          </div>
+        <Card padding="md" className="dash-rise" style={{ animationDelay: "60ms" }}>
+          <ConfigCardTitle icon={Building2} chip="bg-primary/15 text-primary">
+            Información del negocio
+          </ConfigCardTitle>
           <div className="space-y-3">
             <Input
               label="Nombre del negocio"
@@ -134,11 +160,10 @@ export default function ConfiguracionPage() {
         </Card>
 
         {/* Politica de mora */}
-        <Card padding="md">
-          <div className="flex items-center gap-2 mb-4">
-            <Percent className="h-5 w-5 text-warning" />
-            <CardTitle className="text-base">Politica de mora</CardTitle>
-          </div>
+        <Card padding="md" className="dash-rise" style={{ animationDelay: "120ms" }}>
+          <ConfigCardTitle icon={Percent} chip="bg-warning/15 text-warning">
+            Política de mora
+          </ConfigCardTitle>
           <div className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-foreground mb-1.5">
@@ -190,11 +215,10 @@ export default function ConfiguracionPage() {
         <div className="space-y-6">
 
         {/* Preferencias operativas */}
-        <Card padding="md">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="h-5 w-5 text-info" />
-            <CardTitle className="text-base">Preferencias operativas</CardTitle>
-          </div>
+        <Card padding="md" className="dash-rise" style={{ animationDelay: "180ms" }}>
+          <ConfigCardTitle icon={Clock} chip="bg-info/15 text-info">
+            Preferencias operativas
+          </ConfigCardTitle>
           <div className="space-y-3">
             <Input
               label="Tasa de interes predeterminada (%)"
@@ -281,11 +305,10 @@ export default function ConfiguracionPage() {
 
         {/* WhatsApp — full width */}
         {/* Plantilla WhatsApp */}
-        <Card padding="md" className="lg:col-span-2">
-          <div className="flex items-center gap-2 mb-4">
-            <MessageSquare className="h-5 w-5 text-success" />
-            <CardTitle className="text-base">Plantilla WhatsApp</CardTitle>
-          </div>
+        <Card padding="md" className="dash-rise lg:col-span-2" style={{ animationDelay: "240ms" }}>
+          <ConfigCardTitle icon={MessageSquare} chip="bg-success/15 text-success">
+            Plantilla WhatsApp
+          </ConfigCardTitle>
           <div className="space-y-2">
             <textarea
               className="flex min-h-[100px] w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
@@ -299,11 +322,10 @@ export default function ConfiguracionPage() {
         </Card>
 
         {/* Apariencia */}
-        <Card padding="md">
-          <div className="flex items-center gap-2 mb-4">
-            <Palette className="h-5 w-5 text-primary" />
-            <CardTitle className="text-base">Apariencia</CardTitle>
-          </div>
+        <Card padding="md" className="dash-rise" style={{ animationDelay: "300ms" }}>
+          <ConfigCardTitle icon={Palette} chip="bg-primary/15 text-primary">
+            Apariencia
+          </ConfigCardTitle>
           <div className="flex items-center gap-3">
             <input
               type="color"

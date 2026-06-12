@@ -14,6 +14,7 @@ import { type MedioPago } from "@/lib/mock/ruta-types";
 import type { RouteItem } from "@/lib/mock/ruta";
 import { MapPin } from "lucide-react";
 import { toast } from "sonner";
+import { PageHeader, FilterPills, staggerDelay } from "@/components/ui/page-header";
 
 type FilterType = "todos" | CuotaRuta["estado"] | "no_encontrado";
 
@@ -98,39 +99,24 @@ function CobradorRutaView() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-foreground">Ruta de hoy</h1>
-          <p className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString("es-CO", {
-              weekday: "short",
-              day: "numeric",
-              month: "long",
-            })}
-            {" "}&middot; {items.length} cobros
-          </p>
-        </div>
-        <Badge variant="warning" className="text-xs">
-          {pendientes.length} pendientes
-        </Badge>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow={new Date().toLocaleDateString("es-CO", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        })}
+        title="Ruta de hoy"
+        subtitle={`${items.length} cobro${items.length !== 1 ? "s" : ""} programados`}
+        actions={
+          <Badge variant="warning" className="text-xs font-semibold">
+            {pendientes.length} pendiente{pendientes.length !== 1 ? "s" : ""}
+          </Badge>
+        }
+      />
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {FILTER_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            onClick={() => setFilter(opt.value)}
-            className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium transition-colors min-h-[32px] ${
-              filter === opt.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            {opt.label}
-          </button>
-        ))}
+      <div className="dash-rise" style={{ animationDelay: "60ms" }}>
+        <FilterPills options={FILTER_OPTIONS} value={filter} onChange={setFilter} />
       </div>
 
       {filteredItems.length === 0 ? (
@@ -141,12 +127,10 @@ function CobradorRutaView() {
         />
       ) : (
         <div className="space-y-2">
-          {filteredItems.map((item) => (
-            <RouteCard
-              key={item.id}
-              {...item}
-              onClick={() => handleCardClick(item)}
-            />
+          {filteredItems.map((item, i) => (
+            <div key={item.id} className="dash-rise" style={staggerDelay(i)}>
+              <RouteCard {...item} onClick={() => handleCardClick(item)} />
+            </div>
           ))}
         </div>
       )}

@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
+import { SectionHead, staggerDelay } from "@/components/ui/page-header";
 import { formatCop } from "@/lib/domain/money";
 import { toast } from "sonner";
 
@@ -71,50 +72,76 @@ export default function ClienteDetailPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="dash-rise group flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
         Volver
       </button>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_220px] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[1fr_240px] lg:items-start">
         {/* Left: info card */}
-        <Card padding="md">
-          <div className="space-y-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-xl font-bold text-foreground">{cliente.nombre}</h1>
-                {cliente.cedula && (
-                  <p className="text-sm text-muted-foreground">CC {cliente.cedula}</p>
-                )}
+        <Card
+          padding="md"
+          className="dash-rise relative overflow-hidden p-5"
+          style={{ animationDelay: "60ms" }}
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background:
+                "radial-gradient(ellipse 70% 60% at 10% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 60%)",
+            }}
+          />
+          <div className="relative space-y-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3.5">
+                <div className="relative shrink-0">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary to-violet-600 font-display text-base font-bold text-white shadow-lg shadow-primary/25">
+                    {cliente.nombre.slice(0, 2).toUpperCase()}
+                  </div>
+                  <span
+                    className={`absolute -bottom-px -right-px h-3.5 w-3.5 rounded-full border-2 border-card ${cliente.activo ? "bg-success" : "bg-muted-foreground/50"}`}
+                  />
+                </div>
+                <div>
+                  <h1 className="font-display text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                    {cliente.nombre}
+                  </h1>
+                  {cliente.cedula && (
+                    <p className="text-sm text-muted-foreground tabular-nums">
+                      CC {cliente.cedula}
+                    </p>
+                  )}
+                </div>
               </div>
               <ScoreBadge score={cliente.score_pago} size="lg" />
             </div>
 
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Phone className="h-4 w-4" />
+                <Phone className="h-4 w-4 text-primary/70" />
                 <span>{cliente.telefono}</span>
               </div>
               {cliente.direccion && (
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="h-4 w-4" />
+                  <MapPin className="h-4 w-4 text-primary/70" />
                   <span>{cliente.direccion}{cliente.barrio ? ` · ${cliente.barrio}` : ""}</span>
                 </div>
               )}
               {cliente.notas && (
                 <div className="flex items-start gap-2 text-muted-foreground">
-                  <FileText className="h-4 w-4 mt-0.5" />
+                  <FileText className="mt-0.5 h-4 w-4 text-primary/70" />
                   <span>{cliente.notas}</span>
                 </div>
               )}
             </div>
 
-            <div className="flex gap-2 pt-1">
-              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="flex items-center gap-1">
+            <div className="flex gap-2 border-t border-dashed border-border pt-3.5">
+              <Button size="sm" variant="outline" onClick={() => setEditOpen(true)} className="gap-1.5">
                 <Pencil className="h-3.5 w-3.5" />
                 Editar
               </Button>
@@ -123,7 +150,7 @@ export default function ClienteDetailPage() {
                 variant={cliente.activo ? "danger" : "success"}
                 onClick={handleToggleActivo}
                 disabled={togglingActivo}
-                className="flex items-center gap-1"
+                className="gap-1.5"
               >
                 {cliente.activo
                   ? <><PowerOff className="h-3.5 w-3.5" /> Desactivar</>
@@ -136,46 +163,70 @@ export default function ClienteDetailPage() {
 
         {/* Right: stats */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
-          <Card padding="md">
-            <p className="text-xs text-muted-foreground">Total prestado</p>
-            <p className="text-lg font-bold font-mono text-foreground">{formatCop(totalPrestado)}</p>
-          </Card>
-          <Card padding="md">
-            <p className="text-xs text-muted-foreground">Prestamos activos</p>
-            <p className="text-lg font-bold text-foreground">{prestamosActivos.length}</p>
-          </Card>
+          <div
+            className="dash-rise rounded-2xl border border-border bg-card p-4 backdrop-blur-sm"
+            style={{ animationDelay: "120ms" }}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Total prestado
+            </p>
+            <p className="mt-1.5 font-display text-xl font-bold leading-none tracking-tight text-foreground tabular-nums">
+              {formatCop(totalPrestado)}
+            </p>
+          </div>
+          <div
+            className="dash-rise rounded-2xl border border-border bg-card p-4 backdrop-blur-sm"
+            style={{ animationDelay: "180ms" }}
+          >
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Préstamos activos
+            </p>
+            <p className="mt-1.5 font-display text-xl font-bold leading-none tracking-tight text-foreground tabular-nums">
+              {prestamosActivos.length}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div>
-        <h2 className="text-lg font-semibold text-foreground mb-3">Historial de prestamos</h2>
+      <section className="dash-rise" style={{ animationDelay: "240ms" }}>
+        <SectionHead title="Historial de préstamos" count={prestamos.length} />
         {prestamos.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Sin prestamos registrados</p>
+          <p className="text-sm text-muted-foreground">Sin préstamos registrados</p>
         ) : (
-          <div className="space-y-3">
-            {prestamos.map((prestamo) => (
-              <Link key={prestamo.id} href={`/app/prestamos/${prestamo.id}`}>
-                <Card padding="md" className="mb-3">
-                  <div className="flex items-center justify-between">
+          <div className="space-y-2.5">
+            {prestamos.map((prestamo, i) => (
+              <Link key={prestamo.id} href={`/app/prestamos/${prestamo.id}`} className="block">
+                <Card
+                  padding="md"
+                  className="dash-rise group transition-all hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5"
+                  style={staggerDelay(i)}
+                >
+                  <div className="flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-sm font-semibold text-foreground">{formatCop(prestamo.capital)}</p>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="font-display text-base font-bold tabular-nums text-foreground transition-colors group-hover:text-primary">
+                        {formatCop(prestamo.capital)}
+                      </p>
+                      <p className="mt-0.5 text-xs capitalize text-muted-foreground">
                         {prestamo.modelo_interes.replace("_", " ")} · {prestamo.tasa_mensual}% mensual
                       </p>
                     </div>
                     <LoanStatusBadge estado={prestamo.estado} />
                   </div>
-                  <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>Cuota {prestamo.prestamo_saldos?.[0]?.cuotas_pagadas ?? 0}/{prestamo.prestamo_saldos?.[0]?.cuotas_totales ?? 0}</span>
-                    <span>·</span>
-                    <span>{formatCop(prestamo.prestamo_saldos?.[0]?.saldo_pendiente ?? 0)} pendiente</span>
+                  <div className="mt-2.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="tabular-nums">
+                      Cuota {prestamo.prestamo_saldos?.[0]?.cuotas_pagadas ?? 0}/{prestamo.prestamo_saldos?.[0]?.cuotas_totales ?? 0}
+                    </span>
+                    <span aria-hidden>·</span>
+                    <span className="tabular-nums">
+                      {formatCop(prestamo.prestamo_saldos?.[0]?.saldo_pendiente ?? 0)} pendiente
+                    </span>
                   </div>
                 </Card>
               </Link>
             ))}
           </div>
         )}
-      </div>
+      </section>
 
       <Dialog open={editOpen} onClose={() => setEditOpen(false)} title="Editar cliente">
         <EditClienteForm

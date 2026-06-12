@@ -2,19 +2,31 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Search, Plus, Phone, Users } from "lucide-react";
+import { Plus, Phone, Users, MapPin, ArrowUpRight } from "lucide-react";
 import { useClientes, type Cliente } from "@/hooks/queries/use-clientes";
 import { ScoreBadge } from "@/components/domain/score-badge";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { ClientForm } from "@/components/forms/client-form";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
+import {
+  PageHeader,
+  FilterPills,
+  SearchInput,
+  staggerDelay,
+} from "@/components/ui/page-header";
 import { cn } from "@/components/ui/cn";
 
 type FilterPill = "todos" | "activos" | "inactivos";
+
+const AVATAR_STYLES = [
+  "bg-primary/15 text-primary",
+  "bg-success/15 text-success",
+  "bg-warning/15 text-warning",
+  "bg-info/15 text-info",
+];
 
 export default function ClientesPage() {
   const [search, setSearch] = useState("");
@@ -41,48 +53,48 @@ export default function ClientesPage() {
     return list;
   }, [clientes, search, filter]);
 
-  const pills: { value: FilterPill; label: string }[] = [
-    { value: "todos", label: "Todos" },
-    { value: "activos", label: "Activos" },
-    { value: "inactivos", label: "Inactivos" },
+  const activos = clientes.filter((c) => c.activo).length;
+
+  const pills = [
+    { value: "todos" as const, label: "Todos", count: clientes.length },
+    { value: "activos" as const, label: "Activos", count: activos },
+    {
+      value: "inactivos" as const,
+      label: "Inactivos",
+      count: clientes.length - activos,
+    },
   ];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
-        <Button size="sm" onClick={() => setDialogOpen(true)}>
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline ml-1">Crear</span>
-        </Button>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow="Directorio"
+        title="Clientes"
+        subtitle={
+          isPending
+            ? "Cargando cartera de clientes…"
+            : `${clientes.length} cliente${clientes.length !== 1 ? "s" : ""} en tu cartera`
+        }
+        actions={
+          <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1.5">
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            <span className="hidden sm:inline">Crear cliente</span>
+            <span className="sm:hidden">Crear</span>
+          </Button>
+        }
+      />
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Buscar por nombre o cedula..."
+      <div
+        className="dash-rise flex flex-col gap-3 sm:flex-row sm:items-center"
+        style={{ animationDelay: "60ms" }}
+      >
+        <SearchInput
+          placeholder="Buscar por nombre o cédula…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex h-11 w-full rounded-lg border border-border bg-background pl-10 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+          containerClassName="flex-1"
         />
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {pills.map((pill) => (
-          <button
-            key={pill.value}
-            onClick={() => setFilter(pill.value)}
-            className={cn(
-              "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-              filter === pill.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80",
-            )}
-          >
-            {pill.label}
-          </button>
-        ))}
+        <FilterPills options={pills} value={filter} onChange={setFilter} />
       </div>
 
       {isPending ? (
@@ -92,52 +104,30 @@ export default function ClientesPage() {
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Users}
-          title={search || filter !== "todos" ? "Sin resultados" : "Sin clientes aun"}
-          description={search || filter !== "todos" ? "Intenta con otros filtros." : "Crea el primer cliente para empezar."}
-          action={!search && filter === "todos" ? (
-            <Button size="sm" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" />Crear cliente</Button>
-          ) : undefined}
+          title={
+            search || filter !== "todos" ? "Sin resultados" : "Sin clientes aún"
+          }
+          description={
+            search || filter !== "todos"
+              ? "Intenta con otros filtros."
+              : "Crea el primer cliente para empezar."
+          }
+          action={
+            !search && filter === "todos" ? (
+              <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1.5">
+                <Plus className="h-4 w-4" />
+                Crear cliente
+              </Button>
+            ) : undefined
+          }
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((cliente) => (
-            <Link key={cliente.id} href={`/app/clientes/${cliente.id}`}>
-              <Card padding="md" className="flex items-center gap-3 transition-colors hover:border-primary/30 cursor-pointer h-full">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {cliente.nombre}
-                    </p>
-                    <ScoreBadge score={cliente.score_pago} />
-                  </div>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                    {cliente.cedula && <span>CC {cliente.cedula}</span>}
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {cliente.telefono}
-                    </span>
-                  </div>
-                  {cliente.barrio && (
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {cliente.barrio}
-                    </p>
-                  )}
-                </div>
-                <div
-                  className={cn(
-                    "h-2.5 w-2.5 shrink-0 rounded-full",
-                    cliente.activo ? "bg-success" : "bg-muted-foreground",
-                  )}
-                />
-              </Card>
-            </Link>
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((cliente, i) => (
+            <ClienteCard key={cliente.id} cliente={cliente} index={i} />
           ))}
         </div>
       )}
-
-      <p className="text-center text-xs text-muted-foreground">
-        {filtered.length} cliente{filtered.length !== 1 ? "s" : ""}
-      </p>
 
       <Dialog
         open={dialogOpen}
@@ -150,5 +140,63 @@ export default function ClientesPage() {
         />
       </Dialog>
     </div>
+  );
+}
+
+function ClienteCard({ cliente, index }: { cliente: Cliente; index: number }) {
+  const initials = cliente.nombre.slice(0, 2).toUpperCase();
+  const avatar = AVATAR_STYLES[index % AVATAR_STYLES.length];
+
+  return (
+    <Link href={`/app/clientes/${cliente.id}`} className="block h-full">
+      <div
+        className="dash-rise group flex h-full items-center gap-3.5 rounded-xl border border-border bg-card px-4 py-3.5 backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5"
+        style={staggerDelay(index)}
+      >
+        <div className="relative shrink-0">
+          <div
+            className={cn(
+              "flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold",
+              avatar,
+            )}
+          >
+            {initials}
+          </div>
+          <span
+            className={cn(
+              "absolute -bottom-px -right-px h-3 w-3 rounded-full border-2 border-card",
+              cliente.activo ? "bg-success" : "bg-muted-foreground/50",
+            )}
+            title={cliente.activo ? "Activo" : "Inactivo"}
+          />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+              {cliente.nombre}
+            </p>
+            <ScoreBadge score={cliente.score_pago} />
+          </div>
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+            {cliente.cedula && (
+              <span className="tabular-nums">CC {cliente.cedula}</span>
+            )}
+            <span className="flex items-center gap-1">
+              <Phone className="h-3 w-3" />
+              {cliente.telefono}
+            </span>
+            {cliente.barrio && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {cliente.barrio}
+              </span>
+            )}
+          </div>
+        </div>
+
+        <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
+      </div>
+    </Link>
   );
 }

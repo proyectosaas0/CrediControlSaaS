@@ -18,20 +18,32 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
 import { toast } from "sonner";
 import { cn } from "@/components/ui/cn";
+import { PageHeader, staggerDelay } from "@/components/ui/page-header";
 
 export default function CobradoresPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const { data: cobradores = [], isPending, error, refetch } = useCobradores();
 
+  const activos = cobradores.filter((c) => c.activo).length;
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Cobradores</h1>
-        <Button size="sm" onClick={() => setDialogOpen(true)}>
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline ml-1">Agregar</span>
-        </Button>
-      </div>
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow="Equipo"
+        title="Cobradores"
+        subtitle={
+          isPending
+            ? "Cargando equipo…"
+            : `${activos} activo${activos !== 1 ? "s" : ""} de ${cobradores.length} en total`
+        }
+        actions={
+          <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1.5">
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
+            <span className="hidden sm:inline">Agregar cobrador</span>
+            <span className="sm:hidden">Agregar</span>
+          </Button>
+        }
+      />
 
       {isPending ? (
         <SkeletonList count={3} />
@@ -42,12 +54,12 @@ export default function CobradoresPage() {
           icon={UserCircle}
           title="Sin cobradores registrados"
           description="Agrega un cobrador para empezar a asignar rutas de cobro."
-          action={<Button size="sm" onClick={() => setDialogOpen(true)}><Plus className="h-4 w-4" />Agregar cobrador</Button>}
+          action={<Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1.5"><Plus className="h-4 w-4" />Agregar cobrador</Button>}
         />
       ) : (
-        <div className="grid gap-3 lg:grid-cols-2">
-          {cobradores.map((cobrador) => (
-            <CobradorCard key={cobrador.id} cobrador={cobrador} />
+        <div className="grid gap-2.5 lg:grid-cols-2">
+          {cobradores.map((cobrador, i) => (
+            <CobradorCard key={cobrador.id} cobrador={cobrador} index={i} />
           ))}
         </div>
       )}
@@ -66,26 +78,44 @@ export default function CobradoresPage() {
   );
 }
 
-function CobradorCard({ cobrador }: { cobrador: Cobrador }) {
+function CobradorCard({ cobrador, index }: { cobrador: Cobrador; index: number }) {
+  const initials = cobrador.nombre_completo.slice(0, 2).toUpperCase();
+
   return (
-    <Link href={`/app/cobradores/${cobrador.id}`}>
-      <Card padding="md" className="cursor-pointer hover:border-primary/30 transition-colors">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-semibold text-foreground">
-                {cobrador.nombre_completo}
-              </p>
-              <Badge variant={cobrador.activo ? "success" : "muted"}>
-                {cobrador.activo ? "Activo" : "Inactivo"}
-              </Badge>
+    <Link href={`/app/cobradores/${cobrador.id}`} className="block h-full">
+      <Card
+        padding="md"
+        className="dash-rise group h-full cursor-pointer transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5"
+        style={staggerDelay(index)}
+      >
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <div
+              className={cn(
+                "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-bold",
+                cobrador.activo
+                  ? "bg-success/15 text-success"
+                  : "bg-muted text-muted-foreground",
+              )}
+            >
+              {initials}
             </div>
-            {cobrador.telefono && (
-              <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                <Phone className="h-3 w-3" />
-                {cobrador.telefono}
-              </p>
-            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                  {cobrador.nombre_completo}
+                </p>
+                <Badge variant={cobrador.activo ? "success" : "muted"}>
+                  {cobrador.activo ? "Activo" : "Inactivo"}
+                </Badge>
+              </div>
+              {cobrador.telefono && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+                  <Phone className="h-3 w-3" />
+                  {cobrador.telefono}
+                </p>
+              )}
+            </div>
           </div>
           <ToggleActiveButton cobradorId={cobrador.id} activo={cobrador.activo} />
         </div>
