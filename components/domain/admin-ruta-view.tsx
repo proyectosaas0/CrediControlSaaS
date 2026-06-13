@@ -23,20 +23,22 @@ const MOCK_COBRADORES_PROGRESS: CobradorProgress[] = [
 
 export function AdminRutaView() {
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">Ruta del dia</h1>
+    <div className="space-y-5">
+      <div className="space-y-1">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Ruta del día
+        </h1>
         <p className="text-sm text-muted-foreground">
           Progreso de cobradores en tiempo real
         </p>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-3">
         {MOCK_COBRADORES_PROGRESS.map((c) => {
           const pct = c.total > 0 ? Math.round((c.realizados / c.total) * 100) : 0;
           return (
-            <Card key={c.nombre} padding="md">
-              <div className="flex items-center justify-between">
+            <Card key={c.nombre} padding="md" className="overflow-hidden border-border/80 bg-card/90 backdrop-blur-sm">
+              <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="font-semibold text-foreground">{c.nombre}</p>
                   <p className="text-sm text-muted-foreground">
@@ -44,10 +46,10 @@ export function AdminRutaView() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold text-success">
+                  <p className="font-display text-lg font-bold tabular-nums text-success">
                     {formatCop(c.recaudado)}
                   </p>
-                  <Badge variant={pct >= 80 ? "success" : pct >= 50 ? "warning" : "danger"}>
+                  <Badge variant={pct >= 80 ? "success" : pct >= 50 ? "warning" : "danger"} className="shadow-sm">
                     {pct}%
                   </Badge>
                 </div>

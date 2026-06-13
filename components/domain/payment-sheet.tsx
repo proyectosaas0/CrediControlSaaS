@@ -37,6 +37,8 @@ export function PaymentSheet({
 
   if (!item) return null;
 
+  const cuotaLabel = item.cuotaTotal ? `${item.cuotaNumero}/${item.cuotaTotal}` : `${item.cuotaNumero}`;
+
   const montoNumerico = monto ? Number(monto.replace(/\D/g, "")) : item.montoEsperado;
   const isFormValid = medioPago !== null && montoNumerico > 0;
 
@@ -84,7 +86,7 @@ export function PaymentSheet({
           cliente: item.clienteNombre,
           monto: montoNumerico,
           medioPago: MEDIOS_PAGO.find((m) => m.value === medioPago)?.label ?? "",
-          cuota: `${item.cuotaNumero}/${item.cuotaTotal}`,
+          cuota: cuotaLabel,
           saldo: item.saldoPendiente - montoNumerico,
           cobrador: MOCK_COBRADOR,
           fecha: new Date().toLocaleString("es-CO"),
@@ -96,7 +98,7 @@ export function PaymentSheet({
       open={open}
       onClose={onClose}
       side="bottom"
-      title={step === "success" ? "Pago exitoso" : `${item.clienteNombre} · Cuota ${item.cuotaNumero}/${item.cuotaTotal}`}
+      title={step === "success" ? "Pago exitoso" : `${item.clienteNombre} · Cuota ${cuotaLabel}`}
     >
       {step === "form" ? (
         <div className="space-y-4 pb-6" onTransitionEnd={handleOpen}>
@@ -198,7 +200,7 @@ export function PaymentSheet({
               {formatCop(montoNumerico)} registrados
             </p>
             <p className="text-sm text-muted-foreground">
-              {item.clienteNombre} · {MEDIOS_PAGO.find((m) => m.value === medioPago)?.label}
+              {item.clienteNombre} · {MEDIOS_PAGO.find((m) => m.value === medioPago)?.label} · Cuota {cuotaLabel}
             </p>
           </div>
 

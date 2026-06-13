@@ -8,11 +8,13 @@ import { PaymentSheet } from "@/components/domain/payment-sheet";
 import { AdminRutaView } from "@/components/domain/admin-ruta-view";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { Badge } from "@/components/ui/badge";
+import { PlatformStat } from "@/components/ui/platform-stat";
 import { useAuth } from "@/providers/auth-provider";
 import { useRutaHoy, type CuotaRuta } from "@/hooks/queries/use-ruta";
+import { formatCop } from "@/lib/domain/money";
 import { type MedioPago } from "@/lib/mock/ruta-types";
 import type { RouteItem } from "@/lib/mock/ruta";
-import { MapPin } from "lucide-react";
+import { Clock3, CreditCard, MapPin, Wallet, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, FilterPills, staggerDelay } from "@/components/ui/page-header";
 
@@ -71,6 +73,21 @@ function CobradorRutaView() {
     (i) => i.estado === "pendiente" || i.estado === "mora" || i.estado === "parcial",
   );
 
+  const totalEsperado = items.reduce((sum, item) => sum + item.montoEsperado, 0);
+  const totalPagado = items.reduce((sum, item) => sum + (item.montoPagado ?? 0), 0);
+  const totalPendiente = items.reduce((sum, item) => sum + Math.max(item.saldoPendiente, 0), 0);
+  const avance = items.length > 0 ? Math.round(((items.length - pendientes.length) / items.length) * 100) : 0;
+
+  const filterOptions = FILTER_OPTIONS.map((option) => ({
+    ...option,
+    count:
+      option.value === "todos"
+        ? items.length
+        : option.value === "no_encontrado"
+          ? items.filter((item) => item.estado === "no_encontrado").length
+          : items.filter((item) => item.estado === option.value).length,
+  }));
+
   function handleCardClick(item: RouteItem) {
     if (item.estado === "pagado" || item.estado === "no_encontrado") return;
     setSelectedItem(item);
@@ -78,7 +95,6 @@ function CobradorRutaView() {
   }
 
   function handlePaymentSuccess(_id: string, _medioPago: MedioPago, _monto: number) {
-    void _id; void _medioPago; void _monto;
     toast.success("Pago registrado");
     void queryClient.invalidateQueries({ queryKey: ["ruta"] });
     setSheetOpen(false);
@@ -92,8 +108,9 @@ function CobradorRutaView() {
 
   if (isLoading) {
     return (
-      <Card padding="md" className="py-10 text-center">
-        <p className="text-sm text-muted-foreground">Cargando ruta...</p>
+      <Card padding="md" className="py-12 text-center">
+        <p className="text-sm font-medium text-foreground">Cargando la ruta de hoy...</p>
+        <p className="mt-1 text-xs text-muted-foreground">Preparando cobros, estados y filtros.</p>
       </Card>
     );
   }
@@ -107,16 +124,52 @@ function CobradorRutaView() {
           month: "long",
         })}
         title="Ruta de hoy"
-        subtitle={`${items.length} cobro${items.length !== 1 ? "s" : ""} programados`}
+        subtitle={`${items.length} cobro${items.length !== 1 ? "s" : ""} programados · ${avance}% ejecutado`}
         actions={
-          <Badge variant="warning" className="text-xs font-semibold">
-            {pendientes.length} pendiente{pendientes.length !== 1 ? "s" : ""}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="warning" className="text-xs font-semibold">
+              {pendientes.length} pendiente{pendientes.length !== 1 ? "s" : ""}
+            </Badge>
+            <Badge variant="primary" className="text-xs font-semibold">
+              {avance}% avance
+            </Badge>
+          </div>
         }
       />
 
-      <div className="dash-rise" style={{ animationDelay: "60ms" }}>
-        <FilterPills options={FILTER_OPTIONS} value={filter} onChange={setFilter} />
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <PlatformStat
+          icon={Wallet}
+          label="Esperado"
+          value={formatCop(totalEsperado)}
+          chip="bg-primary/12 text-primary"
+          delay={40}
+        />
+        <PlatformStat
+          icon={CreditCard}
+          label="Recaudado"
+          value={formatCop(totalPagado)}
+          chip="bg-success/12 text-success"
+          delay={80}
+        />
+        <PlatformStat
+          icon={Clock3}
+          label="Pendiente"
+          value={pendientes.length}
+          chip="bg-warning/12 text-warning"
+          delay={120}
+        />
+        <PlatformStat
+          icon={TrendingUp}
+          label="Saldo"
+          value={formatCop(totalPendiente)}
+          chip="bg-info/12 text-info"
+          delay={160}
+        />
+      </div>
+
+      <div className="dash-rise rounded-2xl border border-border bg-card/70 p-2 shadow-sm backdrop-blur-sm" style={{ animationDelay: "60ms" }}>
+        <FilterPills options={filterOptions} value={filter} onChange={setFilter} className="px-1" />
       </div>
 
       {filteredItems.length === 0 ? (
@@ -126,7 +179,7 @@ function CobradorRutaView() {
           description="No hay cobros con este filtro para hoy."
         />
       ) : (
-        <div className="space-y-2">
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-2">
           {filteredItems.map((item, i) => (
             <div key={item.id} className="dash-rise" style={staggerDelay(i)}>
               <RouteCard {...item} onClick={() => handleCardClick(item)} />

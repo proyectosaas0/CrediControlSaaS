@@ -38,39 +38,52 @@ export function RouteCard({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full rounded-xl border p-4 text-left transition-all active:scale-[0.98]",
-        estado === "pendiente" && "border-warning/30 bg-warning/5 hover:bg-warning/10",
-        estado === "pagado" && "border-success/30 bg-success/5",
-        estado === "parcial" && "border-info/30 bg-info/5 hover:bg-info/10",
-        estado === "mora" && "border-danger/30 bg-danger/5 hover:bg-danger/10",
-        estado === "no_encontrado" && "border-border bg-muted/50",
+        "group w-full rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.99]",
+        "bg-card/90 shadow-sm shadow-black/5 backdrop-blur-sm hover:-translate-y-0.5 hover:shadow-lg",
+        estado === "pendiente" && "border-warning/25 hover:border-warning/40 bg-warning/[0.04]",
+        estado === "pagado" && "border-success/25 bg-success/[0.04]",
+        estado === "parcial" && "border-info/25 hover:border-info/40 bg-info/[0.04]",
+        estado === "mora" && "border-danger/25 hover:border-danger/40 bg-danger/[0.04]",
+        estado === "no_encontrado" && "border-border bg-muted/40",
         "min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-1">
           <div className="flex items-center gap-2">
             <Circle className={cn("h-2.5 w-2.5 shrink-0", config.dot)} />
-            <span className="truncate text-sm font-semibold text-foreground">
+            <span className="truncate text-[15px] font-semibold text-foreground">
               {clienteNombre}
             </span>
           </div>
-          <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3 shrink-0" />
-            <span className="truncate">{barrio}</span>
-            <span aria-hidden="true">&middot;</span>
-            <span className="shrink-0 font-medium text-foreground">
-              {formatCop(montoPagado ?? montoEsperado)}
-            </span>
+            <span className="truncate">{barrio || "Sin barrio"}</span>
           </div>
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <Badge variant={config.badge}>{config.label}</Badge>
+          <Badge variant={config.badge} className="shadow-sm">
+            {config.label}
+          </Badge>
           <span className="text-[11px] text-muted-foreground">
-            Cuota {cuotaNumero}/{cuotaTotal}
+            Cuota {cuotaTotal ? `${cuotaNumero}/${cuotaTotal}` : cuotaNumero}
           </span>
         </div>
+      </div>
+
+      <div className="mt-3 flex items-end justify-between gap-3 border-t border-border/60 pt-3">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            Monto
+          </p>
+          <p className="mt-1 font-display text-lg font-bold tabular-nums text-foreground">
+            {formatCop(montoPagado ?? montoEsperado)}
+          </p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Saldo {formatCop(Math.max(montoEsperado - (montoPagado ?? 0), 0))}
+        </p>
       </div>
     </button>
   );
