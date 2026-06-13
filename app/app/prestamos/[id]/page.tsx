@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/error-state";
+import { SectionHead } from "@/components/ui/page-header";
 import { toast } from "sonner";
 
 export default function PrestamoDetailPage() {
@@ -42,111 +43,151 @@ export default function PrestamoDetailPage() {
   const progress = cuotasTotales > 0 ? Math.round((cuotasPagadas / cuotasTotales) * 100) : 0;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="dash-rise group flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
         Volver
       </button>
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-foreground">
-          Prestamo {prestamo.id.slice(-4).toUpperCase()}
-        </h1>
+      <div
+        className="dash-rise flex flex-wrap items-end justify-between gap-3"
+        style={{ animationDelay: "40ms" }}
+      >
+        <div>
+          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+            Préstamo #{prestamo.id.slice(-4).toUpperCase()}
+          </p>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            {prestamo.clientes?.nombre ?? "—"}
+          </h1>
+        </div>
         <LoanStatusBadge estado={prestamo.estado} />
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1fr_260px] lg:items-start">
+      <div className="grid gap-4 lg:grid-cols-[1fr_260px] lg:items-start">
         {/* Left: info + cronograma */}
-        <div className="space-y-5">
-          <Card padding="md">
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Cliente</span>
-                <span className="font-medium text-foreground">
-                  {prestamo.clientes?.nombre ?? "—"}
-                </span>
+        <div className="space-y-6">
+          <Card
+            padding="md"
+            className="dash-rise p-5"
+            style={{ animationDelay: "80ms" }}
+          >
+            {/* Cifras clave */}
+            <div className="grid grid-cols-3 divide-x divide-border rounded-xl border border-border bg-primary/[0.04]">
+              <div className="px-3 py-3 text-center sm:px-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  Cuota diaria
+                </p>
+                <p className="mt-1 truncate font-display text-base font-bold tabular-nums text-primary sm:text-lg">
+                  {formatCop(prestamo.cuota_diaria ?? 0)}
+                </p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Capital</span>
-                <span className="font-mono text-foreground">
-                  {formatCop(prestamo.capital)}
-                </span>
+              <div className="px-3 py-3 text-center sm:px-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  Total a pagar
+                </p>
+                <p className="mt-1 truncate font-display text-base font-bold tabular-nums text-foreground sm:text-lg">
+                  {formatCop(prestamo.total_pagar ?? 0)}
+                </p>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Modelo</span>
-                <span className="text-foreground">
-                  {prestamo.modelo_interes.replace("_", " ")}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Tasa mensual</span>
-                <span className="text-foreground">{prestamo.tasa_mensual}%</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Plazo</span>
-                <span className="text-foreground">{prestamo.plazo_dias} dias</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Inicio</span>
-                <span className="text-foreground">{prestamo.fecha_inicio ?? ""}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Fin</span>
-                <span className="text-foreground">{prestamo.fecha_fin ?? ""}</span>
+              <div className="px-3 py-3 text-center sm:px-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  Saldo pendiente
+                </p>
+                <p className="mt-1 truncate font-display text-base font-bold tabular-nums text-danger sm:text-lg">
+                  {formatCop(saldoPendiente)}
+                </p>
               </div>
             </div>
 
-            <div className="mt-4 border-t border-border pt-4 space-y-1">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Cuota diaria</span>
-                <span className="font-bold font-mono text-primary">
-                  {formatCop(prestamo.cuota_diaria ?? 0)}
-                </span>
+            {/* Condiciones */}
+            <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 text-sm sm:grid-cols-3">
+              <div>
+                <dt className="text-xs text-muted-foreground">Capital</dt>
+                <dd className="mt-0.5 font-medium tabular-nums text-foreground">
+                  {formatCop(prestamo.capital)}
+                </dd>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Total a pagar</span>
-                <span className="font-bold font-mono text-foreground">
-                  {formatCop(prestamo.total_pagar ?? 0)}
-                </span>
+              <div>
+                <dt className="text-xs text-muted-foreground">Modelo</dt>
+                <dd className="mt-0.5 font-medium capitalize text-foreground">
+                  {prestamo.modelo_interes.replace("_", " ")}
+                </dd>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Saldo pendiente</span>
-                <span className="font-bold font-mono text-danger">
-                  {formatCop(saldoPendiente)}
-                </span>
+              <div>
+                <dt className="text-xs text-muted-foreground">Tasa mensual</dt>
+                <dd className="mt-0.5 font-medium tabular-nums text-foreground">
+                  {prestamo.tasa_mensual}%
+                </dd>
               </div>
-            </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Plazo</dt>
+                <dd className="mt-0.5 font-medium tabular-nums text-foreground">
+                  {prestamo.plazo_dias} días
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Inicio</dt>
+                <dd className="mt-0.5 font-medium tabular-nums text-foreground">
+                  {prestamo.fecha_inicio ?? "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-muted-foreground">Fin</dt>
+                <dd className="mt-0.5 font-medium tabular-nums text-foreground">
+                  {prestamo.fecha_fin ?? "—"}
+                </dd>
+              </div>
+            </dl>
           </Card>
 
-          <CronogramaSection prestamo={prestamo} cuotasPagadas={cuotasPagadas} />
+          <div className="dash-rise" style={{ animationDelay: "160ms" }}>
+            <CronogramaSection prestamo={prestamo} cuotasPagadas={cuotasPagadas} />
+          </div>
         </div>
 
         {/* Right: stats + actions */}
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-1">
-            <Card padding="md">
-              <p className="text-xs text-muted-foreground">Cuotas pagadas</p>
-              <p className="text-lg font-bold text-success">
-                {cuotasPagadas}/{cuotasTotales}
+            <div
+              className="dash-rise rounded-2xl border border-border bg-card p-4 backdrop-blur-sm"
+              style={{ animationDelay: "120ms" }}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                Cuotas pagadas
               </p>
-            </Card>
-            <Card padding="md">
-              <p className="text-xs text-muted-foreground">Progreso</p>
-              <p className="text-lg font-bold text-foreground">{progress}%</p>
-              <div className="mt-1 h-2 w-full rounded-full bg-muted">
+              <p className="mt-1.5 font-display text-xl font-bold leading-none tabular-nums text-success">
+                {cuotasPagadas}
+                <span className="text-sm text-muted-foreground">/{cuotasTotales}</span>
+              </p>
+            </div>
+            <div
+              className="dash-rise rounded-2xl border border-border bg-card p-4 backdrop-blur-sm"
+              style={{ animationDelay: "180ms" }}
+            >
+              <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                Progreso
+              </p>
+              <p className="mt-1.5 font-display text-xl font-bold leading-none tabular-nums text-foreground">
+                {progress}%
+              </p>
+              <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-2 rounded-full bg-primary transition-all"
+                  className="dash-fill h-full rounded-full bg-gradient-to-r from-primary to-violet-400"
                   style={{ width: `${progress}%` }}
                 />
               </div>
-            </Card>
+            </div>
           </div>
 
           {(canRefinance || canCancel) && (
-            <div className="flex gap-3 lg:flex-col">
+            <div
+              className="dash-rise flex gap-3 lg:flex-col"
+              style={{ animationDelay: "240ms" }}
+            >
               {canRefinance && <RefinanciarButton prestamoId={prestamo.id} />}
               {canCancel && <CancelarButton prestamoId={prestamo.id} />}
             </div>
@@ -180,65 +221,71 @@ function CronogramaSection({
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-foreground mb-3">
-        Cronograma de pagos
-      </h2>
+      <SectionHead title="Cronograma de pagos" count={schedule.length} />
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-border text-muted-foreground">
-              <th className="pb-2 pr-2 text-left font-medium">#</th>
-              <th className="pb-2 pr-2 text-left font-medium">Fecha</th>
-              <th className="pb-2 pr-2 text-right font-medium">Cuota</th>
-              <th className="pb-2 pr-2 text-right font-medium">Capital</th>
-              <th className="pb-2 pr-2 text-right font-medium">Interes</th>
-              <th className="pb-2 text-right font-medium">Saldo</th>
-            </tr>
-          </thead>
-          <tbody>
-            {displaySchedule.map((cuota) => {
-              const isPaid = cuota.numeroCuota <= cuotasPagadas;
-              return (
-                <tr
-                  key={cuota.numeroCuota}
-                  className={`border-b border-border/50 ${isPaid ? "bg-success/5" : ""}`}
-                >
-                  <td className="py-2 pr-2 text-foreground">
-                    {cuota.numeroCuota}
-                  </td>
-                  <td className="py-2 pr-2 text-muted-foreground">
-                    {cuota.fechaEsperada}
-                  </td>
-                  <td className="py-2 pr-2 text-right font-mono text-foreground">
-                    {formatCop(cuota.montoEsperado)}
-                  </td>
-                  <td className="py-2 pr-2 text-right font-mono text-muted-foreground">
-                    {formatCop(cuota.montoCapital)}
-                  </td>
-                  <td className="py-2 pr-2 text-right font-mono text-muted-foreground">
-                    {formatCop(cuota.montoInteres)}
-                  </td>
-                  <td className="py-2 text-right font-mono text-muted-foreground">
-                    {formatCop(cuota.saldoEstimado)}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card backdrop-blur-sm">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border text-muted-foreground">
+                <th className="py-2.5 pl-4 pr-2 text-left text-[10px] font-bold uppercase tracking-[0.14em]">#</th>
+                <th className="py-2.5 pr-2 text-left text-[10px] font-bold uppercase tracking-[0.14em]">Fecha</th>
+                <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Cuota</th>
+                <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Capital</th>
+                <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Interés</th>
+                <th className="py-2.5 pr-4 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Saldo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displaySchedule.map((cuota) => {
+                const isPaid = cuota.numeroCuota <= cuotasPagadas;
+                return (
+                  <tr
+                    key={cuota.numeroCuota}
+                    className={`border-b border-border/50 transition-colors last:border-0 ${isPaid ? "bg-success/[0.06]" : "hover:bg-primary/[0.03]"}`}
+                  >
+                    <td className="py-2.5 pl-4 pr-2">
+                      <span
+                        className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums ${
+                          isPaid
+                            ? "bg-success/15 text-success"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {cuota.numeroCuota}
+                      </span>
+                    </td>
+                    <td className="py-2.5 pr-2 tabular-nums text-muted-foreground">
+                      {cuota.fechaEsperada}
+                    </td>
+                    <td className="py-2.5 pr-2 text-right font-semibold tabular-nums text-foreground">
+                      {formatCop(cuota.montoEsperado)}
+                    </td>
+                    <td className="py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
+                      {formatCop(cuota.montoCapital)}
+                    </td>
+                    <td className="py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
+                      {formatCop(cuota.montoInteres)}
+                    </td>
+                    <td className="py-2.5 pr-4 text-right tabular-nums text-muted-foreground">
+                      {formatCop(cuota.saldoEstimado)}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {schedule.length > 7 && (
+          <button
+            onClick={() => setShowAll(!showAll)}
+            className="w-full border-t border-border py-2.5 text-center text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.05]"
+          >
+            {showAll ? "Ver menos" : `Ver todas las ${schedule.length} cuotas`}
+          </button>
+        )}
       </div>
-
-      {schedule.length > 7 && (
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="mt-2 text-xs text-primary hover:underline"
-        >
-          {showAll
-            ? "Ver menos"
-            : `Ver todas las ${schedule.length} cuotas`}
-        </button>
-      )}
     </div>
   );
 }

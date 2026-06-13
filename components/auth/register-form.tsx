@@ -86,8 +86,10 @@ export function RegisterForm() {
   return (
     <>
       <div className="mb-6 text-center">
-        <h1 className="text-xl font-bold text-foreground">{es.auth.register}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+          {es.auth.register}
+        </h1>
+        <p className="mt-1.5 text-sm text-muted-foreground">
           {es.register.comenzarGratis} — digitaliza tu cobranza en minutos
         </p>
       </div>

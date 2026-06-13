@@ -73,40 +73,70 @@ export default function NuevoPrestamoPage() {
     }
   }, [step1Data, step2Data, router]);
 
+  const STEP_LABELS = ["Cliente", "Condiciones", "Confirmar"];
+
   return (
-    <div className="mx-auto max-w-lg lg:max-w-xl space-y-4">
+    <div className="mx-auto max-w-lg space-y-5 lg:max-w-xl">
       <button
         onClick={() => {
           if (step === 1) router.push("/app/prestamos");
           else setStep((s) => (s - 1) as Step);
         }}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        className="dash-rise group flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        <ArrowLeft className="h-4 w-4" />
-        {step === 1 ? "Volver a prestamos" : "Atras"}
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+        {step === 1 ? "Volver a préstamos" : "Atrás"}
       </button>
 
-      <h1 className="text-2xl font-bold text-foreground">Nuevo prestamo</h1>
-
-      <div className="flex gap-2">
-        {[1, 2, 3].map((s) => (
-          <div
-            key={s}
-            className={`h-1.5 flex-1 rounded-full ${
-              s <= step ? "bg-primary" : "bg-muted"
-            }`}
-          />
-        ))}
+      <div className="dash-rise" style={{ animationDelay: "40ms" }}>
+        <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+          Paso {step} de 3
+        </p>
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          Nuevo préstamo
+        </h1>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        Paso {step} de 3 —{" "}
-        {step === 1
-          ? "Seleccionar cliente"
-          : step === 2
-            ? "Condiciones del prestamo"
-            : "Confirmar prestamo"}
-      </p>
+      {/* Stepper */}
+      <div
+        className="dash-rise flex items-center gap-2"
+        style={{ animationDelay: "80ms" }}
+      >
+        {STEP_LABELS.map((label, i) => {
+          const num = (i + 1) as Step;
+          const isDone = num < step;
+          const isCurrent = num === step;
+          return (
+            <div key={label} className="flex flex-1 items-center gap-2">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[11px] font-bold tabular-nums transition-colors ${
+                    isDone
+                      ? "bg-success/15 text-success"
+                      : isCurrent
+                        ? "bg-primary text-primary-foreground shadow-md shadow-primary/30"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {isDone ? <Check className="h-3 w-3" /> : num}
+                </span>
+                <span
+                  className={`hidden text-xs font-semibold sm:block ${
+                    isCurrent ? "text-foreground" : "text-muted-foreground"
+                  }`}
+                >
+                  {label}
+                </span>
+              </div>
+              {i < STEP_LABELS.length - 1 && (
+                <span
+                  className={`h-px flex-1 ${isDone ? "bg-success/40" : "bg-border"}`}
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
 
       {step === 1 && (
         <Step1
@@ -299,17 +329,23 @@ function Step2({
       </div>
 
       {preview && (
-        <Card padding="md" className="bg-primary/5 border-primary/20">
-          <p className="text-xs text-muted-foreground mb-2">Vista previa</p>
-          <div className="grid grid-cols-2 gap-2 text-sm">
-            <span className="text-muted-foreground">Cuota diaria:</span>
-            <span className="font-bold font-mono text-foreground">
-              {formatCop(preview.cuotaDiaria)}
-            </span>
-            <span className="text-muted-foreground">Total a pagar:</span>
-            <span className="font-bold font-mono text-foreground">
-              {formatCop(preview.totalPagar)}
-            </span>
+        <Card padding="md" className="dash-rise border-primary/25 bg-primary/[0.06]">
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+            Vista previa
+          </p>
+          <div className="grid grid-cols-2 divide-x divide-primary/15">
+            <div className="pr-4">
+              <p className="text-xs text-muted-foreground">Cuota diaria</p>
+              <p className="mt-1 font-display text-lg font-bold tabular-nums text-primary">
+                {formatCop(preview.cuotaDiaria)}
+              </p>
+            </div>
+            <div className="pl-4">
+              <p className="text-xs text-muted-foreground">Total a pagar</p>
+              <p className="mt-1 font-display text-lg font-bold tabular-nums text-foreground">
+                {formatCop(preview.totalPagar)}
+              </p>
+            </div>
           </div>
         </Card>
       )}
@@ -353,9 +389,9 @@ function Step3({
 
   return (
     <div className="space-y-4">
-      <Card padding="md">
-        <h2 className="text-lg font-semibold text-foreground mb-3">
-          Resumen del prestamo
+      <Card padding="md" className="dash-rise p-5">
+        <h2 className="mb-3 font-display text-lg font-bold tracking-tight text-foreground">
+          Resumen del préstamo
         </h2>
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
@@ -409,16 +445,16 @@ function Step3({
           )}
         </div>
 
-        <div className="mt-4 border-t border-border pt-4">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Cuota diaria</span>
-            <span className="text-lg font-bold font-mono text-primary">
+        <div className="mt-4 border-t border-dashed border-border pt-4">
+          <div className="flex items-baseline justify-between">
+            <span className="text-sm text-muted-foreground">Cuota diaria</span>
+            <span className="font-display text-xl font-bold tabular-nums text-primary">
               {formatCop(totals.cuotaDiaria)}
             </span>
           </div>
-          <div className="flex justify-between mt-1">
-            <span className="text-muted-foreground">Total a pagar</span>
-            <span className="text-lg font-bold font-mono text-foreground">
+          <div className="mt-1.5 flex items-baseline justify-between">
+            <span className="text-sm text-muted-foreground">Total a pagar</span>
+            <span className="font-display text-xl font-bold tabular-nums text-foreground">
               {formatCop(totals.totalPagar)}
             </span>
           </div>

@@ -3,10 +3,10 @@ import Link from "next/link";
 export default function SuscripcionVencidaPage() {
   return (
     <main className="relative flex min-h-screen items-center justify-center p-4 sm:p-8">
-      <div className="w-full max-w-md">
-        <div className="relative rounded-2xl border border-white/[0.08] bg-white/[0.02] p-[1px] shadow-2xl shadow-indigo-500/5 backdrop-blur-xl">
+      <div className="dash-rise w-full max-w-md">
+        <div className="relative rounded-2xl border border-danger/20 bg-white/[0.02] p-[1px] shadow-2xl shadow-danger/10 backdrop-blur-xl">
           <div className="rounded-2xl bg-black/40 p-6 sm:p-8 text-center">
-            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-[rgba(251,113,133,0.15)]">
+            <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(251,113,133,0.15)] ring-1 ring-danger/25">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 className="h-6 w-6 text-[var(--danger)]"
@@ -23,7 +23,7 @@ export default function SuscripcionVencidaPage() {
               </svg>
             </div>
 
-            <h1 className="text-xl font-bold text-[var(--foreground)]">
+            <h1 className="font-display text-2xl font-bold tracking-tight text-[var(--foreground)]">
               Suscripción inactiva
             </h1>
 

@@ -26,10 +26,12 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col items-center gap-8 py-8 text-center">
       <div className="space-y-3">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
           Digitaliza tu
           <br />
-          <span className="text-primary">cobranza diaria</span>
+          <span className="bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">
+            cobranza diaria
+          </span>
         </h1>
         <p className="mx-auto max-w-sm text-muted-foreground">
           Controla tu cartera, registra pagos y envia comprobantes desde

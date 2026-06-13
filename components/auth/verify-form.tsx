@@ -58,10 +58,12 @@ export function VerifyForm() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/20">
           <MailCheck className="h-6 w-6 text-primary" />
         </div>
-        <CardTitle>{es.auth.verify}</CardTitle>
+        <CardTitle className="font-display text-xl font-bold tracking-tight">
+          {es.auth.verify}
+        </CardTitle>
         <CardDescription>
           {es.auth.verifyInstruction}
         </CardDescription>

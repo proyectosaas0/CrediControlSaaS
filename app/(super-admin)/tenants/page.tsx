@@ -2,7 +2,6 @@
 
 import { useState, useMemo } from "react";
 import {
-  Search,
   Phone,
   MapPin,
   Calendar,
@@ -10,13 +9,22 @@ import {
   PlayCircle,
   PauseCircle,
   CalendarPlus,
-  Eye,
+  ArrowUpRight,
   ArrowLeft,
   ShieldCheck,
+  Building2,
 } from "lucide-react";
 import { useTenants, type Tenant } from "@/hooks/queries/use-super-admin";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  PageHeader,
+  FilterPills,
+  SearchInput,
+  SectionHead,
+  staggerDelay,
+} from "@/components/ui/page-header";
+import { SkeletonList } from "@/components/ui/skeleton";
 import { cn } from "@/components/ui/cn";
 import { toast } from "sonner";
 
@@ -82,119 +90,111 @@ export default function TenantsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-foreground">Tenants</h1>
+    <div className="space-y-5">
+      <PageHeader
+        eyebrow="Plataforma"
+        title="Tenants"
+        subtitle={
+          isLoading
+            ? "Cargando tenants…"
+            : `${filtered.length} negocio${filtered.length !== 1 ? "s" : ""} registrados`
+        }
+      />
 
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder="Buscar por nombre o ciudad..."
+      <div
+        className="dash-rise flex flex-col gap-3 sm:flex-row sm:items-center"
+        style={{ animationDelay: "60ms" }}
+      >
+        <SearchInput
+          placeholder="Buscar por nombre o ciudad…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex h-11 w-full rounded-lg border border-border bg-background pl-10 pr-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1"
+          containerClassName="flex-1"
         />
-      </div>
-
-      <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {ESTADOS.map((e) => (
-          <button
-            key={e.value}
-            onClick={() => setFiltroEstado(e.value)}
-            className={cn(
-              "whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors",
-              filtroEstado === e.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80",
-            )}
-          >
-            {e.label}
-          </button>
-        ))}
+        <FilterPills options={ESTADOS} value={filtroEstado} onChange={setFiltroEstado} />
       </div>
 
       {isLoading ? (
-        <Card padding="md" className="py-10 text-center">
-          <p className="text-muted-foreground">Cargando...</p>
-        </Card>
+        <SkeletonList count={4} />
       ) : filtered.length === 0 ? (
-        <Card padding="md" className="py-10 text-center">
-          <p className="text-sm font-semibold text-foreground">No se encontraron tenants</p>
+        <div className="dash-rise rounded-2xl border border-dashed border-border py-12 text-center">
+          <p className="font-display text-base font-bold text-foreground">
+            No se encontraron tenants
+          </p>
           <p className="mt-1 text-xs text-muted-foreground">
             No hay tenants con el filtro seleccionado.
           </p>
-        </Card>
+        </div>
       ) : (
-        <div className="space-y-3">
-          {filtered.map((t) => {
+        <div className="space-y-2.5">
+          {filtered.map((t, i) => {
             const badge = estadoBadge[t.estado_suscripcion] ?? { className: "bg-muted text-muted-foreground", label: t.estado_suscripcion };
             return (
               <Card
                 key={t.id}
                 padding="md"
-                className="cursor-pointer hover:border-primary/30 transition-colors"
+                className="dash-rise group cursor-pointer transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5"
+                style={staggerDelay(i)}
                 onClick={() => setSelectedTenant(t.id)}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        {t.nombre_negocio}
-                      </p>
-                      <span
-                        className={cn(
-                          "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
-                          badge.className,
-                        )}
-                      >
-                        {badge.label}
-                      </span>
-                    </div>
-
-                    <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                      {t.ciudad && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {t.ciudad}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                      <Building2 className="h-4 w-4" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                          {t.nombre_negocio}
+                        </p>
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
+                            badge.className,
+                          )}
+                        >
+                          {badge.label}
                         </span>
-                      )}
-                      {t.telefono && (
-                        <span className="flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {t.telefono}
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                            t.plan === "trial"
+                              ? "bg-warning/15 text-warning"
+                              : "bg-primary/15 text-primary",
+                          )}
+                        >
+                          {planLabel[t.plan] ?? t.plan}
                         </span>
-                      )}
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {t.created_at}
-                      </span>
-                    </div>
+                      </div>
 
-                    <div className="mt-2 flex items-center gap-3 text-xs">
-                      <span
-                        className={cn(
-                          "rounded px-1.5 py-0.5 text-xs font-medium",
-                          t.plan === "trial"
-                            ? "bg-warning/15 text-warning"
-                            : "bg-primary/15 text-primary",
+                      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                        {t.ciudad && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {t.ciudad}
+                          </span>
                         )}
-                      >
-                        {planLabel[t.plan] ?? t.plan}
-                      </span>
+                        {t.telefono && (
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-3 w-3" />
+                            {t.telefono}
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {t.created_at}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <Eye className="h-4 w-4 shrink-0 text-muted-foreground mt-0.5" />
+                  <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/40 transition-all group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
                 </div>
               </Card>
             );
           })}
         </div>
       )}
-
-      <p className="text-center text-xs text-muted-foreground">
-        {filtered.length} tenant{filtered.length !== 1 ? "s" : ""}
-      </p>
     </div>
   );
 }
@@ -217,19 +217,27 @@ function TenantDetail({
   })();
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <button
         onClick={onBack}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-md"
+        className="dash-rise group flex items-center gap-1.5 rounded-md text-sm font-medium text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
         Volver
       </button>
 
-      <div className="flex items-center justify-between">
+      <div
+        className="dash-rise flex flex-wrap items-end justify-between gap-3"
+        style={{ animationDelay: "40ms" }}
+      >
         <div>
-          <h1 className="text-xl font-bold text-foreground">{tenant.nombre_negocio}</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="mb-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+            Tenant
+          </p>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+            {tenant.nombre_negocio}
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
             {tenant.ciudad ?? "Sin ciudad"} · Creado {tenant.created_at}
           </p>
         </div>
@@ -244,32 +252,34 @@ function TenantDetail({
       </div>
 
       {/* Info */}
-      <Card padding="md">
-        <div className="grid grid-cols-2 gap-3 text-sm">
+      <Card padding="md" className="dash-rise p-5" style={{ animationDelay: "80ms" }}>
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
           <div>
-            <p className="text-muted-foreground">Plan</p>
-            <p className="font-medium text-foreground">
+            <dt className="text-xs text-muted-foreground">Plan</dt>
+            <dd className="mt-0.5 font-medium text-foreground">
               {planLabel[tenant.plan] ?? tenant.plan}
-            </p>
+            </dd>
           </div>
           <div>
-            <p className="text-muted-foreground">Trial hasta</p>
-            <p className="font-medium text-foreground">{tenant.trial_hasta ?? "—"}</p>
+            <dt className="text-xs text-muted-foreground">Trial hasta</dt>
+            <dd className="mt-0.5 font-medium tabular-nums text-foreground">
+              {tenant.trial_hasta ?? "—"}
+            </dd>
           </div>
           <div>
-            <p className="text-muted-foreground">Telefono</p>
-            <p className="font-medium text-foreground">
+            <dt className="text-xs text-muted-foreground">Teléfono</dt>
+            <dd className="mt-0.5 font-medium text-foreground">
               {tenant.telefono ?? "—"}
-            </p>
+            </dd>
           </div>
-        </div>
+        </dl>
 
         {trialDaysLeft > 0 && (
-          <div className="mt-3 pt-3 border-t border-border">
+          <div className="mt-4 border-t border-dashed border-border pt-3.5">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-warning" />
-              <span className="text-sm text-warning font-medium">
-                {trialDaysLeft} dias restantes de trial
+              <span className="text-sm font-medium text-warning">
+                {trialDaysLeft} día{trialDaysLeft !== 1 ? "s" : ""} restantes de trial
               </span>
             </div>
           </div>
@@ -277,8 +287,8 @@ function TenantDetail({
       </Card>
 
       {/* Actions */}
-      <div className="space-y-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">Acciones</h2>
+      <div className="dash-rise" style={{ animationDelay: "140ms" }}>
+        <SectionHead title="Acciones" />
         <div className="grid grid-cols-2 gap-2">
           {tenant.estado_suscripcion === "suspendido" && (
             <Button

@@ -95,40 +95,52 @@ export default function PagoDetailPage() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        className="dash-rise group flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
         Volver a pagos
       </button>
 
       {/* Header card */}
-      <Card padding="md">
-        <div className="flex items-start justify-between gap-3">
+      <Card
+        padding="md"
+        className="dash-rise relative overflow-hidden p-5"
+        style={{ animationDelay: "60ms" }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(ellipse 70% 70% at 10% 0%, color-mix(in srgb, var(--success) 8%, transparent), transparent 60%)",
+          }}
+        />
+        <div className="relative flex items-start justify-between gap-3">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="mb-2 flex items-center gap-2">
               <span className="rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-semibold text-success">
                 {TIPO_LABELS[pago.tipo] ?? pago.tipo}
               </span>
-              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground capitalize">
+              <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium capitalize text-muted-foreground">
                 {pago.medio_pago}
               </span>
             </div>
-            <p className="text-2xl font-bold font-mono text-foreground">
+            <p className="font-display text-3xl font-bold tracking-tight tabular-nums text-foreground sm:text-4xl">
               {formatCop(pago.monto)}
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">{fecha}</p>
+            <p className="mt-1.5 text-sm text-muted-foreground">{fecha}</p>
           </div>
 
           {isAdmin && (
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex shrink-0 items-center gap-2">
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => setEditOpen(true)}
-                className="flex items-center gap-1.5"
+                className="gap-1.5"
               >
                 <Pencil className="h-3.5 w-3.5" />
                 Editar
@@ -137,7 +149,7 @@ export default function PagoDetailPage() {
                 size="sm"
                 variant="danger"
                 onClick={() => setDeleteOpen(true)}
-                className="flex items-center gap-1.5"
+                className="gap-1.5"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 Anular
@@ -148,7 +160,10 @@ export default function PagoDetailPage() {
       </Card>
 
       {/* Details grid */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div
+        className="dash-rise grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3"
+        style={{ animationDelay: "140ms" }}
+      >
         <InfoRow icon={User} label="Cliente" value={pago.clientes?.nombre ?? "—"} />
         <InfoRow icon={CreditCard} label="Cobrador" value={pago.cobrador_nombre ?? "—"} />
 
@@ -237,10 +252,14 @@ function InfoRow({
 }) {
   return (
     <Card padding="md" className="flex items-start gap-3">
-      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+        <Icon className="h-3.5 w-3.5" />
+      </span>
       <div className="min-w-0">
-        <p className="text-xs font-medium text-muted-foreground">{label}</p>
-        <p className="mt-0.5 text-sm font-medium text-foreground break-words">{value}</p>
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+          {label}
+        </p>
+        <p className="mt-1 break-words text-sm font-medium text-foreground">{value}</p>
       </div>
     </Card>
   );
