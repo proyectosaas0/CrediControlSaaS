@@ -1,7 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { evaluateRouteAccess, type RouteRole } from "@/lib/auth/route-guard";
-import { isSubscriptionActive } from "@/lib/domain/subscription";
 import type { Database } from "@/lib/database.types";
 
 export async function updateSession(request: NextRequest) {
@@ -34,26 +33,9 @@ export async function updateSession(request: NextRequest) {
   const role = ((claims?.rol as RouteRole | undefined) ?? null) as RouteRole;
   const orgId = (claims?.organization_id as string | undefined) ?? null;
 
-  // Subscription status only matters for admin/cobrador on /app routes
-  const isAppPathname =
-    request.nextUrl.pathname === "/app" ||
-    request.nextUrl.pathname.startsWith("/app/");
-
-  let subscriptionActive = true;
-  if (isAuthenticated && role !== "super_admin" && isAppPathname) {
-    if (orgId) {
-      const { data: org } = await supabase
-        .from("organizations")
-        .select("estado_suscripcion, trial_hasta")
-        .eq("id", orgId)
-        .maybeSingle();
-      subscriptionActive = org
-        ? isSubscriptionActive({ estado: org.estado_suscripcion, trialHasta: org.trial_hasta })
-        : false;
-    } else {
-      subscriptionActive = false;
-    }
-  }
+  // Nota: la lógica de bloqueo por estado de suscripción se ha eliminado.
+  // Para preservar la firma de evaluateRouteAccess mantenemos el flag en true.
+  const subscriptionActive = true;
 
   const decision = evaluateRouteAccess({
     pathname: request.nextUrl.pathname,

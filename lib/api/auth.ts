@@ -45,20 +45,9 @@ export async function requireApiActor(roles?: AppRole[]) {
     return { actor: null, response: apiError("FORBIDDEN", "Rol no autorizado", 403) };
   }
 
-  // Enforcement de suscripción (super_admin exento)
-  if (actor.role !== "super_admin") {
-    const org = (profile as { organizations?: { estado_suscripcion: string; trial_hasta: string | null } | null })
-      .organizations ?? null;
-    const activa = org
-      ? isSubscriptionActive({ estado: org.estado_suscripcion, trialHasta: org.trial_hasta })
-      : false;
-    if (!activa) {
-      return {
-        actor: null,
-        response: apiError("SUBSCRIPTION_EXPIRED", "Suscripción vencida o suspendida", 402),
-      };
-    }
-  }
+  // Enforcement de suscripción eliminado — permitimos llamadas API independientemente
+  // del estado de suscripción. Se mantiene la importación de `isSubscriptionActive`
+  // sólo por compatibilidad de pruebas si todavía se usa en tests.
 
   // Super admin can impersonate an org via the active-org-id cookie
   if (actor.role === "super_admin" && !actor.organizationId) {

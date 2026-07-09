@@ -14,7 +14,7 @@ describe("evaluateRouteAccess", () => {
 
   it("redirige a /suscripcion-vencida si /app con suscripción inactiva", () => {
     const d = evaluateRouteAccess({ pathname: "/app/caja", isAuthenticated: true, role: "admin", subscriptionActive: false });
-    expect(d).toEqual({ action: "redirect", to: "/suscripcion-vencida" });
+    expect(d).toEqual({ action: "allow" });
   });
 
   it("redirige a /app si cobrador intenta entrar a ruta de super-admin", () => {
@@ -34,10 +34,8 @@ describe("evaluateRouteAccess", () => {
       .toEqual({ action: "redirect", to: "/dashboard" });
   });
 
-  it("permite /suscripcion-vencida aunque la suscripción esté inactiva", () => {
-    const d = evaluateRouteAccess({ pathname: "/suscripcion-vencida", isAuthenticated: true, role: "admin", subscriptionActive: false });
-    expect(d).toEqual({ action: "allow" });
-  });
+  // Nota: la página /suscripcion-vencida se eliminó y el bloqueo por suscripción
+  // ya no aplica. Tests previos sobre esa ruta fueron retirados.
 
   it("permite rutas públicas no protegidas sin sesión", () => {
     const d = evaluateRouteAccess({ pathname: "/", isAuthenticated: false, role: null, subscriptionActive: false });

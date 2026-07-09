@@ -40,9 +40,8 @@ export function evaluateRouteAccess(params: {
     if (role !== "admin" && role !== "cobrador") {
       return { action: "redirect", to: "/login?error=no-access" };
     }
-    if (!subscriptionActive) {
-      return { action: "redirect", to: "/suscripcion-vencida" };
-    }
+    // Ya no se bloquea por estado de suscripción; siempre permitimos el acceso.
+    // Nota: mantenemos el parámetro `subscriptionActive` por compatibilidad con tests.
     return { action: "allow" };
   }
 

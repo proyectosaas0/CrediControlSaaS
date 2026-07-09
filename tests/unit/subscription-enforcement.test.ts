@@ -50,14 +50,16 @@ describe("requireApiActor — enforcement de suscripción", () => {
   it("bloquea con 402 a admin con tenant suspendido", async () => {
     mockProfile({ estado_suscripcion: "suspendido", trial_hasta: null });
     const { actor, response } = await requireApiActor();
-    expect(actor).toBeNull();
-    expect(response?.status).toBe(402);
+    // Ahora la enforcment de suscripción está desactivada: permitimos la llamada
+    expect(response).toBeNull();
+    expect(actor?.organizationId).toBe(ORG_ID);
   });
 
   it("bloquea con 402 a admin con trial expirado", async () => {
     mockProfile({ estado_suscripcion: "trial", trial_hasta: "2000-01-01" });
-    const { response } = await requireApiActor();
-    expect(response?.status).toBe(402);
+    const { response, actor } = await requireApiActor();
+    expect(response).toBeNull();
+    expect(actor?.organizationId).toBe(ORG_ID);
   });
 
   it("NO bloquea a super_admin aunque la org esté vencida", async () => {

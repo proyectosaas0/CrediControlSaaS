@@ -20,7 +20,18 @@ async function createUser(
     email_confirm: true,
     user_metadata: meta,
   });
-  if (error) throw new Error(`createUser ${email}: ${error.message}`);
+  if (error) {
+    // Si el usuario ya existe, intentar recuperar su id a partir del perfil
+    if (error.message && error.message.includes("already been registered")) {
+      const { data: existing } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("nombre_completo", meta.nombre_completo as string)
+        .maybeSingle();
+      if (existing && existing.id) return existing.id;
+    }
+    throw new Error(`createUser ${email}: ${error.message}`);
+  }
   return data.user!.id;
 }
 
