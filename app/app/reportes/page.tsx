@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/page-header";
 import { cn } from "@/components/ui/cn";
 import { getInitials } from "@/lib/utils";
+import { exportReportesCsv, exportReportesPdf } from "@/lib/reportes/export";
 import { toast } from "sonner";
 
 type Periodo = "hoy" | "semana" | "mes" | "rango";
@@ -83,6 +84,38 @@ export default function ReportesPage() {
     .slice()
     .sort((a, b) => b.total - a.total);
 
+  function datosExportables() {
+    return {
+      rango,
+      metricas,
+      cartera,
+      proyeccionTotal: proyeccion?.total,
+      recaudoDiario,
+      rendimiento: rendimientoFiltrado.map((r) => ({
+        nombre: nombreCobrador(r.name),
+        total: r.total,
+      })),
+    };
+  }
+
+  function handleExportCsv() {
+    try {
+      exportReportesCsv(datosExportables());
+      toast.success("CSV exportado");
+    } catch {
+      toast.error("No se pudo exportar el CSV");
+    }
+  }
+
+  function handleExportPdf() {
+    try {
+      exportReportesPdf(datosExportables());
+      toast.success("PDF exportado");
+    } catch {
+      toast.error("No se pudo exportar el PDF");
+    }
+  }
+
   return (
     <div className="space-y-7">
       <PageHeader
@@ -95,7 +128,7 @@ export default function ReportesPage() {
               size="sm"
               variant="outline"
               className="gap-1.5"
-              onClick={() => toast.success("CSV exportado")}
+              onClick={handleExportCsv}
             >
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">CSV</span>
@@ -104,7 +137,7 @@ export default function ReportesPage() {
               size="sm"
               variant="outline"
               className="gap-1.5"
-              onClick={() => toast.success("PDF exportado")}
+              onClick={handleExportPdf}
             >
               <Download className="h-4 w-4" />
               <span className="hidden sm:inline">PDF</span>
