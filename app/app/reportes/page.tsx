@@ -78,7 +78,7 @@ export default function ReportesPage() {
   const rendimientoFiltrado = (
     cobradorFiltro === "todos"
       ? cobradoresRendimiento
-      : cobradoresRendimiento.filter((r) => r.cobrador_id === cobradorFiltro)
+      : cobradoresRendimiento.filter((r) => r.name === cobradorFiltro)
   )
     .slice()
     .sort((a, b) => b.total - a.total);
@@ -451,7 +451,7 @@ function RendimientoLeaderboard({
   filas,
   nombreCobrador,
 }: {
-  filas: { cobrador_id: string; total: number }[];
+  filas: { name: string; total: number }[];
   nombreCobrador: (id: string) => string;
 }) {
   if (filas.length === 0) {
@@ -468,11 +468,11 @@ function RendimientoLeaderboard({
     <div className="overflow-hidden rounded-2xl border border-border bg-card backdrop-blur-sm">
       {filas.map((fila, i) => {
         const rank = i + 1;
-        const nombre = nombreCobrador(fila.cobrador_id);
+        const nombre = nombreCobrador(fila.name);
         const width = (fila.total / max) * 100;
         return (
           <div
-            key={`${fila.cobrador_id}-${i}`}
+            key={`${fila.name}-${i}`}
             className="dash-rise flex items-center gap-3.5 border-b border-border px-4 py-3.5 last:border-0"
             style={{ animationDelay: `${460 + i * 40}ms` }}
           >
