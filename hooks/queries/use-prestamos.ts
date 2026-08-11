@@ -26,6 +26,8 @@ export type Prestamo = {
   excluir_sabados: boolean;
   excluir_domingos: boolean;
   created_at: string;
+  motivo_cancelacion: string | null;
+  cancelado_at: string | null;
   clientes: { nombre: string } | null;
   prestamo_saldos: PrestamoSaldo[] | null;
 };

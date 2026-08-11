@@ -540,6 +540,7 @@ export type Database = {
       }
       prestamos: {
         Row: {
+          cancelado_at: string | null
           capital: number
           cliente_id: string
           cobrador_id: string | null
@@ -554,6 +555,7 @@ export type Database = {
           fecha_inicio: string | null
           id: string
           modelo_interes: Database["public"]["Enums"]["modelo_interes"]
+          motivo_cancelacion: string | null
           organization_id: string
           plazo_dias: number
           prestamo_anterior_id: string | null
@@ -561,6 +563,7 @@ export type Database = {
           total_pagar: number | null
         }
         Insert: {
+          cancelado_at?: string | null
           capital: number
           cliente_id: string
           cobrador_id?: string | null
@@ -575,6 +578,7 @@ export type Database = {
           fecha_inicio?: string | null
           id?: string
           modelo_interes: Database["public"]["Enums"]["modelo_interes"]
+          motivo_cancelacion?: string | null
           organization_id: string
           plazo_dias: number
           prestamo_anterior_id?: string | null
@@ -582,6 +586,7 @@ export type Database = {
           total_pagar?: number | null
         }
         Update: {
+          cancelado_at?: string | null
           capital?: number
           cliente_id?: string
           cobrador_id?: string | null
@@ -596,6 +601,7 @@ export type Database = {
           fecha_inicio?: string | null
           id?: string
           modelo_interes?: Database["public"]["Enums"]["modelo_interes"]
+          motivo_cancelacion?: string | null
           organization_id?: string
           plazo_dias?: number
           prestamo_anterior_id?: string | null

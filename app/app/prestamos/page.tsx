@@ -143,11 +143,16 @@ function PrestamoCard({ prestamo, index }: { prestamo: Prestamo; index: number }
   const pagadas = saldo?.cuotas_pagadas ?? 0;
   const totales = saldo?.cuotas_totales ?? 0;
   const pct = totales > 0 ? Math.round((pagadas / totales) * 100) : 0;
+  const isCancelado = prestamo.estado === "cancelado";
 
   return (
     <Link href={`/app/prestamos/${prestamo.id}`} className="block h-full">
       <div
-        className="dash-rise group flex h-full flex-col rounded-xl border border-border bg-card p-4 backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5"
+        className={`dash-rise group flex h-full flex-col rounded-xl border p-4 backdrop-blur-sm transition-all ${
+          isCancelado
+            ? "border-border/60 bg-card/60 opacity-70 hover:opacity-100"
+            : "border-border bg-card hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5"
+        }`}
         style={staggerDelay(index)}
       >
         <div className="flex items-start justify-between gap-2">
@@ -161,30 +166,52 @@ function PrestamoCard({ prestamo, index }: { prestamo: Prestamo; index: number }
           {formatCop(prestamo.capital)}
         </p>
 
-        <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-          <span className="tabular-nums">
-            {formatCop(prestamo.cuota_diaria ?? 0)}/día
-          </span>
-          <span className="tabular-nums">
-            Cuota {pagadas}/{totales}
-          </span>
-        </div>
+        {isCancelado ? (
+          <div className="mt-3 flex-1 space-y-1">
+            {prestamo.motivo_cancelacion && (
+              <p className="truncate text-xs text-muted-foreground">
+                {prestamo.motivo_cancelacion}
+              </p>
+            )}
+            {prestamo.cancelado_at && (
+              <p className="text-[11px] text-muted-foreground/70">
+                Cancelado el{" "}
+                {new Date(prestamo.cancelado_at).toLocaleDateString("es-CO", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+              <span className="tabular-nums">
+                {formatCop(prestamo.cuota_diaria ?? 0)}/día
+              </span>
+              <span className="tabular-nums">
+                Cuota {pagadas}/{totales}
+              </span>
+            </div>
 
-        <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-primary to-violet-400 transition-all duration-500"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
+            <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-primary to-violet-400 transition-all duration-500"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
 
-        <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground/70">
-          <span className="tabular-nums">
-            Total {formatCop(prestamo.total_pagar ?? 0)}
-          </span>
-          <span className="font-semibold tabular-nums text-muted-foreground">
-            {pct}%
-          </span>
-        </div>
+            <div className="mt-2 flex items-center justify-between text-[11px] text-muted-foreground/70">
+              <span className="tabular-nums">
+                Total {formatCop(prestamo.total_pagar ?? 0)}
+              </span>
+              <span className="font-semibold tabular-nums text-muted-foreground">
+                {pct}%
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </Link>
   );

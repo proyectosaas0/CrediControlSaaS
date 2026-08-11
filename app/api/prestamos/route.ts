@@ -33,7 +33,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("prestamos")
     .select(
-      "id, organization_id, cliente_id, cobrador_id, estado, capital, cuota_diaria, total_pagar, plazo_dias, modelo_interes, tasa_mensual, fecha_inicio, fecha_fin, created_at, clientes(nombre), prestamo_saldos(*)",
+      "id, organization_id, cliente_id, cobrador_id, estado, capital, cuota_diaria, total_pagar, plazo_dias, modelo_interes, tasa_mensual, fecha_inicio, fecha_fin, created_at, motivo_cancelacion, cancelado_at, clientes(nombre), prestamo_saldos(*)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
