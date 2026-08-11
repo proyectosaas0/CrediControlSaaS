@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, forwardRef } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/components/ui/cn";
 import { ChevronDown, Search } from "lucide-react";
 
@@ -35,12 +36,14 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       disabled,
       searchable,
     },
-    ref,
+    forwardedRef,
   ) => {
     const [open, setOpen] = useState(false);
     const [internalValue, setInternalValue] = useState(controlledValue ?? "");
     const [searchQuery, setSearchQuery] = useState("");
-    const containerRef = useRef<HTMLDivElement>(null);
+    const [dropPos, setDropPos] = useState({ top: 0, left: 0, width: 0 });
+    const triggerRef = useRef<HTMLButtonElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
     const searchRef = useRef<HTMLInputElement>(null);
     const selectId = id ?? label?.toLowerCase().replace(/\s+/g, "-");
 
@@ -64,8 +67,15 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       [onChange, name, selectId],
     );
 
+    const updatePosition = useCallback(() => {
+      if (!triggerRef.current) return;
+      const r = triggerRef.current.getBoundingClientRect();
+      setDropPos({ top: r.bottom + 6, left: r.left, width: r.width });
+    }, []);
+
     function handleOpen() {
       if (disabled) return;
+      if (!open) updatePosition();
       setOpen((prev) => !prev);
     }
 
@@ -77,33 +87,46 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
       if (!open) setSearchQuery("");
     }, [open, searchable]);
 
+    // Keep the portaled dropdown aligned with its trigger
+    useEffect(() => {
+      if (!open) return;
+      updatePosition();
+      window.addEventListener("scroll", updatePosition, true);
+      window.addEventListener("resize", updatePosition);
+      return () => {
+        window.removeEventListener("scroll", updatePosition, true);
+        window.removeEventListener("resize", updatePosition);
+      };
+    }, [open, updatePosition]);
+
     // Close on Escape
     useEffect(() => {
       if (!open) return;
       const handleKey = (e: KeyboardEvent) => {
         if (e.key === "Escape") {
           setOpen(false);
-          containerRef.current?.querySelector("button")?.focus();
+          triggerRef.current?.focus();
         }
       };
       document.addEventListener("keydown", handleKey);
       return () => document.removeEventListener("keydown", handleKey);
     }, [open]);
 
-    // Close on click outside
+    // Close on click outside (trigger or portaled dropdown)
     useEffect(() => {
       if (!open) return;
       const handleClick = (e: MouseEvent) => {
-        if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-          setOpen(false);
-        }
+        const target = e.target as Node;
+        if (triggerRef.current?.contains(target)) return;
+        if (dropdownRef.current?.contains(target)) return;
+        setOpen(false);
       };
       document.addEventListener("mousedown", handleClick);
       return () => document.removeEventListener("mousedown", handleClick);
     }, [open]);
 
     return (
-      <div ref={containerRef} className="w-full min-w-0 space-y-1.5">
+      <div className="w-full min-w-0 space-y-1.5">
         {label && (
           <label htmlFor={selectId} className="block text-sm font-medium text-foreground">
             {label}
@@ -111,7 +134,11 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
         )}
         <div className="relative w-full min-w-0">
           <button
-            ref={ref}
+            ref={(node) => {
+              triggerRef.current = node;
+              if (typeof forwardedRef === "function") forwardedRef(node);
+              else if (forwardedRef) forwardedRef.current = node;
+            }}
             id={selectId}
             type="button"
             role="combobox"
@@ -137,12 +164,21 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
               open && "rotate-180",
             )}
           />
+        </div>
+        {error && (
+          <p className="text-sm text-danger" role="alert">
+            {error}
+          </p>
+        )}
 
-          {open && (
+        {open &&
+          createPortal(
             <div
+              ref={dropdownRef}
               id={`${selectId}-listbox`}
               role="listbox"
-              className="absolute left-0 right-0 top-full z-[60] mt-1.5 w-full min-w-0 rounded-xl border border-white/[0.08] bg-card shadow-2xl shadow-black/50 backdrop-blur-md overflow-hidden"
+              style={{ top: dropPos.top, left: dropPos.left, width: dropPos.width }}
+              className="fixed z-[9999] min-w-0 rounded-xl border border-white/[0.08] bg-card shadow-2xl shadow-black/50 backdrop-blur-md overflow-hidden"
             >
               {searchable && (
                 <div className="p-2 border-b border-white/[0.06]">
@@ -187,14 +223,9 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                   })
                 )}
               </ul>
-            </div>
+            </div>,
+            document.body,
           )}
-        </div>
-        {error && (
-          <p className="text-sm text-danger" role="alert">
-            {error}
-          </p>
-        )}
       </div>
     );
   },
