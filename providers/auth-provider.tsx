@@ -3,7 +3,6 @@
 import { createContext, useContext, useCallback, useState, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { AppRole } from "@/lib/auth";
-import { useRouter } from "next/navigation";
 import { Spinner } from "@/components/feedback/spinner";
 import { useSyncExternalStore } from "react";
 
@@ -146,7 +145,6 @@ if (typeof window !== "undefined") {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const state = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [, forceUpdate] = useState(0);
 
@@ -167,8 +165,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     authState = { user: null, role: null, orgId: null, loading: false };
     emitChange();
     forceUpdate((n) => n + 1);
-    router.push("/login");
-  }, [router]);
+    // Full-page navigation guarantees the cleared session cookie is reflected
+    // before the middleware evaluates /login -- router.push() alone can race
+    // against Supabase's async cookie-clear step and bounce back to /app.
+    window.location.href = "/login";
+  }, []);
 
   if (state.loading) {
     return (
