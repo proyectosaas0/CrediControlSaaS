@@ -31,7 +31,7 @@ const AVATAR_STYLES = [
 
 export default function ClientesPage() {
   const { role } = useAuth();
-  const canCreate = role === "admin" || role === "super_admin";
+  const canCreate = role === "admin" || role === "cobrador" || role === "super_admin";
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterPill>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);

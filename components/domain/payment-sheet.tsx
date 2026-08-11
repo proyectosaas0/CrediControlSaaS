@@ -10,6 +10,8 @@ import type { RouteItem } from "@/lib/mock/ruta";
 import { CheckCircle2, Loader2, MessageSquare, UserX } from "lucide-react";
 import { useWhatsApp } from "@/hooks/use-whatsapp";
 import { MOCK_NEGOCIO, MOCK_COBRADOR } from "@/lib/mock/ruta";
+import { postApi } from "@/hooks/queries/fetch-api";
+import { toast } from "sonner";
 
 type PaymentSheetProps = {
   item: RouteItem | null;
@@ -58,24 +60,38 @@ export function PaymentSheet({
     if (!medioPago || !item) return;
     setSubmitting(true);
 
-    // TODO: Reemplazar por POST /api/pagos
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    onPaymentSuccess(item.id, medioPago, montoNumerico);
-    setSubmitting(false);
-    setStep("success");
+    try {
+      await postApi("/api/pagos", {
+        cronogramaPagoId: item.id,
+        medioPago,
+        monto: montoNumerico,
+        tipo: isPartial ? "parcial" : item.estado === "mora" ? "mora" : "cuota",
+      });
+      onPaymentSuccess(item.id, medioPago, montoNumerico);
+      setStep("success");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo registrar el pago");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   async function handleNotFound() {
     if (!item) return;
     setSubmitting(true);
 
-    // TODO: Reemplazar por POST /api/ruta/visitas con resultado: 'no_encontrado'
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    onMarkNotFound(item.id);
-    setSubmitting(false);
-    onClose();
+    try {
+      await postApi("/api/ruta/visitas", {
+        cronogramaPagoId: item.id,
+        resultado: "no_encontrado",
+      });
+      onMarkNotFound(item.id);
+      onClose();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo registrar la visita");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   const whatsappLink =

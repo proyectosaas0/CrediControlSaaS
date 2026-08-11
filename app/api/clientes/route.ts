@@ -45,7 +45,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { actor, response } = await requireApiActor(["admin", "super_admin"]);
+  const { actor, response } = await requireApiActor(["admin", "cobrador", "super_admin"]);
   if (response) return response;
   if (!actor!.organizationId) return apiError("FORBIDDEN", "Usuario sin organizacion", 403);
 
