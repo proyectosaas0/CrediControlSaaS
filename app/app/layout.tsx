@@ -17,7 +17,7 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { role, user } = useAuth();
 
-  const userName = user?.email?.slice(0, 2).toUpperCase() ?? "U";
+  const userName = user?.nombreCompleto || user?.email?.split("@")[0] || "Usuario";
 
   const { data: rutaItems } = useRutaHoy(undefined, { enabled: role === "cobrador" });
   const pendingCount =

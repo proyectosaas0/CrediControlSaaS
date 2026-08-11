@@ -8,7 +8,7 @@ import { Spinner } from "@/components/feedback/spinner";
 import { useSyncExternalStore } from "react";
 
 type AuthState = {
-  user: { id: string; email?: string } | null;
+  user: { id: string; email?: string; nombreCompleto?: string | null } | null;
   role: AppRole | null;
   orgId: string | null;
   loading: boolean;
@@ -80,17 +80,21 @@ let initialized = false;
 
 async function resolveRoleAndOrg(
   jwtClaims: Record<string, unknown>,
-): Promise<{ role: AppRole | null; orgId: string | null }> {
+): Promise<{ role: AppRole | null; orgId: string | null; nombreCompleto: string | null }> {
   const role = (jwtClaims.rol as AppRole | undefined) ?? null;
   const orgId = (jwtClaims.organization_id as string | undefined) ?? null;
-  if (role && orgId) return { role, orgId };
+  const nombreCompleto = (jwtClaims.nombre_completo as string | undefined) ?? null;
+  if (role && orgId && nombreCompleto) return { role, orgId, nombreCompleto };
 
   const res = await fetch("/api/auth/me");
-  if (!res.ok) return { role: null, orgId: null };
-  const json = await res.json() as { data?: { actor?: { role?: string; organizationId?: string } } };
+  if (!res.ok) return { role, orgId, nombreCompleto };
+  const json = await res.json() as {
+    data?: { actor?: { role?: string; organizationId?: string }; profile?: { nombre_completo?: string } };
+  };
   return {
-    role: (json.data?.actor?.role as AppRole | undefined) ?? null,
-    orgId: json.data?.actor?.organizationId ?? null,
+    role: (json.data?.actor?.role as AppRole | undefined) ?? role,
+    orgId: json.data?.actor?.organizationId ?? orgId,
+    nombreCompleto: json.data?.profile?.nombre_completo ?? nombreCompleto,
   };
 }
 
@@ -100,9 +104,9 @@ async function applySession(
   try {
     if (session?.user) {
       const claims = parseJwtClaims(session.access_token);
-      const { role, orgId } = await resolveRoleAndOrg(claims);
+      const { role, orgId, nombreCompleto } = await resolveRoleAndOrg(claims);
       authState = {
-        user: { id: session.user.id, email: session.user.email },
+        user: { id: session.user.id, email: session.user.email, nombreCompleto },
         role,
         orgId,
         loading: false,

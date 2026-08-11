@@ -38,7 +38,7 @@ import {
 
 export default function DashboardPage() {
   const { user, role } = useAuth();
-  const userName = user?.email?.split("@")[0] ?? "Usuario";
+  const userName = user?.nombreCompleto || user?.email?.split("@")[0] || "Usuario";
 
   if (role === "cobrador") {
     return <CobradorDashboard userName={userName} />;
