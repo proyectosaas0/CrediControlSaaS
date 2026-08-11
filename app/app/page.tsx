@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/providers/auth-provider";
-import { OnboardingTutorial } from "@/components/auth/onboarding-tutorial";
 import { CobradorDashboard } from "@/components/domain/cobrador-dashboard";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { formatCop } from "@/lib/domain/money";
@@ -40,17 +38,9 @@ import {
 
 export default function DashboardPage() {
   const { user, role } = useAuth();
-  const [showOnboarding, setShowOnboarding] = useState(true);
   const userName = user?.email?.split("@")[0] ?? "Usuario";
 
   if (role === "cobrador") {
-    if (showOnboarding) {
-      return (
-        <div className="mx-auto max-w-md py-4">
-          <OnboardingTutorial onComplete={() => setShowOnboarding(false)} />
-        </div>
-      );
-    }
     return <CobradorDashboard userName={userName} />;
   }
 

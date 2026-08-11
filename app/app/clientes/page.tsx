@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Plus, Phone, Users, MapPin, ArrowUpRight } from "lucide-react";
 import { useClientes, type Cliente } from "@/hooks/queries/use-clientes";
+import { useAuth } from "@/providers/auth-provider";
 import { ScoreBadge } from "@/components/domain/score-badge";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
@@ -29,6 +30,8 @@ const AVATAR_STYLES = [
 ];
 
 export default function ClientesPage() {
+  const { role } = useAuth();
+  const canCreate = role === "admin" || role === "super_admin";
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<FilterPill>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -76,11 +79,13 @@ export default function ClientesPage() {
             : `${clientes.length} cliente${clientes.length !== 1 ? "s" : ""} en tu cartera`
         }
         actions={
-          <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1.5">
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-            <span className="hidden sm:inline">Crear cliente</span>
-            <span className="sm:hidden">Crear</span>
-          </Button>
+          canCreate && (
+            <Button size="sm" onClick={() => setDialogOpen(true)} className="gap-1.5">
+              <Plus className="h-4 w-4" strokeWidth={2.5} />
+              <span className="hidden sm:inline">Crear cliente</span>
+              <span className="sm:hidden">Crear</span>
+            </Button>
+          )
         }
       />
 
