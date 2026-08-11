@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Banknote, Plus, Calendar, CreditCard } from "lucide-react";
-import { usePagos, useCronogramaPrestamo } from "@/hooks/queries/use-pagos";
+import { usePagos, useCronogramaPrestamo, type Pago } from "@/hooks/queries/use-pagos";
 import { useClientes } from "@/hooks/queries/use-clientes";
 import { usePrestamos } from "@/hooks/queries/use-prestamos";
 import { useAuth } from "@/providers/auth-provider";
@@ -37,6 +37,49 @@ const TIPOS_PAGO = [
   { value: "liquidacion", label: "Liquidación" },
 ];
 
+type PagoGroup = { key: string; label: string; pagos: Pago[]; total: number };
+
+function dateKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+function formatGroupLabel(iso: string): string {
+  const date = new Date(iso);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (dateKey(date) === dateKey(today)) return "Hoy";
+  if (dateKey(date) === dateKey(yesterday)) return "Ayer";
+
+  const label = date.toLocaleDateString("es-CO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: date.getFullYear() === today.getFullYear() ? undefined : "numeric",
+  });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+function groupPagosByDate(pagos: Pago[]): PagoGroup[] {
+  const groups: PagoGroup[] = [];
+  const byKey = new Map<string, PagoGroup>();
+
+  for (const pago of pagos) {
+    const key = dateKey(new Date(pago.created_at));
+    let group = byKey.get(key);
+    if (!group) {
+      group = { key, label: formatGroupLabel(pago.created_at), pagos: [], total: 0 };
+      byKey.set(key, group);
+      groups.push(group);
+    }
+    group.pagos.push(pago);
+    group.total += pago.monto;
+  }
+
+  return groups;
+}
+
 export default function PagosPage() {
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
@@ -56,6 +99,7 @@ export default function PagosPage() {
   });
 
   const totalMonto = filtered.reduce((sum, p) => sum + p.monto, 0);
+  const groups = groupPagosByDate(filtered);
 
   return (
     <div className="space-y-5">
@@ -116,38 +160,59 @@ export default function PagosPage() {
           }
         />
       ) : (
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((pago, i) => (
-            <Link key={pago.id} href={`/app/pagos/${pago.id}`} className="block h-full">
-              <div
-                className="dash-rise group flex h-full items-center gap-3.5 rounded-xl border border-border bg-card px-4 py-3.5 backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5"
-                style={staggerDelay(i)}
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success">
-                  <Banknote className="h-4 w-4" />
+        <div className="space-y-6">
+          {groups.map((group) => (
+            <div key={group.key} className="space-y-2.5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                  <h2 className="shrink-0 text-sm font-bold text-foreground">
+                    {group.label}
+                  </h2>
+                  <span className="flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-primary/15 px-1.5 text-[11px] font-bold tabular-nums text-primary">
+                    {group.pagos.length}
+                  </span>
+                  <span className="hidden h-px flex-1 bg-gradient-to-r from-border to-transparent sm:block" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
-                      {pago.clientes?.nombre ?? "—"}
-                    </p>
-                    <p className="shrink-0 font-display text-sm font-bold tabular-nums text-success">
-                      +{formatCop(pago.monto)}
-                    </p>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {new Date(pago.created_at).toLocaleDateString("es-CO")}
-                    </span>
-                    <span className="flex items-center gap-1 capitalize">
-                      <CreditCard className="h-3 w-3" />
-                      {pago.medio_pago}
-                    </span>
-                  </div>
-                </div>
+                <p className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">
+                  {formatCop(group.total)}
+                </p>
               </div>
-            </Link>
+
+              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                {group.pagos.map((pago, i) => (
+                  <Link key={pago.id} href={`/app/pagos/${pago.id}`} className="block h-full">
+                    <div
+                      className="dash-rise group flex h-full items-center gap-3.5 rounded-xl border border-border bg-card px-4 py-3.5 backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-lg hover:shadow-primary/5"
+                      style={staggerDelay(i)}
+                    >
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success">
+                        <Banknote className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
+                            {pago.clientes?.nombre ?? "—"}
+                          </p>
+                          <p className="shrink-0 font-display text-sm font-bold tabular-nums text-success">
+                            +{formatCop(pago.monto)}
+                          </p>
+                        </div>
+                        <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(pago.created_at).toLocaleDateString("es-CO")}
+                          </span>
+                          <span className="flex items-center gap-1 capitalize">
+                            <CreditCard className="h-3 w-3" />
+                            {pago.medio_pago}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}
