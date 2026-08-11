@@ -215,11 +215,22 @@ function CronogramaSection({
 }) {
   const [showAll, setShowAll] = useState(false);
 
+  if (!prestamo.fecha_inicio) {
+    return (
+      <div>
+        <SectionHead title="Cronograma de pagos" count={0} />
+        <div className="rounded-2xl border border-border bg-card p-4 text-center text-xs text-muted-foreground backdrop-blur-sm">
+          Este préstamo no tiene fecha de inicio definida, así que aún no hay cronograma.
+        </div>
+      </div>
+    );
+  }
+
   const schedule = buildLoanSchedule({
     capital: prestamo.capital,
-    excluirDomingos: false,
-    excluirSabados: false,
-    fechaInicio: prestamo.fecha_inicio ?? "",
+    excluirDomingos: prestamo.excluir_domingos,
+    excluirSabados: prestamo.excluir_sabados,
+    fechaInicio: prestamo.fecha_inicio,
     modelo: prestamo.modelo_interes as LoanModel,
     plazoDias: prestamo.plazo_dias,
     tasaMensual: prestamo.tasa_mensual,
