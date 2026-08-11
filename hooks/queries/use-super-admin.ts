@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchApi } from "./fetch-api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchApi, postApi } from "./fetch-api";
 
 export type SuperAdminMetricas = {
   tenants: number;
@@ -29,5 +29,34 @@ export function useTenants() {
   return useQuery({
     queryKey: ["super-admin", "tenants"],
     queryFn: () => fetchApi<Tenant[]>("/api/super-admin/tenants"),
+  });
+}
+
+function useTenantMutation(action: "activar" | "suspender") {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (tenantId: string) => postApi<Tenant>(`/api/super-admin/tenants/${tenantId}/${action}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["super-admin", "tenants"] });
+    },
+  });
+}
+
+export function useActivarTenant() {
+  return useTenantMutation("activar");
+}
+
+export function useSuspenderTenant() {
+  return useTenantMutation("suspender");
+}
+
+export function useExtenderTrialTenant() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tenantId, trialHasta }: { tenantId: string; trialHasta: string }) =>
+      postApi<Tenant>(`/api/super-admin/tenants/${tenantId}/extender-periodo`, { trialHasta }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["super-admin", "tenants"] });
+    },
   });
 }

@@ -14,7 +14,13 @@ import {
   ShieldCheck,
   Building2,
 } from "lucide-react";
-import { useTenants, type Tenant } from "@/hooks/queries/use-super-admin";
+import {
+  useTenants,
+  useActivarTenant,
+  useSuspenderTenant,
+  useExtenderTrialTenant,
+  type Tenant,
+} from "@/hooks/queries/use-super-admin";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -208,6 +214,37 @@ function TenantDetail({
 }) {
   const badge = estadoBadge[tenant.estado_suscripcion] ?? { className: "bg-muted text-muted-foreground", label: tenant.estado_suscripcion };
 
+  const activar = useActivarTenant();
+  const suspender = useSuspenderTenant();
+  const extenderTrial = useExtenderTrialTenant();
+
+  const handleActivar = () => {
+    activar.mutate(tenant.id, {
+      onSuccess: () => toast.success("Tenant activado correctamente"),
+      onError: (err) => toast.error(err instanceof Error ? err.message : "No se pudo activar el tenant"),
+    });
+  };
+
+  const handleSuspender = () => {
+    suspender.mutate(tenant.id, {
+      onSuccess: () => toast.success("Tenant suspendido"),
+      onError: (err) => toast.error(err instanceof Error ? err.message : "No se pudo suspender el tenant"),
+    });
+  };
+
+  const handleExtenderTrial = () => {
+    const base = tenant.trial_hasta ? new Date(`${tenant.trial_hasta}T00:00:00Z`) : new Date();
+    const start = base.getTime() > Date.now() ? base : new Date();
+    const nuevaFecha = new Date(start.getTime() + 15 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    extenderTrial.mutate(
+      { tenantId: tenant.id, trialHasta: nuevaFecha },
+      {
+        onSuccess: () => toast.success("Periodo de trial extendido 15 dias"),
+        onError: (err) => toast.error(err instanceof Error ? err.message : "No se pudo extender el trial"),
+      },
+    );
+  };
+
   const trialDaysLeft = (() => {
     if (tenant.estado_suscripcion !== "trial") return 0;
     if (!tenant.trial_hasta) return 0;
@@ -294,7 +331,8 @@ function TenantDetail({
             <Button
               size="sm"
               variant="success"
-              onClick={() => toast.success("Tenant activado correctamente")}
+              onClick={handleActivar}
+              disabled={activar.isPending}
               className="w-full"
             >
               <PlayCircle className="h-4 w-4" />
@@ -305,7 +343,8 @@ function TenantDetail({
             <Button
               size="sm"
               variant="danger"
-              onClick={() => toast.success("Tenant suspendido")}
+              onClick={handleSuspender}
+              disabled={suspender.isPending}
               className="w-full"
             >
               <PauseCircle className="h-4 w-4" />
@@ -316,7 +355,8 @@ function TenantDetail({
             <Button
               size="sm"
               variant="outline"
-              onClick={() => toast.success("Periodo de trial extendido 15 dias")}
+              onClick={handleExtenderTrial}
+              disabled={extenderTrial.isPending}
               className="w-full"
             >
               <CalendarPlus className="h-4 w-4" />

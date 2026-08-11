@@ -20,6 +20,19 @@ export async function fetchApi<T>(
     }
   }
   const res = await fetch(url.toString());
+  return parseApiResponse<T>(res);
+}
+
+export async function postApi<T>(path: string, body?: unknown): Promise<T> {
+  const res = await fetch(path, {
+    method: "POST",
+    headers: body !== undefined ? { "Content-Type": "application/json" } : undefined,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+  return parseApiResponse<T>(res);
+}
+
+async function parseApiResponse<T>(res: Response): Promise<T> {
   let json: { data?: T; error?: { code?: string; message?: string } };
   try {
     json = await res.json();
