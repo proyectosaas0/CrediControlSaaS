@@ -26,7 +26,7 @@ export default function DashboardLayout({
     ).length ?? 0;
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-screen">
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

@@ -14,7 +14,7 @@ export default function SuperAdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-full">
+    <div className="flex h-screen">
       <aside className="hidden w-64 flex-col border-r border-sidebar-border bg-sidebar-bg lg:flex">
         <div className="flex h-14 items-center border-b border-sidebar-border px-4">
           <span className="text-lg font-bold text-sidebar-foreground">
