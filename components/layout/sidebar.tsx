@@ -19,6 +19,7 @@ import {
   Zap,
 } from "lucide-react";
 import { cn } from "@/components/ui/cn";
+import { getInitials } from "@/lib/utils";
 import type { AppRole } from "@/lib/auth";
 
 type NavItem = {
@@ -105,7 +106,7 @@ export function Sidebar({
 }: SidebarProps) {
   const pathname = usePathname();
   const groups = role === "cobrador" ? COBRADOR_GROUPS : ADMIN_GROUPS;
-  const initials = userName.slice(0, 2).toUpperCase();
+  const initials = getInitials(userName);
 
   return (
     <>

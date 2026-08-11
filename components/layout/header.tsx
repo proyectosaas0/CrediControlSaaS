@@ -7,6 +7,7 @@ import { SidebarTrigger } from "./sidebar";
 import { useAuth } from "@/providers/auth-provider";
 import { LogOut, ChevronDown } from "lucide-react";
 import { OrgSwitcher } from "./org-switcher";
+import { getInitials } from "@/lib/utils";
 
 type HeaderProps = {
   onMenuClick: () => void;
@@ -38,7 +39,7 @@ export function Header({ onMenuClick, userName = "Usuario" }: HeaderProps) {
           <span className="hidden text-sm text-muted-foreground sm:inline">
             {userName}
           </span>
-          <Avatar initials={userName.slice(0, 2).toUpperCase()} size="sm" />
+          <Avatar initials={getInitials(userName)} size="sm" />
           <ChevronDown className={`hidden h-3 w-3 text-muted-foreground transition-transform sm:block ${menuOpen ? "rotate-180" : ""}`} />
         </button>
 
