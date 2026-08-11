@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, RefreshCcw, XCircle } from "lucide-react";
+import { postApi, ApiError } from "@/hooks/queries/fetch-api";
 import { cancelarPrestamoSchema, type CancelarPrestamoData } from "@/lib/schemas/admin";
 import { buildLoanSchedule, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
@@ -366,6 +368,7 @@ function RefinanciarButton({ }: { prestamoId: string }) {
 
 function CancelarButton({ prestamoId }: { prestamoId: string }) {
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -376,10 +379,15 @@ function CancelarButton({ prestamoId }: { prestamoId: string }) {
   });
 
   async function onSubmit(data: CancelarPrestamoData) {
-    // TODO: Reemplazar por POST /api/prestamos/[id]/cancelar
-    console.log("Cancelar prestamo:", prestamoId, data);
-    toast.success("Prestamo cancelado");
-    setOpen(false);
+    try {
+      await postApi(`/api/prestamos/${prestamoId}/cancelar`, data);
+      await queryClient.invalidateQueries({ queryKey: ["prestamos", prestamoId] });
+      await queryClient.invalidateQueries({ queryKey: ["prestamos"] });
+      toast.success("Prestamo cancelado");
+      setOpen(false);
+    } catch (error) {
+      toast.error(error instanceof ApiError ? error.message : "No se pudo cancelar el prestamo");
+    }
   }
 
   return (
