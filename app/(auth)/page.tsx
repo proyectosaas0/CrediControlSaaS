@@ -24,9 +24,9 @@ const BENEFITS = [
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col items-center gap-8 py-8 text-center">
+    <div className="flex flex-col items-center gap-8 py-8 text-center md:gap-10">
       <div className="space-y-3">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground sm:text-4xl md:text-5xl">
           Digitaliza tu
           <br />
           <span className="bg-gradient-to-r from-primary to-violet-400 bg-clip-text text-transparent">
@@ -39,7 +39,7 @@ export default function LandingPage() {
         </p>
       </div>
 
-      <div className="flex w-full flex-col gap-3">
+      <div className="flex w-full flex-col gap-3 sm:flex-row">
         <Link
           href="/register"
           className={buttonClasses("primary", "lg") + " w-full"}
@@ -57,7 +57,7 @@ export default function LandingPage() {
 
       <Separator />
 
-      <div className="w-full space-y-3">
+      <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
         {BENEFITS.map((b) => (
           <Card key={b.title} padding="sm">
             <CardContent className="flex items-start gap-3 p-0">
@@ -77,7 +77,7 @@ export default function LandingPage() {
 
       <Separator />
 
-      <div className="w-full rounded-xl border border-border bg-muted p-4 text-left">
+      <div className="w-full rounded-xl border border-border bg-muted p-4 text-left md:p-6">
         <p className="text-sm italic text-muted-foreground">
           &ldquo;Antes perdia 2 horas todas las noches contando. Ahora cierro
           ruta en 5 minutos y mis clientes reciben el comprobante al
@@ -88,7 +88,7 @@ export default function LandingPage() {
         </p>
       </div>
 
-      <div className="w-full space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-center">
+      <div className="w-full space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4 text-center md:p-6">
         <p className="text-lg font-semibold text-foreground">
           Plan gratuito — 15 dias
         </p>
