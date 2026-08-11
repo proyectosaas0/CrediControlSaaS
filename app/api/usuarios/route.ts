@@ -3,7 +3,7 @@ import { requireApiActor } from "@/lib/api/auth";
 import { apiError, apiOk } from "@/lib/api/errors";
 import { parseJson } from "@/lib/api/validation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/server/admin-supabase";
+import { createAdminClient, inviteUser } from "@/lib/server/admin-supabase";
 
 const createAdminSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio"),
@@ -61,12 +61,11 @@ export async function POST(request: Request) {
 
   const admin = createAdminClient();
 
-  const { data: userData, error: createError } = await admin.auth.admin.createUser({
-    email,
-    email_confirm: true,
+  const { data: userData, error: createError } = await inviteUser(admin, email, {
     // app_created tells handle_new_user to skip org/profile auto-provisioning;
     // this route inserts the profile in the correct org below.
-    user_metadata: { nombre_completo: nombre, app_created: true },
+    nombre_completo: nombre,
+    app_created: true,
   });
   if (createError) {
     const isDuplicate =
