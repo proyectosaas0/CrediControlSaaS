@@ -24,7 +24,13 @@ export function Header({ onMenuClick, userName = "Usuario" }: HeaderProps) {
   };
 
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/80 backdrop-blur-xl px-4">
+    // relative + z-20: backdrop-blur-xl below makes this header a stacking
+    // context, but without an explicit position it's still a plain in-flow
+    // box -- <main>, its later sibling, then paints on top of it (including
+    // the absolutely-positioned dropdown that overflows past the header's
+    // own height), silently eating clicks on "Cerrar sesión". Explicit
+    // position+z-index makes header paint above main regardless of DOM order.
+    <header className="relative z-20 flex h-14 shrink-0 items-center gap-3 border-b border-border bg-background/80 backdrop-blur-xl px-4">
       <SidebarTrigger onClick={onMenuClick} />
       <div className="flex-1" />
       {role === "super_admin" && <OrgSwitcher />}
