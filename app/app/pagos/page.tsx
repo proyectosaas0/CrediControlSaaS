@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import {
   PageHeader,
   SearchInput,
+  FilterPills,
   staggerDelay,
 } from "@/components/ui/page-header";
 import { Dialog } from "@/components/ui/dialog";
@@ -241,10 +242,16 @@ type RegisterPaymentFormProps = {
   onCancel: () => void;
 };
 
+const MODOS_PAGO = [
+  { value: "cuota", label: "Por cuota" },
+  { value: "abono", label: "Abono al préstamo" },
+];
+
 function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) {
   const queryClient = useQueryClient();
   const [clienteId, setClienteId] = useState("");
   const [prestamoId, setPrestamoId] = useState("");
+  const [modo, setModo] = useState<"cuota" | "abono">("cuota");
   const [cuotaId, setCuotaId] = useState("");
   const [medioPago, setMedioPago] = useState("");
   const [tipo, setTipo] = useState("cuota");
@@ -263,6 +270,8 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
   );
 
   const selectedCuota = cuotas.find((c) => c.id === cuotaId);
+  const selectedPrestamo = prestamos.find((p) => p.id === prestamoId);
+  const saldoPendiente = selectedPrestamo?.prestamo_saldos?.[0]?.saldo_pendiente;
 
   function handleClienteChange(id: string) {
     setClienteId(id);
@@ -273,8 +282,16 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
 
   function handlePrestamoChange(id: string) {
     setPrestamoId(id);
+    setModo("cuota");
     setCuotaId("");
     setMonto("");
+  }
+
+  function handleModoChange(value: string) {
+    setModo(value as "cuota" | "abono");
+    setCuotaId("");
+    setMonto("");
+    setTipo(value === "abono" ? "abono" : "cuota");
   }
 
   function handleCuotaChange(id: string) {
@@ -285,7 +302,12 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!cuotaId || !medioPago || !monto) {
+    if (modo === "abono") {
+      if (!prestamoId || !medioPago || !monto) {
+        toast.error("Completa todos los campos obligatorios");
+        return;
+      }
+    } else if (!cuotaId || !medioPago || !monto) {
       toast.error("Completa todos los campos obligatorios");
       return;
     }
@@ -294,7 +316,7 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        cronogramaPagoId: cuotaId,
+        ...(modo === "abono" ? { prestamoId } : { cronogramaPagoId: cuotaId }),
         medioPago,
         monto: Number(monto),
         tipo,
@@ -327,6 +349,8 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
     label: `Cuota ${c.numero_cuota} · ${formatCop(c.monto_esperado)} · ${c.estado}`,
   }));
 
+  const canSubmit = modo === "abono" ? !!prestamoId : !!cuotaId;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Select
@@ -351,6 +375,10 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
       )}
 
       {prestamoId && (
+        <FilterPills options={MODOS_PAGO} value={modo} onChange={handleModoChange} />
+      )}
+
+      {prestamoId && modo === "cuota" && (
         <Select
           label="Cuota *"
           options={cuotaOptions}
@@ -361,14 +389,24 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
         />
       )}
 
-      {cuotaId && (
+      {prestamoId && modo === "abono" && saldoPendiente !== undefined && (
+        <p className="text-xs text-muted-foreground">
+          Saldo pendiente del préstamo:{" "}
+          <span className="font-semibold text-foreground">{formatCop(saldoPendiente)}</span>.
+          El abono se aplica automáticamente a las cuotas pendientes más próximas.
+        </p>
+      )}
+
+      {((modo === "cuota" && cuotaId) || (modo === "abono" && prestamoId)) && (
         <>
-          <Select
-            label="Tipo de pago *"
-            options={TIPOS_PAGO}
-            value={tipo}
-            onChange={(e) => setTipo(e.target.value)}
-          />
+          {modo === "cuota" && (
+            <Select
+              label="Tipo de pago *"
+              options={TIPOS_PAGO}
+              value={tipo}
+              onChange={(e) => setTipo(e.target.value)}
+            />
+          )}
           <Select
             label="Método de pago *"
             options={MEDIOS_PAGO}
@@ -401,7 +439,7 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
         <Button
           type="submit"
           loading={saving}
-          disabled={!cuotaId || !medioPago || !monto}
+          disabled={!canSubmit || !medioPago || !monto}
           className="flex-1"
         >
           Registrar pago

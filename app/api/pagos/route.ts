@@ -7,14 +7,21 @@ import { withTransaction } from "@/lib/database/transactions";
 import { logger } from "@/lib/logger";
 
 const registerPaymentSchema = z.object({
-  cronogramaPagoId: z.string().uuid(),
+  cronogramaPagoId: z.string().uuid().optional(),
+  prestamoId: z.string().uuid().optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
   medioPago: z.enum(["efectivo", "nequi", "transferencia"]),
   monto: z.number().positive(),
   nota: z.string().trim().optional(),
-  tipo: z.enum(["cuota", "parcial", "vencida", "mora", "liquidacion"]),
-});
+  tipo: z.enum(["cuota", "parcial", "vencida", "mora", "liquidacion", "abono"]),
+}).refine(
+  (data) => (data.tipo === "abono" ? !!data.prestamoId : !!data.cronogramaPagoId),
+  {
+    message: "Selecciona una cuota, o el prestamo si es un abono",
+    path: ["cronogramaPagoId"],
+  },
+);
 
 export async function GET(request: Request) {
   const { actor, response } = await requireApiActor();
@@ -56,10 +63,45 @@ export async function POST(request: Request) {
   try {
     const result = await withTransaction(
       async (supabase) => {
+        if (input.tipo === "abono") {
+          const { data: prestamo, error: prestamoError } = await supabase
+            .from("prestamos")
+            .select("id, cliente_id, cobrador_id")
+            .eq("id", input.prestamoId!)
+            .eq("organization_id", organizationId)
+            .maybeSingle();
+          if (prestamoError) throw prestamoError;
+          if (!prestamo) return { error: apiError("NOT_FOUND", "Prestamo no encontrado", 404) };
+          if (actor!.role === "cobrador" && prestamo.cobrador_id !== actor!.userId) {
+            return { error: apiError("FORBIDDEN", "Prestamo no asignado al cobrador", 403) };
+          }
+
+          const { data: pagoId, error } = await supabase.rpc("register_payment", {
+            p_cliente_id: prestamo.cliente_id,
+            p_cobrador_id: prestamo.cobrador_id ?? actor!.userId,
+            // register_payment's uuid param has no SQL DEFAULT, so the generated
+            // type doesn't know it's nullable -- it genuinely accepts null (an
+            // "abono" isn't tied to one cuota).
+            p_cronograma_pago_id: null as unknown as string,
+            p_lat: input.lat ?? undefined,
+            p_lng: input.lng ?? undefined,
+            p_medio_pago: input.medioPago,
+            p_monto: input.monto,
+            p_nota: input.nota ?? undefined,
+            p_organization_id: organizationId,
+            p_prestamo_id: prestamo.id,
+            p_registrado_por: actor!.userId,
+            p_tipo: input.tipo,
+          });
+
+          if (error) throw error;
+          return { pagoId };
+        }
+
         const { data: cuota, error: cuotaError } = await supabase
           .from("cronograma_pagos")
           .select("id, organization_id, prestamo_id, cobrador_id")
-          .eq("id", input.cronogramaPagoId)
+          .eq("id", input.cronogramaPagoId!)
           .eq("organization_id", organizationId)
           .maybeSingle();
         if (cuotaError) throw cuotaError;
