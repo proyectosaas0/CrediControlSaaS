@@ -87,7 +87,7 @@ export default function PagosPage() {
   const queryClient = useQueryClient();
   const { data: pagos = [], isPending, error, refetch } = usePagos();
 
-  const isAdmin = role === "admin" || role === "super_admin";
+  const canRegistrarPago = role === "admin" || role === "super_admin" || role === "cobrador";
 
   const filtered = pagos.filter((p) => {
     if (!search.trim()) return true;
@@ -119,7 +119,7 @@ export default function PagosPage() {
           )
         }
         actions={
-          isAdmin && (
+          canRegistrarPago && (
             <Button size="sm" onClick={() => setCreateOpen(true)} className="gap-1.5">
               <Plus className="h-4 w-4" strokeWidth={2.5} />
               <span className="hidden sm:inline">Registrar pago</span>
@@ -151,7 +151,7 @@ export default function PagosPage() {
               : "Los pagos aparecerán aquí cuando se registren cuotas."
           }
           action={
-            isAdmin && !search ? (
+            canRegistrarPago && !search ? (
               <Button size="sm" onClick={() => setCreateOpen(true)}>
                 <Plus className="h-4 w-4" />
                 Registrar pago
@@ -217,7 +217,7 @@ export default function PagosPage() {
         </div>
       )}
 
-      {isAdmin && (
+      {canRegistrarPago && (
         <Dialog
           open={createOpen}
           onClose={() => setCreateOpen(false)}
