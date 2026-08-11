@@ -3,7 +3,7 @@ import { requireApiActor } from "@/lib/api/auth";
 import { apiError, apiOk } from "@/lib/api/errors";
 import { parseJson } from "@/lib/api/validation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/server/admin-supabase";
+import { createAdminClient, sendPasswordRecovery } from "@/lib/server/admin-supabase";
 
 const patchSchema = z.object({
   activo: z.boolean().optional(),
@@ -91,10 +91,7 @@ export async function POST(request: Request, context: RouteContext) {
   const { data: userData } = await admin.auth.admin.getUserById(id);
   if (!userData.user?.email) return apiError("NOT_FOUND", "Email del usuario no encontrado", 404);
 
-  const { error } = await admin.auth.admin.generateLink({
-    type: "recovery",
-    email: userData.user.email,
-  });
+  const { error } = await sendPasswordRecovery(admin, userData.user.email);
 
   if (error) return apiError("INTERNAL_ERROR", error.message, 500);
 
