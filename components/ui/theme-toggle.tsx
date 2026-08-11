@@ -8,6 +8,9 @@ export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
+  // Mount guard to avoid SSR/client hydration mismatch (next-themes doesn't know
+  // the persisted theme until after mount) — the one extra client render is expected.
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {

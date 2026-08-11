@@ -31,7 +31,6 @@ export async function updateSession(request: NextRequest) {
   const claims = claimsResult.data?.claims ?? null;
   const isAuthenticated = Boolean(claims?.sub);
   const role = ((claims?.rol as RouteRole | undefined) ?? null) as RouteRole;
-  const orgId = (claims?.organization_id as string | undefined) ?? null;
 
   // Nota: la lógica de bloqueo por estado de suscripción se ha eliminado.
   // Para preservar la firma de evaluateRouteAccess mantenemos el flag en true.

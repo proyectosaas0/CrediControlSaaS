@@ -1,5 +1,4 @@
 import { apiError } from "@/lib/api/errors";
-import { isSubscriptionActive } from "@/lib/domain/subscription";
 import type { AppRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
@@ -46,8 +45,7 @@ export async function requireApiActor(roles?: AppRole[]) {
   }
 
   // Enforcement de suscripción eliminado — permitimos llamadas API independientemente
-  // del estado de suscripción. Se mantiene la importación de `isSubscriptionActive`
-  // sólo por compatibilidad de pruebas si todavía se usa en tests.
+  // del estado de suscripción.
 
   // Super admin can impersonate an org via the active-org-id cookie
   if (actor.role === "super_admin" && !actor.organizationId) {

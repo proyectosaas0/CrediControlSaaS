@@ -13,7 +13,7 @@ export function evaluateRouteAccess(params: {
   role: RouteRole;
   subscriptionActive: boolean;
 }): RouteDecision {
-  const { pathname, isAuthenticated, role, subscriptionActive } = params;
+  const { pathname, isAuthenticated, role } = params;
 
   const isAppRoute = pathname === "/app" || pathname.startsWith("/app/");
   const isSuperAdminRoute = SUPER_ADMIN_PREFIXES.some(

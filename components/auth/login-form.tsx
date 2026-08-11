@@ -10,12 +10,11 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { Separator } from "@/components/ui/separator";
 import { LogIn, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { es } from "@/lib/i18n/es";
 
 export function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/app";
   const errorParam = searchParams.get("error");
@@ -53,7 +52,7 @@ export function LoginForm() {
 
     // Full-page navigation guarantees the session cookie is included in the request.
     // Using router.push() alone can race against Supabase's async cookie-set step.
-    window.location.href = redirectTo;
+    window.location.assign(redirectTo);
   }
 
   return (
