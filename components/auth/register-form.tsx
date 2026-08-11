@@ -14,24 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { es } from "@/lib/i18n/es";
-
-const CIUDADES_COLOMBIA = [
-  { value: "Bogota", label: "Bogota" },
-  { value: "Medellin", label: "Medellin" },
-  { value: "Cali", label: "Cali" },
-  { value: "Barranquilla", label: "Barranquilla" },
-  { value: "Cartagena", label: "Cartagena" },
-  { value: "Bucaramanga", label: "Bucaramanga" },
-  { value: "Pereira", label: "Pereira" },
-  { value: "Santa Marta", label: "Santa Marta" },
-  { value: "Manizales", label: "Manizales" },
-  { value: "Ibague", label: "Ibague" },
-  { value: "Villavicencio", label: "Villavicencio" },
-  { value: "Pasto", label: "Pasto" },
-  { value: "Monteria", label: "Monteria" },
-  { value: "Neiva", label: "Neiva" },
-  { value: "Otra", label: "Otra" },
-];
+import { MUNICIPIOS_COLOMBIA } from "@/lib/data/municipios-colombia";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -116,8 +99,9 @@ export function RegisterForm() {
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Select
             label={es.register.ciudad}
-            options={CIUDADES_COLOMBIA}
+            options={MUNICIPIOS_COLOMBIA}
             placeholder="Selecciona tu ciudad"
+            searchable
             error={errors.ciudad?.message}
             {...register("ciudad")}
           />

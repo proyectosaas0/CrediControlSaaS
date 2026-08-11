@@ -48,6 +48,10 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
     const selectedOption = options.find((o) => o.value === selectedValue);
     const displayText = selectedOption?.label ?? placeholder ?? "Seleccionar...";
 
+    const LARGE_LIST_THRESHOLD = 50;
+    const isLargeUnfilteredList =
+      searchable && !searchQuery.trim() && options.length > LARGE_LIST_THRESHOLD;
+
     const filteredOptions = searchable && searchQuery.trim()
       ? options.filter((o) =>
           o.label.toLowerCase().includes(searchQuery.toLowerCase()),
@@ -161,7 +165,11 @@ export const Select = forwardRef<HTMLButtonElement, SelectProps>(
                 </div>
               )}
               <ul className="max-h-52 overflow-y-auto py-1">
-                {filteredOptions.length === 0 ? (
+                {isLargeUnfilteredList ? (
+                  <li className="px-3 py-4 text-center text-sm text-muted-foreground">
+                    Escribe para buscar entre {options.length} opciones
+                  </li>
+                ) : filteredOptions.length === 0 ? (
                   <li className="px-3 py-4 text-center text-sm text-muted-foreground">
                     Sin resultados
                   </li>
