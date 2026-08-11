@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, RefreshCcw, XCircle } from "lucide-react";
+import { ArrowLeft, RefreshCcw, XCircle, Ban } from "lucide-react";
 import { postApi, ApiError } from "@/hooks/queries/fetch-api";
 import { cancelarPrestamoSchema, type CancelarPrestamoData } from "@/lib/schemas/admin";
 import { buildLoanSchedule, type LoanModel } from "@/lib/domain/loans";
@@ -43,6 +43,7 @@ export default function PrestamoDetailPage() {
     prestamo.estado === "activo" || prestamo.estado === "en_mora";
   const canCancel = prestamo.estado === "activo" || prestamo.estado === "en_mora";
   const canEdit = canRefinance && cuotasPagadas === 0;
+  const isCancelado = prestamo.estado === "cancelado";
 
   const progress = cuotasTotales > 0 ? Math.round((cuotasPagadas / cuotasTotales) * 100) : 0;
 
@@ -99,9 +100,13 @@ export default function PrestamoDetailPage() {
               </div>
               <div className="px-3 py-3 text-center sm:px-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-                  Saldo pendiente
+                  {isCancelado ? "Saldo al cancelar" : "Saldo pendiente"}
                 </p>
-                <p className="mt-1 truncate font-display text-base font-bold tabular-nums text-danger sm:text-lg">
+                <p
+                  className={`mt-1 truncate font-display text-base font-bold tabular-nums sm:text-lg ${
+                    isCancelado ? "text-muted-foreground" : "text-danger"
+                  }`}
+                >
                   {formatCop(saldoPendiente)}
                 </p>
               </div>
@@ -173,29 +178,61 @@ export default function PrestamoDetailPage() {
               style={{ animationDelay: "180ms" }}
             >
               <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                Progreso
+                {isCancelado ? "Avance al cancelar" : "Progreso"}
               </p>
               <p className="mt-1.5 font-display text-xl font-bold leading-none tabular-nums text-foreground">
                 {progress}%
               </p>
               <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="dash-fill h-full rounded-full bg-gradient-to-r from-primary to-violet-400"
+                  className={`h-full rounded-full ${
+                    isCancelado
+                      ? "bg-muted-foreground/40"
+                      : "dash-fill bg-gradient-to-r from-primary to-violet-400"
+                  }`}
                   style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
           </div>
 
-          {(canRefinance || canCancel) && (
+          {isCancelado ? (
             <div
-              className="dash-rise flex gap-3 lg:flex-col"
+              className="dash-rise rounded-2xl border border-border bg-muted/40 p-4"
               style={{ animationDelay: "240ms" }}
             >
-              {canEdit && <EditPrestamoButton prestamo={prestamo} />}
-              {canRefinance && <RefinanciarButton prestamoId={prestamo.id} />}
-              {canCancel && <CancelarButton prestamoId={prestamo.id} />}
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Ban className="h-4 w-4 shrink-0" />
+                <p className="text-xs font-bold uppercase tracking-[0.14em]">
+                  Préstamo cancelado
+                </p>
+              </div>
+              {prestamo.motivo_cancelacion && (
+                <p className="mt-2 text-sm text-foreground">
+                  {prestamo.motivo_cancelacion}
+                </p>
+              )}
+              {prestamo.cancelado_at && (
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  {new Date(prestamo.cancelado_at).toLocaleDateString("es-CO", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+              )}
             </div>
+          ) : (
+            (canRefinance || canCancel) && (
+              <div
+                className="dash-rise flex gap-3 lg:flex-col"
+                style={{ animationDelay: "240ms" }}
+              >
+                {canEdit && <EditPrestamoButton prestamo={prestamo} />}
+                {canRefinance && <RefinanciarButton prestamoId={prestamo.id} />}
+                {canCancel && <CancelarButton prestamoId={prestamo.id} />}
+              </div>
+            )
           )}
           {!canEdit && canRefinance && cuotasPagadas > 0 && (
             <p className="text-xs text-muted-foreground">
