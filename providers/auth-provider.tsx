@@ -70,7 +70,12 @@ function parseJwtClaims(token: string): Record<string, unknown> {
   try {
     const base64url = token.split('.')[1];
     const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
-    return JSON.parse(atob(base64)) as Record<string, unknown>;
+    // atob() decodes base64 into a string of raw bytes (one char per byte),
+    // not UTF-8 text -- multi-byte characters (á, ñ, é...) get mangled
+    // unless we re-decode those bytes as UTF-8 before parsing.
+    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+    const json = new TextDecoder("utf-8").decode(bytes);
+    return JSON.parse(json) as Record<string, unknown>;
   } catch {
     return {};
   }
