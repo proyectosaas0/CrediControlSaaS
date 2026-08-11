@@ -59,7 +59,7 @@ export function LoginForm() {
   return (
     <>
       <div className="mb-6 text-center">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           {es.auth.login}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
