@@ -449,13 +449,30 @@ function WeekChart({ semana }: { semana?: RecaudoDiario[] }) {
 
 type Accent = "indigo" | "emerald" | "amber" | "rose" | "muted";
 
-const accentMap: Record<Accent, { icon: string; progress: string }> = {
-  indigo: { icon: "bg-primary/15 text-primary", progress: "bg-primary" },
-  emerald: { icon: "bg-success/15 text-success", progress: "bg-success" },
-  amber: { icon: "bg-warning/15 text-warning", progress: "bg-warning" },
-  rose: { icon: "bg-danger/15 text-danger", progress: "bg-danger" },
+const accentMap: Record<Accent, { icon: string; ring: string; progress: string }> = {
+  indigo: {
+    icon: "bg-gradient-to-br from-primary/25 via-primary/10 to-transparent text-primary",
+    ring: "ring-primary/15",
+    progress: "bg-gradient-to-r from-primary to-violet-400",
+  },
+  emerald: {
+    icon: "bg-gradient-to-br from-success/25 via-success/10 to-transparent text-success",
+    ring: "ring-success/15",
+    progress: "bg-gradient-to-r from-success to-emerald-400",
+  },
+  amber: {
+    icon: "bg-gradient-to-br from-warning/25 via-warning/10 to-transparent text-warning",
+    ring: "ring-warning/15",
+    progress: "bg-gradient-to-r from-warning to-amber-400",
+  },
+  rose: {
+    icon: "bg-gradient-to-br from-danger/25 via-danger/10 to-transparent text-danger",
+    ring: "ring-danger/15",
+    progress: "bg-gradient-to-r from-danger to-rose-400",
+  },
   muted: {
     icon: "bg-muted text-muted-foreground",
+    ring: "ring-border",
     progress: "bg-muted-foreground",
   },
 };
@@ -486,15 +503,16 @@ function StatTile({
   const body = (
     <div
       className={cn(
-        "dash-rise group relative flex h-full items-center gap-4 overflow-hidden rounded-2xl border border-border bg-card px-4 py-4 backdrop-blur-sm transition-all",
+        "dash-rise group relative flex h-full items-center gap-4 overflow-hidden rounded-2xl border border-border bg-card px-4 py-4 shadow-sm shadow-black/[0.03] backdrop-blur-sm transition-all dark:shadow-black/20",
         href && "hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5",
       )}
       style={{ animationDelay: `${delay}ms` }}
     >
       <div
         className={cn(
-          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ring-1 ring-inset",
           a.icon,
+          a.ring,
         )}
       >
         <Icon className="h-4 w-4" />
@@ -504,7 +522,7 @@ function StatTile({
         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
           {label}
         </p>
-        <p className="mt-1 font-display text-xl font-bold leading-none tracking-tight text-foreground tabular-nums">
+        <p className="mt-1 font-display text-2xl font-bold leading-none tracking-tight text-foreground tabular-nums">
           {value}
         </p>
         {progress !== undefined && (
