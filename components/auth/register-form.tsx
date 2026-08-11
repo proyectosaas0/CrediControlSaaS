@@ -86,7 +86,7 @@ export function RegisterForm() {
   return (
     <>
       <div className="mb-6 text-center">
-        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground md:text-3xl">
           {es.auth.register}
         </h1>
         <p className="mt-1.5 text-sm text-muted-foreground">
@@ -95,38 +95,42 @@ export function RegisterForm() {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
-        <Input
-          label={es.register.nombreCompleto}
-          autoComplete="name"
-          placeholder="Juan Perez"
-          error={errors.nombre_completo?.message}
-          {...register("nombre_completo")}
-        />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Input
+            label={es.register.nombreCompleto}
+            autoComplete="name"
+            placeholder="Juan Perez"
+            error={errors.nombre_completo?.message}
+            {...register("nombre_completo")}
+          />
 
-        <Input
-          label={es.register.nombreNegocio}
-          autoComplete="organization"
-          placeholder="Cobros del Valle"
-          error={errors.nombre_negocio?.message}
-          {...register("nombre_negocio")}
-        />
+          <Input
+            label={es.register.nombreNegocio}
+            autoComplete="organization"
+            placeholder="Cobros del Valle"
+            error={errors.nombre_negocio?.message}
+            {...register("nombre_negocio")}
+          />
+        </div>
 
-        <Select
-          label={es.register.ciudad}
-          options={CIUDADES_COLOMBIA}
-          placeholder="Selecciona tu ciudad"
-          error={errors.ciudad?.message}
-          {...register("ciudad")}
-        />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <Select
+            label={es.register.ciudad}
+            options={CIUDADES_COLOMBIA}
+            placeholder="Selecciona tu ciudad"
+            error={errors.ciudad?.message}
+            {...register("ciudad")}
+          />
 
-        <Input
-          label={es.register.telefono}
-          type="tel"
-          autoComplete="tel"
-          placeholder="+57 300 1234567"
-          error={errors.telefono?.message}
-          {...register("telefono")}
-        />
+          <Input
+            label={es.register.telefono}
+            type="tel"
+            autoComplete="tel"
+            placeholder="+57 300 1234567"
+            error={errors.telefono?.message}
+            {...register("telefono")}
+          />
+        </div>
 
         <Input
           label={es.auth.email}
@@ -137,21 +141,23 @@ export function RegisterForm() {
           {...register("email")}
         />
 
-        <PasswordInput
-          label={es.auth.password}
-          autoComplete="new-password"
-          placeholder="Minimo 8 caracteres"
-          error={errors.password?.message}
-          {...register("password")}
-        />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <PasswordInput
+            label={es.auth.password}
+            autoComplete="new-password"
+            placeholder="Minimo 8 caracteres"
+            error={errors.password?.message}
+            {...register("password")}
+          />
 
-        <PasswordInput
-          label={es.auth.confirmPassword}
-          autoComplete="new-password"
-          placeholder="Repite tu contrasena"
-          error={errors.confirmPassword?.message}
-          {...register("confirmPassword")}
-        />
+          <PasswordInput
+            label={es.auth.confirmPassword}
+            autoComplete="new-password"
+            placeholder="Repite tu contrasena"
+            error={errors.confirmPassword?.message}
+            {...register("confirmPassword")}
+          />
+        </div>
 
         {serverError && (
           <p className="rounded-lg bg-danger/10 p-3 text-sm text-danger" role="alert">
