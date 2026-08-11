@@ -16,7 +16,9 @@ export type RecaudoDiario = {
 };
 
 export type ReportesCobrador = {
-  cobrador_id: string;
+  // groupSum() names the grouping key "name" generically; here it's actually
+  // the cobrador_id (pagos.cobrador_id) — look up the display name separately.
+  name: string;
   total: number;
 };
 
