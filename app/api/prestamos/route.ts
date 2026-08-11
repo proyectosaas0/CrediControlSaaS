@@ -51,7 +51,46 @@ export async function GET(request: Request) {
   const { count, data, error } = await query;
   if (error) return apiError("INTERNAL_ERROR", error.message, 500);
 
-  return apiOk(data ?? [], { count: count ?? 0, page, pageSize });
+  const prestamos = data ?? [];
+  const prestamoIds = prestamos.map((p) => p.id);
+
+  const cuotasByPrestamo = new Map<string, { total: number; pagadas: number }>();
+  if (prestamoIds.length > 0) {
+    const { data: cuotas, error: cuotasError } = await supabase
+      .from("cronograma_pagos")
+      .select("prestamo_id, estado")
+      .in("prestamo_id", prestamoIds)
+      .neq("estado", "cancelado");
+    if (cuotasError) return apiError("INTERNAL_ERROR", cuotasError.message, 500);
+
+    for (const cuota of cuotas ?? []) {
+      const entry = cuotasByPrestamo.get(cuota.prestamo_id) ?? { total: 0, pagadas: 0 };
+      entry.total += 1;
+      if (cuota.estado === "pagado") entry.pagadas += 1;
+      cuotasByPrestamo.set(cuota.prestamo_id, entry);
+    }
+  }
+
+  const enriched = prestamos.map((p) => {
+    const saldoRow = Array.isArray(p.prestamo_saldos)
+      ? (p.prestamo_saldos[0] ?? null)
+      : (p.prestamo_saldos ?? null);
+    const cuotas = cuotasByPrestamo.get(p.id) ?? { total: 0, pagadas: 0 };
+    return {
+      ...p,
+      prestamo_saldos: [
+        {
+          ...(saldoRow ?? {}),
+          prestamo_id: p.id,
+          cuotas_pagadas: cuotas.pagadas,
+          cuotas_totales: cuotas.total,
+          saldo_pendiente: saldoRow?.saldo_pendiente ?? 0,
+        },
+      ],
+    };
+  });
+
+  return apiOk(enriched, { count: count ?? 0, page, pageSize });
 }
 
 export async function POST(request: Request) {
