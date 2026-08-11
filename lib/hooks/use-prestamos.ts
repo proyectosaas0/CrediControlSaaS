@@ -17,6 +17,8 @@ export type Prestamo = {
   totalPagar: number;
   fechaInicio: string;
   fechaFin: string;
+  excluirSabados: boolean;
+  excluirDomingos: boolean;
   estado: 'activo' | 'en_mora' | 'saldado' | 'refinanciado' | 'cancelado';
   cuotasPagadas: number;
   cuotasTotales: number;
@@ -38,6 +40,8 @@ type PrestamoRaw = {
   total_pagar: number;
   fecha_inicio: string;
   fecha_fin: string;
+  excluir_sabados?: boolean;
+  excluir_domingos?: boolean;
   estado: string;
   cuotas_pagadas: number;
   cuotas_totales: number;
@@ -68,6 +72,8 @@ function transformPrestamo(raw: PrestamoRaw): Prestamo {
     totalPagar: raw.total_pagar,
     fechaInicio: raw.fecha_inicio,
     fechaFin: raw.fecha_fin,
+    excluirSabados: raw.excluir_sabados ?? false,
+    excluirDomingos: raw.excluir_domingos ?? false,
     estado: raw.estado as Prestamo['estado'],
     cuotasPagadas: raw.cuotas_pagadas,
     cuotasTotales: raw.cuotas_totales,

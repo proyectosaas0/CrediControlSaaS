@@ -23,6 +23,8 @@ export type Prestamo = {
   tasa_mensual: number;
   fecha_inicio: string | null;
   fecha_fin: string | null;
+  excluir_sabados: boolean;
+  excluir_domingos: boolean;
   created_at: string;
   clientes: { nombre: string } | null;
   prestamo_saldos: PrestamoSaldo[] | null;

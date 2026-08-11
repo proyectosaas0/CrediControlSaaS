@@ -6,6 +6,7 @@ const modules = [
   () => import("../../app/api/mora/[id]/pago/route"),
   () => import("../../app/api/mora/[id]/condonar/route"),
   () => import("../../app/api/prestamos/[id]/cancelar/route"),
+  () => import("../../app/api/prestamos/[id]/route"),
   () => import("../../app/api/prestamos/[id]/refinanciar/route"),
   () => import("../../app/api/caja/resumen/route"),
   () => import("../../app/api/caja/cierre-ruta/route"),

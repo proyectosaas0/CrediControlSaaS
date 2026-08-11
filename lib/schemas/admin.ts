@@ -49,6 +49,31 @@ export const prestamoStep2Schema = z.object({
 
 export type PrestamoStep2Data = z.infer<typeof prestamoStep2Schema>;
 
+export const editarPrestamoSchema = z.object({
+  clienteId: z.string().uuid("Selecciona un cliente"),
+  capital: z
+    .number({ error: "Ingresa un monto valido" })
+    .positive("El capital debe ser mayor a 0"),
+  modeloInteres: z.enum(["cuota_fija", "solo_interes", "sobre_saldo"], {
+    message: "Selecciona un modelo de interes",
+  }),
+  tasaMensual: z
+    .number({ error: "Ingresa una tasa valida" })
+    .min(0, "La tasa no puede ser negativa")
+    .max(100, "La tasa maxima es 100%"),
+  plazoDias: z
+    .number({ error: "Ingresa un numero de dias valido" })
+    .int("El plazo debe ser un numero entero")
+    .min(1, "El plazo minimo es 1 dia")
+    .max(365, "El plazo maximo es 365 dias"),
+  fechaInicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Fecha invalida"),
+  excluirSabados: z.boolean(),
+  excluirDomingos: z.boolean(),
+  cobradorId: z.union([z.string().uuid(), z.literal(""), z.null()]).optional(),
+});
+
+export type EditarPrestamoData = z.infer<typeof editarPrestamoSchema>;
+
 export const cobradorSchema = z.object({
   nombre: z.string().trim().min(1, "El nombre es obligatorio"),
   email: z.email("Ingresa un correo valido"),

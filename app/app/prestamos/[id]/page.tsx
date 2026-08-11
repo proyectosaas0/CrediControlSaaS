@@ -9,6 +9,7 @@ import { cancelarPrestamoSchema, type CancelarPrestamoData } from "@/lib/schemas
 import { buildLoanSchedule, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
 import { usePrestamo, type Prestamo } from "@/hooks/queries/use-prestamos";
+import { EditPrestamoButton } from "@/components/domain/edit-prestamo-dialog";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export default function PrestamoDetailPage() {
   const canRefinance =
     prestamo.estado === "activo" || prestamo.estado === "en_mora";
   const canCancel = prestamo.estado === "activo" || prestamo.estado === "en_mora";
+  const canEdit = canRefinance && cuotasPagadas === 0;
 
   const progress = cuotasTotales > 0 ? Math.round((cuotasPagadas / cuotasTotales) * 100) : 0;
 
@@ -188,9 +190,15 @@ export default function PrestamoDetailPage() {
               className="dash-rise flex gap-3 lg:flex-col"
               style={{ animationDelay: "240ms" }}
             >
+              {canEdit && <EditPrestamoButton prestamo={prestamo} />}
               {canRefinance && <RefinanciarButton prestamoId={prestamo.id} />}
               {canCancel && <CancelarButton prestamoId={prestamo.id} />}
             </div>
+          )}
+          {!canEdit && canRefinance && cuotasPagadas > 0 && (
+            <p className="text-xs text-muted-foreground">
+              La edición completa solo está disponible antes del primer pago.
+            </p>
           )}
         </div>
       </div>
