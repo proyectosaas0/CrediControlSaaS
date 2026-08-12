@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Pencil } from "lucide-react";
+import { AlertCircle, Pencil } from "lucide-react";
 import { editarPrestamoSchema, type EditarPrestamoData } from "@/lib/schemas/admin";
 import { buildLoanSchedule, calculateLoanTotals, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
@@ -193,96 +193,127 @@ function EditPrestamoDialog({
   ];
 
   return (
-    <Dialog open={open} onClose={onClose} title="Editar préstamo">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      title="Editar préstamo"
+      footer={
+        <div className="flex gap-3">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            Cancelar
+          </Button>
+          <Button type="submit" form="edit-prestamo-form" loading={saving} className="flex-1">
+            Guardar cambios
+          </Button>
+        </div>
+      }
+    >
+      <form id="edit-prestamo-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6 py-1">
         {hasPayments && (
-          <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-200">
-            Ya existen pagos registrados. Solo puedes cambiar cliente o cobrador; los campos financieros quedan bloqueados.
-          </p>
+          <div className="flex items-start gap-2.5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3.5 py-3 text-sm text-amber-700 dark:text-amber-200">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>
+              Ya existen pagos registrados. Solo puedes cambiar cliente, cobrador o día de
+              cobro — los campos financieros quedan bloqueados.
+            </p>
+          </div>
         )}
 
-        <Select
-          label="Cliente"
-          options={clienteOptions}
-          placeholder="Buscar cliente..."
-          error={errors.clienteId?.message}
-          searchable
-          value={clienteId ?? ""}
-          {...register("clienteId")}
-        />
+        <div className="space-y-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+            Cliente y cobrador
+          </p>
+          <Select
+            label="Cliente"
+            options={clienteOptions}
+            placeholder="Buscar cliente..."
+            error={errors.clienteId?.message}
+            searchable
+            value={clienteId ?? ""}
+            {...register("clienteId")}
+          />
+          <Select
+            label="Cobrador"
+            options={cobradorOptions}
+            error={errors.cobradorId?.message}
+            searchable
+            value={cobradorId ?? ""}
+            {...register("cobradorId")}
+          />
+        </div>
 
-        <Input
-          label="Capital"
-          type="number"
-          placeholder="1.500.000"
-          error={errors.capital?.message}
-          disabled={hasPayments}
-          {...register("capital", { valueAsNumber: true })}
-        />
+        <div className="space-y-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+            Condiciones financieras
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Input
+              label="Capital"
+              type="number"
+              placeholder="1.500.000"
+              error={errors.capital?.message}
+              disabled={hasPayments}
+              {...register("capital", { valueAsNumber: true })}
+            />
+            <Select
+              label="Modelo de interes"
+              options={[...MODELO_OPTIONS]}
+              placeholder="Selecciona un modelo"
+              error={errors.modeloInteres?.message}
+              value={modeloInteres ?? ""}
+              disabled={hasPayments}
+              {...register("modeloInteres")}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Input
+              label="Tasa mensual (%)"
+              type="number"
+              step="0.1"
+              placeholder="10"
+              error={errors.tasaMensual?.message}
+              disabled={hasPayments}
+              {...register("tasaMensual", { valueAsNumber: true })}
+            />
+            <Input
+              label="Plazo (dias)"
+              type="number"
+              placeholder="30"
+              error={errors.plazoDias?.message}
+              disabled={hasPayments}
+              {...register("plazoDias", { valueAsNumber: true })}
+            />
+          </div>
+          <Input
+            label="Fecha de inicio"
+            type="date"
+            error={errors.fechaInicio?.message}
+            disabled={hasPayments}
+            {...register("fechaInicio")}
+          />
+        </div>
 
-        <Select
-          label="Modelo de interes"
-          options={[...MODELO_OPTIONS]}
-          placeholder="Selecciona un modelo"
-          error={errors.modeloInteres?.message}
-          value={modeloInteres ?? ""}
-          disabled={hasPayments}
-          {...register("modeloInteres")}
-        />
-
-        <Input
-          label="Tasa mensual (%)"
-          type="number"
-          step="0.1"
-          placeholder="10"
-          error={errors.tasaMensual?.message}
-          disabled={hasPayments}
-          {...register("tasaMensual", { valueAsNumber: true })}
-        />
-
-        <Input
-          label="Plazo (dias)"
-          type="number"
-          placeholder="30"
-          error={errors.plazoDias?.message}
-          disabled={hasPayments}
-          {...register("plazoDias", { valueAsNumber: true })}
-        />
-
-        <Input
-          label="Fecha de inicio"
-          type="date"
-          error={errors.fechaInicio?.message}
-          disabled={hasPayments}
-          {...register("fechaInicio")}
-        />
-
-        <Select
-          label="Cobrador"
-          options={cobradorOptions}
-          error={errors.cobradorId?.message}
-          searchable
-          value={cobradorId ?? ""}
-          {...register("cobradorId")}
-        />
-
-        <Controller
-          control={control}
-          name="diaCobro"
-          render={({ field }) => (
-            <DiaCobroPicker value={field.value ?? []} onChange={field.onChange} />
-          )}
-        />
-
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" {...register("excluirSabados")} className="h-4 w-4 rounded border-border" disabled={hasPayments} />
-            Excluir sabados
-          </label>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" {...register("excluirDomingos")} className="h-4 w-4 rounded border-border" disabled={hasPayments} />
-            Excluir domingos
-          </label>
+        <div className="space-y-3">
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+            Programación de cobro
+          </p>
+          <Controller
+            control={control}
+            name="diaCobro"
+            render={({ field }) => (
+              <DiaCobroPicker value={field.value ?? []} onChange={field.onChange} />
+            )}
+          />
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" {...register("excluirSabados")} className="h-4 w-4 rounded border-border" disabled={hasPayments} />
+              Excluir sabados
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" {...register("excluirDomingos")} className="h-4 w-4 rounded border-border" disabled={hasPayments} />
+              Excluir domingos
+            </label>
+          </div>
         </div>
 
         {!hasPayments && preview && (
@@ -314,15 +345,6 @@ function EditPrestamoDialog({
             </div>
           </Card>
         )}
-
-        <div className="flex gap-3">
-          <Button type="button" variant="outline" onClick={onClose} className="flex-1">
-            Cancelar
-          </Button>
-          <Button type="submit" loading={saving} className="flex-1">
-            Guardar cambios
-          </Button>
-        </div>
       </form>
     </Dialog>
   );

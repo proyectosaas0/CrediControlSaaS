@@ -11,34 +11,48 @@ export type ReceiptSection = {
   rows: ReceiptRow[];
 };
 
+export type ReceiptHero = {
+  label: string;
+  value: string;
+  accent?: ReceiptRowAccent;
+};
+
 export type ReceiptData = {
   negocio: string;
   titulo: string;
   subtitulo?: string;
+  icon?: "check" | "summary";
+  hero: ReceiptHero;
   sections: ReceiptSection[];
   footerNote?: string;
 };
 
 const COLORS = {
   bg: "#ffffff",
-  headerBg: "#4338ca",
+  headerFrom: "#4338ca",
+  headerTo: "#7c3aed",
   headerText: "#ffffff",
-  foreground: "#0c0d1a",
-  muted: "#5a5d78",
-  border: "#e4e4ec",
+  foreground: "#12142b",
+  muted: "#6b7089",
+  border: "#eceef4",
+  cardBg: "#f8f8fc",
   success: "#059669",
   warning: "#d97706",
   danger: "#e11d48",
-  default: "#0c0d1a",
+  default: "#12142b",
 } as const;
 
 const WIDTH = 720;
-const PADDING = 40;
-const HEADER_HEIGHT = 150;
-const ROW_HEIGHT = 56;
-const SECTION_HEADING_HEIGHT = 40;
-const SECTION_GAP = 16;
-const FOOTER_HEIGHT = 90;
+const PADDING = 44;
+const RADIUS = 28;
+const HEADER_HEIGHT = 188;
+const HERO_HEIGHT = 148;
+const ROW_HEIGHT = 50;
+const SECTION_HEADING_HEIGHT = 34;
+const SECTION_PAD_Y = 18;
+const SECTION_GAP = 18;
+const FOOTER_HEIGHT = 76;
+const FONT = "system-ui, -apple-system, 'Segoe UI', sans-serif";
 
 function accentColor(accent: ReceiptRowAccent | undefined) {
   switch (accent) {
@@ -53,15 +67,34 @@ function accentColor(accent: ReceiptRowAccent | undefined) {
   }
 }
 
+function measureSectionHeight(section: ReceiptSection) {
+  let h = SECTION_PAD_Y * 2;
+  if (section.heading) h += SECTION_HEADING_HEIGHT;
+  h += section.rows.length * ROW_HEIGHT;
+  return h;
+}
+
+const SECTION_TOP_GAP = PADDING * 0.6;
+
 function measureHeight(data: ReceiptData) {
-  let height = HEADER_HEIGHT + PADDING;
+  let height = HEADER_HEIGHT + HERO_HEIGHT + SECTION_TOP_GAP;
   for (const section of data.sections) {
-    if (section.heading) height += SECTION_HEADING_HEIGHT;
-    height += section.rows.length * ROW_HEIGHT;
-    height += SECTION_GAP;
+    height += measureSectionHeight(section) + SECTION_GAP;
   }
   height += FOOTER_HEIGHT;
   return Math.round(height);
+}
+
+function truncateToWidth(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let low = 0;
+  let high = text.length;
+  while (low < high) {
+    const mid = Math.ceil((low + high) / 2);
+    if (ctx.measureText(`${text.slice(0, mid)}…`).width <= maxWidth) low = mid;
+    else high = mid - 1;
+  }
+  return `${text.slice(0, low)}…`;
 }
 
 function roundRect(
@@ -70,15 +103,51 @@ function roundRect(
   y: number,
   w: number,
   h: number,
-  r: number,
+  r: number | { tl: number; tr: number; br: number; bl: number },
 ) {
+  const rad = typeof r === "number" ? { tl: r, tr: r, br: r, bl: r } : r;
   ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
+  ctx.moveTo(x + rad.tl, y);
+  ctx.lineTo(x + w - rad.tr, y);
+  ctx.arcTo(x + w, y, x + w, y + rad.tr, rad.tr);
+  ctx.lineTo(x + w, y + h - rad.br);
+  ctx.arcTo(x + w, y + h, x + w - rad.br, y + h, rad.br);
+  ctx.lineTo(x + rad.bl, y + h);
+  ctx.arcTo(x, y + h, x, y + h - rad.bl, rad.bl);
+  ctx.lineTo(x, y + rad.tl);
+  ctx.arcTo(x, y, x + rad.tl, y, rad.tl);
   ctx.closePath();
+}
+
+function drawIcon(ctx: CanvasRenderingContext2D, cx: number, cy: number, kind: "check" | "summary") {
+  const r = 26;
+  ctx.save();
+  ctx.fillStyle = "rgba(255,255,255,0.16)";
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  if (kind === "check") {
+    ctx.beginPath();
+    ctx.moveTo(cx - 10, cy);
+    ctx.lineTo(cx - 3, cy + 8);
+    ctx.lineTo(cx + 11, cy - 9);
+    ctx.stroke();
+  } else {
+    for (const [i, w] of [0.42, 0.6, 0.3].entries()) {
+      const ly = cy - 10 + i * 10;
+      ctx.beginPath();
+      ctx.moveTo(cx - 12, ly);
+      ctx.lineTo(cx - 12 + 24 * w, ly);
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
 }
 
 export function renderReceiptCanvas(data: ReceiptData): HTMLCanvasElement {
@@ -92,88 +161,122 @@ export function renderReceiptCanvas(data: ReceiptData): HTMLCanvasElement {
   if (!ctx) return canvas;
   ctx.scale(scale, scale);
 
-  // Background + outer border
-  ctx.fillStyle = COLORS.bg;
-  roundRect(ctx, 0, 0, WIDTH, height, 24);
-  ctx.fill();
-  ctx.strokeStyle = COLORS.border;
-  ctx.lineWidth = 1;
-  roundRect(ctx, 0.5, 0.5, WIDTH - 1, height - 1, 24);
-  ctx.stroke();
-
-  // Header
+  // Outer card with soft drop shadow
   ctx.save();
-  roundRect(ctx, 0, 0, WIDTH, HEADER_HEIGHT, 24);
+  ctx.shadowColor = "rgba(30, 20, 90, 0.16)";
+  ctx.shadowBlur = 28;
+  ctx.shadowOffsetY = 12;
+  ctx.fillStyle = COLORS.bg;
+  roundRect(ctx, 0, 0, WIDTH, height, RADIUS);
+  ctx.fill();
+  ctx.restore();
+
+  // Header gradient band
+  ctx.save();
+  roundRect(ctx, 0, 0, WIDTH, HEADER_HEIGHT, { tl: RADIUS, tr: RADIUS, br: 0, bl: 0 });
   ctx.clip();
-  ctx.fillStyle = COLORS.headerBg;
+  const gradient = ctx.createLinearGradient(0, 0, WIDTH, HEADER_HEIGHT);
+  gradient.addColorStop(0, COLORS.headerFrom);
+  gradient.addColorStop(1, COLORS.headerTo);
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, WIDTH, HEADER_HEIGHT);
   ctx.restore();
 
+  drawIcon(ctx, PADDING + 26, 60, data.icon ?? "check");
+
   ctx.fillStyle = COLORS.headerText;
   ctx.textBaseline = "alphabetic";
-  ctx.font = "700 26px system-ui, -apple-system, sans-serif";
-  ctx.fillText(data.negocio, PADDING, 56);
+  ctx.font = `700 17px ${FONT}`;
+  ctx.globalAlpha = 0.92;
+  ctx.fillText(data.negocio.toUpperCase(), PADDING + 66, 55);
+  ctx.globalAlpha = 1;
 
-  ctx.font = "700 32px system-ui, -apple-system, sans-serif";
-  ctx.fillText(data.titulo, PADDING, 100);
+  ctx.font = `800 30px ${FONT}`;
+  ctx.fillText(data.titulo, PADDING, 130);
 
   if (data.subtitulo) {
-    ctx.font = "400 16px system-ui, -apple-system, sans-serif";
+    ctx.font = `500 15px ${FONT}`;
     ctx.globalAlpha = 0.85;
-    ctx.fillText(data.subtitulo, PADDING, 128);
+    ctx.fillText(data.subtitulo, PADDING, 158);
     ctx.globalAlpha = 1;
   }
 
-  // Body
-  let y = HEADER_HEIGHT + PADDING;
+  // Hero amount block
+  const heroTop = HEADER_HEIGHT;
+  ctx.fillStyle = COLORS.bg;
+  ctx.fillRect(0, heroTop, WIDTH, HERO_HEIGHT);
+
+  ctx.textAlign = "center";
+  ctx.fillStyle = COLORS.muted;
+  ctx.font = `700 12px ${FONT}`;
+  ctx.save();
+  ctx.letterSpacing = "2px";
+  ctx.fillText(data.hero.label.toUpperCase(), WIDTH / 2, heroTop + 46);
+  ctx.restore();
+
+  ctx.fillStyle = accentColor(data.hero.accent ?? "default");
+  ctx.font = `800 52px ${FONT}`;
+  ctx.fillText(data.hero.value, WIDTH / 2, heroTop + 104);
+  ctx.textAlign = "left";
+
+  ctx.strokeStyle = COLORS.border;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PADDING, heroTop + HERO_HEIGHT - 1);
+  ctx.lineTo(WIDTH - PADDING, heroTop + HERO_HEIGHT - 1);
+  ctx.stroke();
+
+  // Sections, each its own soft rounded card
+  let y = heroTop + HERO_HEIGHT + SECTION_TOP_GAP;
   for (const section of data.sections) {
+    const sectionHeight = measureSectionHeight(section);
+
+    ctx.fillStyle = COLORS.cardBg;
+    roundRect(ctx, PADDING - 20, y, WIDTH - (PADDING - 20) * 2, sectionHeight, 18);
+    ctx.fill();
+
+    let rowY = y + SECTION_PAD_Y;
     if (section.heading) {
       ctx.fillStyle = COLORS.muted;
-      ctx.font = "700 13px system-ui, -apple-system, sans-serif";
+      ctx.font = `700 12px ${FONT}`;
       ctx.save();
       ctx.letterSpacing = "1.5px";
-      ctx.fillText(section.heading.toUpperCase(), PADDING, y + 18);
+      ctx.fillText(section.heading.toUpperCase(), PADDING, rowY + 12);
       ctx.restore();
-      y += SECTION_HEADING_HEIGHT;
+      rowY += SECTION_HEADING_HEIGHT;
     }
 
     for (const row of section.rows) {
       ctx.fillStyle = COLORS.muted;
-      ctx.font = "400 16px system-ui, -apple-system, sans-serif";
-      ctx.fillText(row.label, PADDING, y + 24);
+      ctx.font = `500 15px ${FONT}`;
+      const labelWidth = ctx.measureText(row.label).width;
+      ctx.fillText(row.label, PADDING, rowY + 22);
 
       ctx.fillStyle = accentColor(row.accent);
-      ctx.font = "700 20px system-ui, -apple-system, sans-serif";
-      const valueWidth = ctx.measureText(row.value).width;
-      ctx.fillText(row.value, WIDTH - PADDING - valueWidth, y + 30);
+      ctx.font = `700 17px ${FONT}`;
+      const maxValueWidth = WIDTH - PADDING * 2 - labelWidth - 24;
+      const value = truncateToWidth(ctx, row.value, Math.max(maxValueWidth, 60));
+      const valueWidth = ctx.measureText(value).width;
+      ctx.fillText(value, WIDTH - PADDING - valueWidth, rowY + 22);
 
-      y += ROW_HEIGHT;
-      if (row !== section.rows[section.rows.length - 1]) {
-        ctx.strokeStyle = COLORS.border;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(PADDING, y - 8);
-        ctx.lineTo(WIDTH - PADDING, y - 8);
-        ctx.stroke();
-      }
+      rowY += ROW_HEIGHT;
     }
-    y += SECTION_GAP;
+
+    y += sectionHeight + SECTION_GAP;
   }
 
   // Footer
-  ctx.strokeStyle = COLORS.border;
-  ctx.beginPath();
-  ctx.moveTo(PADDING, height - FOOTER_HEIGHT + 10);
-  ctx.lineTo(WIDTH - PADDING, height - FOOTER_HEIGHT + 10);
-  ctx.stroke();
-
   ctx.fillStyle = COLORS.muted;
-  ctx.font = "400 13px system-ui, -apple-system, sans-serif";
+  ctx.font = `500 12px ${FONT}`;
+  ctx.textAlign = "center";
+  ctx.globalAlpha = 0.8;
   ctx.fillText(
     data.footerNote ?? `Generado por CrediControl · ${new Date().toLocaleString("es-CO")}`,
-    PADDING,
-    height - 36,
+    WIDTH / 2,
+    height - FOOTER_HEIGHT / 2 + 4,
   );
+  ctx.globalAlpha = 1;
+  ctx.textAlign = "left";
 
   return canvas;
 }

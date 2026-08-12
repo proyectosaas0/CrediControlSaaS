@@ -24,12 +24,14 @@ export function buildPagoReceiptData(input: {
   return {
     negocio: input.negocio,
     titulo: "Comprobante de pago",
-    subtitulo: input.fecha,
+    subtitulo: `${input.cliente} · ${input.fecha}`,
+    icon: "check",
+    hero: { label: "Monto pagado", value: formatCop(input.monto), accent: "success" },
     sections: [
       {
+        heading: "Detalle",
         rows: [
           { label: "Cliente", value: input.cliente },
-          { label: "Monto pagado", value: formatCop(input.monto), accent: "success" },
           { label: "Medio de pago", value: input.medioPago },
           { label: "Tipo", value: TIPO_LABELS[input.tipo] ?? input.tipo },
           ...(input.cuota ? [{ label: "Cuota", value: `N° ${input.cuota}` }] : []),
@@ -65,11 +67,14 @@ export function buildPrestamoSummaryData(input: {
     saldado: "Saldado",
   };
   const estadoAccent = input.estado === "saldado" ? "success" : input.estado === "en_mora" || input.estado === "cancelado" ? "danger" : "default";
+  const heroAccent = input.saldoPendiente <= 0 ? "success" : input.estado === "en_mora" ? "danger" : "warning";
 
   return {
     negocio: input.negocio,
     titulo: "Resumen del préstamo",
     subtitulo: input.cliente,
+    icon: "summary",
+    hero: { label: "Saldo pendiente", value: formatCop(input.saldoPendiente), accent: heroAccent },
     sections: [
       {
         heading: "Préstamo",
@@ -86,13 +91,12 @@ export function buildPrestamoSummaryData(input: {
         ],
       },
       {
-        heading: "Saldo",
+        heading: "Avance",
         rows: [
           {
             label: "Cuotas pagadas",
             value: `${input.cuotasPagadas} / ${input.cuotasTotales}`,
           },
-          { label: "Saldo pendiente", value: formatCop(input.saldoPendiente), accent: "warning" },
           ...(input.proximaCuota
             ? [
                 {

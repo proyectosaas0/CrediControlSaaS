@@ -11,9 +11,11 @@ type DialogProps = {
   children: ReactNode;
   title?: string;
   className?: string;
+  /** Rendered below the scrollable content, pinned to the bottom (e.g. Cancelar/Guardar). */
+  footer?: ReactNode;
 };
 
-export function Dialog({ open, onClose, children, title, className }: DialogProps) {
+export function Dialog({ open, onClose, children, title, className, footer }: DialogProps) {
   const mounted = useIsMounted();
 
   useEffect(() => {
@@ -40,9 +42,9 @@ export function Dialog({ open, onClose, children, title, className }: DialogProp
   if (!mounted || !open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
       <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+        className="dash-overlay-in absolute inset-0 bg-black/60 backdrop-blur-sm sm:bg-black/70"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -51,28 +53,43 @@ export function Dialog({ open, onClose, children, title, className }: DialogProp
         aria-modal="true"
         aria-label={title}
         className={cn(
-          "relative z-50 w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl flex flex-col max-h-[90vh]",
+          "dash-sheet-up sm:dash-modal-in relative z-50 flex w-full flex-col border border-border bg-card shadow-2xl",
+          "max-h-[92vh] rounded-t-3xl sm:max-h-[85vh] sm:max-w-lg sm:rounded-2xl",
           className,
         )}
       >
-        <div className="flex items-center justify-between px-6 pt-6 pb-4 shrink-0">
+        <div className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-border sm:hidden" />
+
+        <div className="flex shrink-0 items-center justify-between gap-3 px-5 pb-4 pt-3 sm:px-6 sm:pt-6">
           {title && (
-            <h2 className="text-lg font-semibold text-card-foreground">
+            <h2 className="font-display text-lg font-bold tracking-tight text-card-foreground">
               {title}
             </h2>
           )}
           <button
             type="button"
             onClick={onClose}
-            className="ml-auto inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
+            className="ml-auto inline-flex min-h-11 min-w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             aria-label="Cerrar"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
-        <div className="overflow-y-auto px-6 pb-6 flex-1 min-h-0">
+
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto px-5 sm:px-6",
+            footer ? "pb-4" : "pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-6",
+          )}
+        >
           {children}
         </div>
+
+        {footer && (
+          <div className="shrink-0 border-t border-border px-5 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:px-6 sm:pb-4">
+            {footer}
+          </div>
+        )}
       </div>
     </div>
   );
