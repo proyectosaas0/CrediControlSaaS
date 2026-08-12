@@ -398,6 +398,8 @@ export type Database = {
       }
       pagos: {
         Row: {
+          anulado_at: string | null
+          anulado_por: string | null
           cliente_id: string
           cobrador_id: string
           created_at: string
@@ -414,6 +416,8 @@ export type Database = {
           tipo: string
         }
         Insert: {
+          anulado_at?: string | null
+          anulado_por?: string | null
           cliente_id: string
           cobrador_id: string
           created_at?: string
@@ -430,6 +434,8 @@ export type Database = {
           tipo: string
         }
         Update: {
+          anulado_at?: string | null
+          anulado_por?: string | null
           cliente_id?: string
           cobrador_id?: string
           created_at?: string
@@ -446,6 +452,13 @@ export type Database = {
           tipo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "pagos_anulado_por_fkey"
+            columns: ["anulado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "pagos_cliente_id_fkey"
             columns: ["cliente_id"]
@@ -540,6 +553,7 @@ export type Database = {
       }
       prestamos: {
         Row: {
+          cancelado_at: string | null
           capital: number
           cliente_id: string
           cobrador_id: string | null
@@ -554,6 +568,7 @@ export type Database = {
           fecha_inicio: string | null
           id: string
           modelo_interes: Database["public"]["Enums"]["modelo_interes"]
+          motivo_cancelacion: string | null
           organization_id: string
           plazo_dias: number
           prestamo_anterior_id: string | null
@@ -561,6 +576,7 @@ export type Database = {
           total_pagar: number | null
         }
         Insert: {
+          cancelado_at?: string | null
           capital: number
           cliente_id: string
           cobrador_id?: string | null
@@ -575,6 +591,7 @@ export type Database = {
           fecha_inicio?: string | null
           id?: string
           modelo_interes: Database["public"]["Enums"]["modelo_interes"]
+          motivo_cancelacion?: string | null
           organization_id: string
           plazo_dias: number
           prestamo_anterior_id?: string | null
@@ -582,6 +599,7 @@ export type Database = {
           total_pagar?: number | null
         }
         Update: {
+          cancelado_at?: string | null
           capital?: number
           cliente_id?: string
           cobrador_id?: string | null
@@ -596,6 +614,7 @@ export type Database = {
           fecha_inicio?: string | null
           id?: string
           modelo_interes?: Database["public"]["Enums"]["modelo_interes"]
+          motivo_cancelacion?: string | null
           organization_id?: string
           plazo_dias?: number
           prestamo_anterior_id?: string | null
@@ -856,15 +875,8 @@ export type Database = {
           {
             foreignKeyName: "tenant_subscriptions_organization_id_fkey"
             columns: ["organization_id"]
-            isOneToOne: true
-            referencedRelation: "organizations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tenant_subscriptions_plan_id_fkey"
-            columns: ["plan_id"]
             isOneToOne: false
-            referencedRelation: "subscription_plans"
+            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
         ]
@@ -907,7 +919,7 @@ export type Database = {
           nota?: string | null
           organization_id?: string
           prestamo_id?: string
-          resultado?: string
+          resultado: string
         }
         Relationships: [
           {
@@ -922,20 +934,6 @@ export type Database = {
             columns: ["cobrador_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "visitas_cobro_cronograma_pago_id_fkey"
-            columns: ["cronograma_pago_id"]
-            isOneToOne: false
-            referencedRelation: "cronograma_pagos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "visitas_cobro_organization_id_fkey"
-            columns: ["organization_id"]
-            isOneToOne: false
-            referencedRelation: "organizations"
             referencedColumns: ["id"]
           },
           {

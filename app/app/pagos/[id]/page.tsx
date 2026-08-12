@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/components/ui/cn";
 import { formatCop } from "@/lib/domain/money";
 import { toast } from "sonner";
 
@@ -44,7 +45,7 @@ export default function PagoDetailPage() {
   const params = useParams();
   const router = useRouter();
   const id = params.id as string;
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: pago, isLoading, error } = usePago(id);
@@ -68,6 +69,9 @@ export default function PagoDetailPage() {
     void queryClient.invalidateQueries({ queryKey: ["pagos"] });
     router.push("/app/pagos");
   }
+
+  const isAnulado = !!pago?.anulado_at;
+  const canAnular = !isAnulado && (isAdmin || (role === "cobrador" && pago?.registrado_por === user?.id));
 
   if (isLoading) {
     return (
@@ -127,33 +131,47 @@ export default function PagoDetailPage() {
               <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium capitalize text-muted-foreground">
                 {pago.medio_pago}
               </span>
+              {isAnulado && (
+                <span className="rounded-full bg-danger/15 px-2.5 py-0.5 text-xs font-semibold text-danger">
+                  Anulado
+                </span>
+              )}
             </div>
-            <p className="font-display text-3xl font-bold tracking-tight tabular-nums text-foreground sm:text-4xl">
+            <p
+              className={cn(
+                "font-display text-3xl font-bold tracking-tight tabular-nums sm:text-4xl",
+                isAnulado ? "text-muted-foreground line-through" : "text-foreground",
+              )}
+            >
               {formatCop(pago.monto)}
             </p>
             <p className="mt-1.5 text-sm text-muted-foreground">{fecha}</p>
           </div>
 
-          {isAdmin && (
+          {(isAdmin || canAnular) && (
             <div className="flex shrink-0 items-center gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setEditOpen(true)}
-                className="gap-1.5"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-                Editar
-              </Button>
-              <Button
-                size="sm"
-                variant="danger"
-                onClick={() => setDeleteOpen(true)}
-                className="gap-1.5"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Anular
-              </Button>
+              {isAdmin && !isAnulado && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setEditOpen(true)}
+                  className="gap-1.5"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  Editar
+                </Button>
+              )}
+              {canAnular && (
+                <Button
+                  size="sm"
+                  variant="danger"
+                  onClick={() => setDeleteOpen(true)}
+                  className="gap-1.5"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Anular
+                </Button>
+              )}
             </div>
           )}
         </div>

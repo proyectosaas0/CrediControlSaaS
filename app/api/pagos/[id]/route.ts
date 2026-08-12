@@ -16,7 +16,7 @@ export async function GET(_request: Request, context: RouteContext) {
   let query = supabase
     .from("pagos")
     .select(
-      "id, monto, medio_pago, tipo, nota, created_at, prestamo_id, cliente_id, cobrador_id, cronograma_pago_id, lat, lng, organization_id, clientes(nombre)",
+      "id, monto, medio_pago, tipo, nota, created_at, prestamo_id, cliente_id, cobrador_id, registrado_por, cronograma_pago_id, lat, lng, organization_id, anulado_at, anulado_por, clientes(nombre)",
     )
     .eq("id", id);
 
@@ -73,13 +73,14 @@ export async function PATCH(request: Request, context: RouteContext) {
 
   let verifyQ = supabase
     .from("pagos")
-    .select("id, cronograma_pago_id")
+    .select("id, cronograma_pago_id, anulado_at")
     .eq("id", id);
   if (actor!.organizationId) verifyQ = verifyQ.eq("organization_id", actor!.organizationId);
 
   const { data: existing, error: fetchErr } = await verifyQ.maybeSingle();
   if (fetchErr) return apiError("INTERNAL_ERROR", fetchErr.message, 500);
   if (!existing) return apiError("NOT_FOUND", "Pago no encontrado", 404);
+  if (existing.anulado_at) return apiError("CONFLICT", "Este pago fue anulado", 409);
 
   type MedioPago = "efectivo" | "nequi" | "transferencia";
   type PagoUpdate = { medio_pago: MedioPago; nota?: string | null };
@@ -100,7 +101,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 }
 
 export async function DELETE(_request: Request, context: RouteContext) {
-  const { actor, response } = await requireApiActor(["admin", "super_admin"]);
+  const { actor, response } = await requireApiActor(["admin", "cobrador", "super_admin"]);
   if (response) return response;
   const organizationId = actor!.organizationId;
   if (!organizationId) return apiError("FORBIDDEN", "Sin organización", 403);
@@ -110,13 +111,17 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   const { data: pago, error: fetchErr } = await supabase
     .from("pagos")
-    .select("id, monto, prestamo_id, cronograma_pago_id")
+    .select("id, monto, prestamo_id, cronograma_pago_id, registrado_por, anulado_at")
     .eq("id", id)
     .eq("organization_id", organizationId)
     .maybeSingle();
 
   if (fetchErr) return apiError("INTERNAL_ERROR", fetchErr.message, 500);
   if (!pago) return apiError("NOT_FOUND", "Pago no encontrado", 404);
+  if (actor!.role === "cobrador" && pago.registrado_por !== actor!.userId) {
+    return apiError("FORBIDDEN", "Solo puedes anular pagos que tú mismo registraste", 403);
+  }
+  if (pago.anulado_at) return apiError("CONFLICT", "Este pago ya fue anulado", 409);
 
   const { data: saldo, error: saldoErr } = await supabase
     .from("prestamo_saldos")
@@ -126,8 +131,11 @@ export async function DELETE(_request: Request, context: RouteContext) {
 
   if (saldoErr) return apiError("INTERNAL_ERROR", saldoErr.message, 500);
 
-  const [deleteResult] = await Promise.all([
-    supabase.from("pagos").delete().eq("id", id),
+  const [anularResult] = await Promise.all([
+    supabase
+      .from("pagos")
+      .update({ anulado_at: new Date().toISOString(), anulado_por: actor!.userId })
+      .eq("id", id),
     saldo
       ? supabase.from("prestamo_saldos").update({
           total_pagado: Math.max(0, saldo.total_pagado - pago.monto),
@@ -144,7 +152,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       : Promise.resolve({ error: null }),
   ]);
 
-  if (deleteResult.error) return apiError("INTERNAL_ERROR", deleteResult.error.message, 500);
+  if (anularResult.error) return apiError("INTERNAL_ERROR", anularResult.error.message, 500);
 
   return apiOk({ id });
 }

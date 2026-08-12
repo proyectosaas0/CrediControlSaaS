@@ -19,6 +19,9 @@ export type PagoDetail = Pago & {
   lat: number | null;
   lng: number | null;
   cobrador_nombre: string | null;
+  registrado_por: string;
+  anulado_at: string | null;
+  anulado_por: string | null;
   prestamo: {
     capital: number;
     modelo_interes: string;
