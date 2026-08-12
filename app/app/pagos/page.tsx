@@ -321,8 +321,8 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
         toast.error(json.error?.message ?? "Error al registrar el abono");
         return;
       }
+      await queryClient.invalidateQueries({ queryKey: ["pagos"] });
       toast.success("Abono registrado correctamente");
-      void queryClient.invalidateQueries({ queryKey: ["pagos"] });
       onSuccess();
       return;
     }
@@ -361,12 +361,12 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
     }
     if (succeededCount === 0) return;
 
+    await queryClient.invalidateQueries({ queryKey: ["pagos"] });
     toast.success(
       succeededCount === 1
         ? "Pago registrado correctamente"
         : `${succeededCount} pagos registrados correctamente`,
     );
-    void queryClient.invalidateQueries({ queryKey: ["pagos"] });
     onSuccess();
   }
 

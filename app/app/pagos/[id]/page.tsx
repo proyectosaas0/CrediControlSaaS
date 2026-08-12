@@ -65,8 +65,8 @@ export default function PagoDetailPage() {
       toast.error(json.error?.message ?? "Error al anular el pago");
       return;
     }
+    await queryClient.invalidateQueries({ queryKey: ["pagos"] });
     toast.success("Pago anulado correctamente");
-    void queryClient.invalidateQueries({ queryKey: ["pagos"] });
     router.push("/app/pagos");
   }
 
