@@ -560,6 +560,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           cuota_diaria: number | null
+          dia_cobro: string | null
           dias_habiles: number | null
           estado: Database["public"]["Enums"]["estado_prestamo"]
           excluir_domingos: boolean
@@ -583,6 +584,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           cuota_diaria?: number | null
+          dia_cobro?: string | null
           dias_habiles?: number | null
           estado?: Database["public"]["Enums"]["estado_prestamo"]
           excluir_domingos?: boolean
@@ -606,6 +608,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           cuota_diaria?: number | null
+          dia_cobro?: string | null
           dias_habiles?: number | null
           estado?: Database["public"]["Enums"]["estado_prestamo"]
           excluir_domingos?: boolean

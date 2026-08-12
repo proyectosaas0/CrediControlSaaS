@@ -5,11 +5,13 @@ import { paginationParams, parseJson } from "@/lib/api/validation";
 import { buildLoanSchedule, calculateLoanTotals } from "@/lib/domain/loans";
 import { createAdminClient } from "@/lib/server/admin-supabase";
 import { createClient } from "@/lib/supabase/server";
+import { DIAS_COBRO } from "@/lib/schemas/admin";
 
 const createPrestamoSchema = z.object({
   capital: z.number().positive(),
   clienteId: z.string().uuid(),
   cobradorId: z.string().uuid().nullable().optional(),
+  diaCobro: z.enum(DIAS_COBRO).nullable().optional(),
   excluirDomingos: z.boolean().default(false),
   excluirSabados: z.boolean().default(false),
   fechaInicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
@@ -33,7 +35,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("prestamos")
     .select(
-      "id, organization_id, cliente_id, cobrador_id, estado, capital, cuota_diaria, total_pagar, plazo_dias, modelo_interes, tasa_mensual, fecha_inicio, fecha_fin, created_at, clientes(nombre), prestamo_saldos(*)",
+      "id, organization_id, cliente_id, cobrador_id, estado, capital, cuota_diaria, total_pagar, plazo_dias, modelo_interes, tasa_mensual, fecha_inicio, fecha_fin, dia_cobro, created_at, clientes(nombre), prestamo_saldos(*)",
       { count: "exact" },
     )
     .order("created_at", { ascending: false })
@@ -144,6 +146,7 @@ export async function POST(request: Request) {
       cobrador_id: input.cobradorId ?? null,
       created_by: actor!.userId,
       cuota_diaria: totals.cuotaDiaria,
+      dia_cobro: input.diaCobro ?? null,
       dias_habiles: schedule.length,
       excluir_domingos: input.excluirDomingos,
       excluir_sabados: input.excluirSabados,

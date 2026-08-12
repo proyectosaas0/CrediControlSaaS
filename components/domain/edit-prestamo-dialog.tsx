@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil } from "lucide-react";
-import { editarPrestamoSchema, type EditarPrestamoData } from "@/lib/schemas/admin";
+import { editarPrestamoSchema, DIAS_COBRO, DIA_COBRO_LABELS, type EditarPrestamoData } from "@/lib/schemas/admin";
 import { buildLoanSchedule, calculateLoanTotals, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
 import { useClientes } from "@/hooks/queries/use-clientes";
@@ -82,6 +82,7 @@ function EditPrestamoDialog({
       excluirSabados: prestamo.excluir_sabados,
       excluirDomingos: prestamo.excluir_domingos,
       cobradorId: prestamo.cobrador_id ?? "",
+      diaCobro: (prestamo.dia_cobro ?? "") as EditarPrestamoData["diaCobro"],
     },
   });
 
@@ -97,6 +98,7 @@ function EditPrestamoDialog({
       excluirSabados: prestamo.excluir_sabados,
       excluirDomingos: prestamo.excluir_domingos,
       cobradorId: prestamo.cobrador_id ?? "",
+      diaCobro: (prestamo.dia_cobro ?? "") as EditarPrestamoData["diaCobro"],
     });
   }, [open, prestamo, reset]);
 
@@ -188,6 +190,11 @@ function EditPrestamoDialog({
     })),
   ];
 
+  const diaCobroOptions = [
+    { value: "", label: "Diario (todos los días)" },
+    ...DIAS_COBRO.map((d) => ({ value: d, label: DIA_COBRO_LABELS[d] })),
+  ];
+
   return (
     <Dialog open={open} onClose={onClose} title="Editar préstamo">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
@@ -260,6 +267,14 @@ function EditPrestamoDialog({
           searchable
           value={cobradorId ?? ""}
           {...register("cobradorId")}
+        />
+
+        <Select
+          label="Día de cobro"
+          options={diaCobroOptions}
+          placeholder="Diario (todos los días)"
+          error={errors.diaCobro?.message}
+          {...register("diaCobro")}
         />
 
         <div className="flex items-center gap-4">

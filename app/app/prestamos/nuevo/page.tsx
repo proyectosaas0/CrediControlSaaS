@@ -8,6 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   prestamoStep1Schema,
   prestamoStep2Schema,
+  DIAS_COBRO,
+  DIA_COBRO_LABELS,
   type PrestamoStep1Data,
   type PrestamoStep2Data,
 } from "@/lib/schemas/admin";
@@ -63,6 +65,7 @@ export default function NuevoPrestamoPage() {
           plazoDias: step2Data.plazoDias,
           fechaInicio: step2Data.fechaInicio,
           cobradorId: step2Data.cobradorId || null,
+          diaCobro: step2Data.diaCobro || null,
           excluirSabados: step2Data.excluirSabados,
           excluirDomingos: step2Data.excluirDomingos,
         }),
@@ -246,6 +249,7 @@ function Step2({
       excluirSabados: false,
       excluirDomingos: false,
       cobradorId: lockedCobrador?.id ?? "",
+      diaCobro: "",
     },
   });
 
@@ -277,6 +281,11 @@ function Step2({
       value: c.id,
       label: c.nombre_completo,
     })),
+  ];
+
+  const diaCobroOptions = [
+    { value: "", label: "Diario (todos los días)" },
+    ...DIAS_COBRO.map((d) => ({ value: d, label: DIA_COBRO_LABELS[d] })),
   ];
 
   return (
@@ -338,6 +347,18 @@ function Step2({
           {...register("cobradorId")}
         />
       )}
+
+      <Select
+        label="Día de cobro"
+        options={diaCobroOptions}
+        placeholder="Diario (todos los días)"
+        error={errors.diaCobro?.message}
+        {...register("diaCobro")}
+      />
+      <p className="-mt-2 text-xs text-muted-foreground">
+        Solo informativo, para clientes que pagan un día fijo a la semana (ej. Elvira paga
+        solo los miércoles). No cambia el cronograma de cuotas.
+      </p>
 
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2 text-sm">
@@ -450,6 +471,14 @@ function Step3({
             <div className="flex justify-between">
               <span className="text-muted-foreground">Cobrador</span>
               <span className="text-foreground">{cobrador.nombre_completo}</span>
+            </div>
+          )}
+          {data.diaCobro && (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Día de cobro</span>
+              <span className="text-foreground">
+                {DIA_COBRO_LABELS[data.diaCobro as keyof typeof DIA_COBRO_LABELS]}
+              </span>
             </div>
           )}
           {(data.excluirSabados || data.excluirDomingos) && (

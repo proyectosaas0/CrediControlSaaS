@@ -55,6 +55,7 @@ export function buildPrestamoSummaryData(input: {
   estado: string;
   motivoCancelacion?: string | null;
   proximaCuota?: { fecha: string; monto: number } | null;
+  diaCobroLabel?: string | null;
 }): ReceiptData {
   const estadoLabels: Record<string, string> = {
     activo: "Activo",
@@ -77,6 +78,7 @@ export function buildPrestamoSummaryData(input: {
           { label: "Capital", value: formatCop(input.capital) },
           { label: "Tasa mensual", value: `${input.tasaMensual}%` },
           { label: "Plazo", value: `${input.plazoDias} días` },
+          ...(input.diaCobroLabel ? [{ label: "Día de cobro", value: input.diaCobroLabel }] : []),
           { label: "Estado", value: estadoLabels[input.estado] ?? input.estado, accent: estadoAccent },
           ...(input.estado === "cancelado" && input.motivoCancelacion
             ? [{ label: "Motivo de cancelación", value: input.motivoCancelacion }]

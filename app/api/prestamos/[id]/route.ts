@@ -102,6 +102,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   const basicUpdate = {
     cliente_id: input.clienteId,
     cobrador_id: input.cobradorId || null,
+    dia_cobro: input.diaCobro || null,
   };
 
   if ((pagosCount ?? 0) > 0 && !financialChanges) {

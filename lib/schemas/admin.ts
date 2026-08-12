@@ -27,6 +27,26 @@ export const prestamoStep1Schema = z.object({
 
 export type PrestamoStep1Data = z.infer<typeof prestamoStep1Schema>;
 
+export const DIAS_COBRO = [
+  "lunes",
+  "martes",
+  "miercoles",
+  "jueves",
+  "viernes",
+  "sabado",
+  "domingo",
+] as const;
+
+export const DIA_COBRO_LABELS: Record<(typeof DIAS_COBRO)[number], string> = {
+  lunes: "Lunes",
+  martes: "Martes",
+  miercoles: "Miércoles",
+  jueves: "Jueves",
+  viernes: "Viernes",
+  sabado: "Sábado",
+  domingo: "Domingo",
+};
+
 export const prestamoStep2Schema = z.object({
   capital: z
     .number({ error: "Ingresa un monto valido" })
@@ -47,6 +67,7 @@ export const prestamoStep2Schema = z.object({
   excluirSabados: z.boolean(),
   excluirDomingos: z.boolean(),
   cobradorId: z.union([z.string().uuid(), z.literal(""), z.null()]).optional(),
+  diaCobro: z.union([z.enum(DIAS_COBRO), z.literal(""), z.null()]).optional(),
 });
 
 export type PrestamoStep2Data = z.infer<typeof prestamoStep2Schema>;
@@ -72,6 +93,7 @@ export const editarPrestamoSchema = z.object({
   excluirSabados: z.boolean(),
   excluirDomingos: z.boolean(),
   cobradorId: z.union([z.string().uuid(), z.literal(""), z.null()]).optional(),
+  diaCobro: z.union([z.enum(DIAS_COBRO), z.literal(""), z.null()]).optional(),
 });
 
 export type EditarPrestamoData = z.infer<typeof editarPrestamoSchema>;
