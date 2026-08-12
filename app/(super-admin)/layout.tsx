@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BarChart3, Building2, CreditCard, TrendingUp } from "lucide-react";
+import { SuperAdminHeaderMenu } from "./super-admin-header-menu";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
@@ -42,10 +43,12 @@ export default function SuperAdminLayout({
       </aside>
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-14 shrink-0 items-center gap-4 border-b border-white/[0.06] bg-background/70 backdrop-blur-xl px-4">
+        <header className="relative z-20 flex h-14 shrink-0 items-center gap-4 border-b border-white/[0.06] bg-background/70 backdrop-blur-xl px-4">
           <span className="text-sm font-medium text-muted-foreground">
             Panel Super Admin
           </span>
+          <div className="flex-1" />
+          <SuperAdminHeaderMenu />
         </header>
         <main className="flex-1 overflow-y-auto">
           <div className="mx-auto w-full max-w-5xl p-4 sm:p-6 lg:max-w-[1120px] lg:p-8">

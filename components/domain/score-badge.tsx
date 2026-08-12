@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 type ScoreBadgeProps = {
   score: number;
   size?: "sm" | "lg";
+  hasHistory?: boolean;
 };
 
 function scoreToVariant(score: number): "success" | "warning" | "danger" {
@@ -17,15 +18,15 @@ function scoreToLabel(score: number): string {
   return "Moroso";
 }
 
-export function ScoreBadge({ score, size = "sm" }: ScoreBadgeProps) {
-  const variant = scoreToVariant(score);
-  const label = scoreToLabel(score);
+export function ScoreBadge({ score, size = "sm", hasHistory = true }: ScoreBadgeProps) {
+  const variant = hasHistory ? scoreToVariant(score) : "muted";
+  const label = hasHistory ? scoreToLabel(score) : "Sin historial";
 
   if (size === "lg") {
     return (
       <div className="inline-flex items-center gap-2">
         <Badge variant={variant} className="text-sm px-3 py-1">
-          {score}%
+          {hasHistory ? `${score}%` : "—"}
         </Badge>
         <span
           className={`text-sm font-medium ${
@@ -33,7 +34,9 @@ export function ScoreBadge({ score, size = "sm" }: ScoreBadgeProps) {
               ? "text-success"
               : variant === "warning"
                 ? "text-warning"
-                : "text-danger"
+                : variant === "danger"
+                  ? "text-danger"
+                  : "text-muted-foreground"
           }`}
         >
           {label}
@@ -42,5 +45,5 @@ export function ScoreBadge({ score, size = "sm" }: ScoreBadgeProps) {
     );
   }
 
-  return <Badge variant={variant}>{score}%</Badge>;
+  return <Badge variant={variant}>{hasHistory ? `${score}%` : label}</Badge>;
 }

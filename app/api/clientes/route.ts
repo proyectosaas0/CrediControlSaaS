@@ -27,9 +27,10 @@ export async function GET(request: Request) {
   const supabase = await createClient();
   let query = supabase
     .from("clientes")
-    .select("id, organization_id, nombre, cedula, telefono, direccion, barrio, notas, score_pago, activo, created_at", {
-      count: "exact",
-    })
+    .select(
+      "id, organization_id, nombre, cedula, telefono, direccion, barrio, notas, score_pago, activo, created_at, prestamos(count)",
+      { count: "exact" },
+    )
     .order("created_at", { ascending: false })
     .range(from, to);
 
@@ -41,7 +42,12 @@ export async function GET(request: Request) {
   const { count, data, error } = await query;
   if (error) return apiError("INTERNAL_ERROR", error.message, 500);
 
-  return apiOk(data ?? [], { count: count ?? 0, page, pageSize });
+  const clientes = (data ?? []).map(({ prestamos, ...cliente }) => ({
+    ...cliente,
+    prestamos_count: (prestamos as { count: number }[])[0]?.count ?? 0,
+  }));
+
+  return apiOk(clientes, { count: count ?? 0, page, pageSize });
 }
 
 export async function POST(request: Request) {

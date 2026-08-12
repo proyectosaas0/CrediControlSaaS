@@ -13,6 +13,7 @@ export type Cliente = {
   score_pago: number;
   activo: boolean;
   created_at: string;
+  prestamos_count?: number;
 };
 
 export function useClientes(params?: {

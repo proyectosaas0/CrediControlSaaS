@@ -30,4 +30,39 @@ describe("loan calculations", () => {
     expect(schedule.map((q) => q.fechaEsperada)).toEqual(["2026-06-05", "2026-06-08", "2026-06-09"]);
     expect(schedule.reduce((sum, q) => sum + q.montoEsperado, 0)).toBe(600000);
   });
+
+  it("splits capital and interes on every cuota for cuota_fija, reconciling with the loan totals", () => {
+    const schedule = buildLoanSchedule({
+      capital: 80000,
+      tasaMensual: 20,
+      plazoDias: 5,
+      modelo: "cuota_fija",
+      fechaInicio: "2026-06-05",
+      excluirSabados: false,
+      excluirDomingos: false,
+    });
+
+    for (const cuota of schedule) {
+      expect(cuota.montoInteres).toBeGreaterThan(0);
+      expect(cuota.montoCapital + cuota.montoInteres).toBeCloseTo(cuota.montoEsperado, 2);
+    }
+    expect(schedule.reduce((sum, q) => sum + q.montoCapital, 0)).toBeCloseTo(80000, 2);
+    expect(schedule.reduce((sum, q) => sum + q.montoInteres, 0)).toBeCloseTo(16000, 2);
+  });
+
+  it("keeps solo_interes cuotas interest-only until the final balloon capital payment", () => {
+    const schedule = buildLoanSchedule({
+      capital: 1000000,
+      tasaMensual: 10,
+      plazoDias: 3,
+      modelo: "solo_interes",
+      fechaInicio: "2026-06-05",
+      excluirSabados: false,
+      excluirDomingos: false,
+    });
+
+    expect(schedule[0].montoCapital).toBe(0);
+    expect(schedule[1].montoCapital).toBe(0);
+    expect(schedule[2].montoCapital).toBeCloseTo(1000000, 2);
+  });
 });

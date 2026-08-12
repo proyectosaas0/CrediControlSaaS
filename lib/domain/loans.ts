@@ -64,20 +64,43 @@ export function buildLoanSchedule(input: ScheduleInput): ScheduleItem[] {
   }
 
   const { totalPagar, cuotaDiaria } = calculateLoanTotals(input);
+  const interesTotal = roundMoney(totalPagar - input.capital);
+  const capitalDiario = roundMoney(input.capital / input.plazoDias);
+  const interesDiario = roundMoney(interesTotal / input.plazoDias);
+
   let accumulated = 0;
+  let accumulatedCapital = 0;
+  let accumulatedInteres = 0;
   let saldo = totalPagar;
 
   return dates.map((fechaEsperada, index) => {
     const remainingSlots = dates.length - index;
-    const montoEsperado = remainingSlots === 1 ? roundMoney(totalPagar - accumulated) : cuotaDiaria;
+    const isLast = remainingSlots === 1;
+    const montoEsperado = isLast ? roundMoney(totalPagar - accumulated) : cuotaDiaria;
     accumulated = roundMoney(accumulated + montoEsperado);
     saldo = roundMoney(saldo - montoEsperado);
 
+    let montoCapital: number;
+    let montoInteres: number;
+    if (input.modelo === "solo_interes") {
+      // Interest-only until the last day, which also carries the full capital.
+      montoCapital = remainingSlots > 1 ? 0 : roundMoney(Math.min(input.capital, montoEsperado));
+      montoInteres = roundMoney(Math.max(0, montoEsperado - montoCapital));
+    } else {
+      // cuota_fija / sobre_saldo: each daily cuota carries a proportional
+      // slice of both capital and interest; the last day absorbs rounding
+      // drift so the totals reconcile exactly with the loan's capital/interes.
+      montoCapital = isLast ? roundMoney(input.capital - accumulatedCapital) : capitalDiario;
+      montoInteres = isLast ? roundMoney(interesTotal - accumulatedInteres) : interesDiario;
+    }
+    accumulatedCapital = roundMoney(accumulatedCapital + montoCapital);
+    accumulatedInteres = roundMoney(accumulatedInteres + montoInteres);
+
     return {
       fechaEsperada,
-      montoCapital: input.modelo === "solo_interes" && remainingSlots > 1 ? 0 : roundMoney(Math.min(input.capital, montoEsperado)),
+      montoCapital,
       montoEsperado,
-      montoInteres: roundMoney(Math.max(0, montoEsperado - Math.min(input.capital, montoEsperado))),
+      montoInteres,
       numeroCuota: index + 1,
       saldoEstimado: saldo,
     };

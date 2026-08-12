@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -32,6 +33,7 @@ const MODELO_OPTIONS = [
 
 export default function NuevoPrestamoPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [step, setStep] = useState<Step>(1);
   const [step1Data, setStep1Data] = useState<PrestamoStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<PrestamoStep2Data | null>(null);
@@ -64,6 +66,7 @@ export default function NuevoPrestamoPage() {
         throw new Error((body as { message?: string }).message ?? "Error al crear el préstamo");
       }
       toast.success("Prestamo creado correctamente");
+      void queryClient.invalidateQueries({ queryKey: ["prestamos"] });
       router.push("/app/prestamos");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Error al crear el préstamo";
@@ -71,7 +74,7 @@ export default function NuevoPrestamoPage() {
     } finally {
       setIsSubmitting(false);
     }
-  }, [step1Data, step2Data, router]);
+  }, [step1Data, step2Data, router, queryClient]);
 
   const STEP_LABELS = ["Cliente", "Condiciones", "Confirmar"];
 

@@ -118,7 +118,7 @@ export default function ClienteDetailPage() {
                   )}
                 </div>
               </div>
-              <ScoreBadge score={cliente.score_pago} size="lg" />
+              <ScoreBadge score={cliente.score_pago} size="lg" hasHistory={prestamos.length > 0} />
             </div>
 
             <div className="space-y-2 text-sm">

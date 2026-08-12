@@ -181,7 +181,7 @@ function ClienteCard({ cliente, index }: { cliente: Cliente; index: number }) {
             <p className="truncate text-sm font-semibold text-foreground transition-colors group-hover:text-primary">
               {cliente.nombre}
             </p>
-            <ScoreBadge score={cliente.score_pago} />
+            <ScoreBadge score={cliente.score_pago} hasHistory={(cliente.prestamos_count ?? 0) > 0} />
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
             {cliente.cedula && (
