@@ -16,6 +16,7 @@ import { formatCop } from "@/lib/domain/money";
 import { useClientes } from "@/hooks/queries/use-clientes";
 import { useCobradores, type Cobrador } from "@/hooks/queries/use-cobradores";
 import type { Cliente } from "@/hooks/queries/use-clientes";
+import { useAuth } from "@/providers/auth-provider";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,11 @@ const MODELO_OPTIONS = [
 export default function NuevoPrestamoPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { role, user } = useAuth();
+  const lockedCobrador =
+    role === "cobrador" && user
+      ? { id: user.id, nombre: user.nombreCompleto ?? "Tú" }
+      : undefined;
   const [step, setStep] = useState<Step>(1);
   const [step1Data, setStep1Data] = useState<PrestamoStep1Data | null>(null);
   const [step2Data, setStep2Data] = useState<PrestamoStep2Data | null>(null);
@@ -153,6 +159,7 @@ export default function NuevoPrestamoPage() {
       {step === 2 && (
         <Step2
           cobradores={cobradores}
+          lockedCobrador={lockedCobrador}
           onNext={(data) => {
             setStep2Data(data);
             setStep(3);
@@ -218,9 +225,11 @@ function Step1({
 
 function Step2({
   cobradores,
+  lockedCobrador,
   onNext,
 }: {
   cobradores: Cobrador[];
+  lockedCobrador?: { id: string; nombre: string };
   onNext: (data: PrestamoStep2Data) => void;
 }) {
   const today = new Date().toISOString().slice(0, 10);
@@ -236,7 +245,7 @@ function Step2({
       fechaInicio: today,
       excluirSabados: false,
       excluirDomingos: false,
-      cobradorId: "",
+      cobradorId: lockedCobrador?.id ?? "",
     },
   });
 
@@ -312,13 +321,23 @@ function Step2({
         {...register("fechaInicio")}
       />
 
-      <Select
-        label="Cobrador"
-        options={cobradorOptions}
-        error={errors.cobradorId?.message}
-        searchable
-        {...register("cobradorId")}
-      />
+      {lockedCobrador ? (
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-foreground">Cobrador</label>
+          <div className="flex h-11 items-center rounded-lg border border-border bg-muted/50 px-3 text-sm text-foreground">
+            {lockedCobrador.nombre} · autoasignado
+          </div>
+          <input type="hidden" {...register("cobradorId")} value={lockedCobrador.id} />
+        </div>
+      ) : (
+        <Select
+          label="Cobrador"
+          options={cobradorOptions}
+          error={errors.cobradorId?.message}
+          searchable
+          {...register("cobradorId")}
+        />
+      )}
 
       <div className="flex items-center gap-4">
         <label className="flex items-center gap-2 text-sm">

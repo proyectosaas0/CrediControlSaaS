@@ -94,7 +94,7 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const { actor, response } = await requireApiActor(["admin", "super_admin"]);
+  const { actor, response } = await requireApiActor(["admin", "cobrador", "super_admin"]);
   if (response) return response;
   if (!actor!.organizationId) return apiError("FORBIDDEN", "Usuario sin organizacion", 403);
 
@@ -102,6 +102,11 @@ export async function POST(request: Request) {
   if (parsed.response) return parsed.response;
 
   const input = parsed.data!;
+  // Cobradores can only create self-assigned prestamos -- ignore any other
+  // cobradorId they might submit and always assign the loan to themselves.
+  if (actor!.role === "cobrador") {
+    input.cobradorId = actor!.userId;
+  }
   const totals = calculateLoanTotals({
     capital: input.capital,
     modelo: input.modeloInteres,

@@ -70,6 +70,7 @@ const COBRADOR_GROUPS: NavGroup[] = [
       { href: "/app", label: "Inicio", icon: Home },
       { href: "/app/ruta", label: "Mi ruta", icon: MapPin },
       { href: "/app/clientes", label: "Clientes", icon: Users },
+      { href: "/app/prestamos", label: "Mis préstamos", icon: FileText },
       { href: "/app/pagos", label: "Mis pagos", icon: Banknote },
       { href: "/app/mora", label: "Mora", icon: AlertTriangle },
       { href: "/app/perfil", label: "Perfil", icon: UserCircle },
