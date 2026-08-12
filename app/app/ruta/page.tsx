@@ -120,6 +120,7 @@ function CobradorRutaView() {
     void _monto;
     toast.success("Pago registrado");
     void queryClient.invalidateQueries({ queryKey: ["ruta"] });
+    void queryClient.invalidateQueries({ queryKey: ["pagos"] });
     setSelectedIds(new Set());
     setSheetOpen(false);
   }
