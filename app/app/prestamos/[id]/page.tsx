@@ -5,12 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, ArrowLeft, RefreshCcw, XCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, RefreshCcw, Share2, XCircle } from "lucide-react";
 import { postApi, ApiError } from "@/hooks/queries/fetch-api";
 import { cancelarPrestamoSchema, type CancelarPrestamoData } from "@/lib/schemas/admin";
 import { buildLoanSchedule, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
 import { usePrestamo, type Prestamo } from "@/hooks/queries/use-prestamos";
+import { useAuthMe } from "@/hooks/queries/use-auth-me";
 import { EditPrestamoButton } from "@/components/domain/edit-prestamo-dialog";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Card } from "@/components/ui/card";
@@ -20,6 +21,8 @@ import { Dialog } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/error-state";
 import { SectionHead } from "@/components/ui/page-header";
+import { buildPrestamoSummaryData } from "@/lib/domain/receipts";
+import { ReceiptDialog } from "@/components/domain/receipt-dialog";
 import { toast } from "sonner";
 
 export default function PrestamoDetailPage() {
@@ -28,6 +31,8 @@ export default function PrestamoDetailPage() {
   const id = params.id as string;
 
   const { data: prestamo, isLoading, error } = usePrestamo(id);
+  const { data: me } = useAuthMe();
+  const [receiptOpen, setReceiptOpen] = useState(false);
 
   if (isLoading) return <SkeletonList count={5} />;
 
@@ -45,6 +50,35 @@ export default function PrestamoDetailPage() {
   const canEdit = canRefinance && cuotasPagadas === 0;
 
   const progress = cuotasTotales > 0 ? Math.round((cuotasPagadas / cuotasTotales) * 100) : 0;
+
+  const proximaCuota = (() => {
+    if (!prestamo.fecha_inicio) return null;
+    const schedule = buildLoanSchedule({
+      capital: prestamo.capital,
+      excluirDomingos: prestamo.excluir_domingos,
+      excluirSabados: prestamo.excluir_sabados,
+      fechaInicio: prestamo.fecha_inicio,
+      modelo: prestamo.modelo_interes as LoanModel,
+      plazoDias: prestamo.plazo_dias,
+      tasaMensual: prestamo.tasa_mensual,
+    });
+    const next = schedule[cuotasPagadas];
+    return next ? { fecha: next.fechaEsperada, monto: next.montoEsperado } : null;
+  })();
+
+  const receiptData = buildPrestamoSummaryData({
+    negocio: me?.organization?.nombre_negocio ?? "CrediControl",
+    cliente: prestamo.clientes?.nombre ?? "Cliente",
+    capital: prestamo.capital,
+    tasaMensual: prestamo.tasa_mensual,
+    plazoDias: prestamo.plazo_dias,
+    cuotasPagadas,
+    cuotasTotales,
+    saldoPendiente,
+    estado: prestamo.estado,
+    motivoCancelacion: prestamo.motivo_cancelacion,
+    proximaCuota: prestamo.estado === "activo" || prestamo.estado === "en_mora" ? proximaCuota : null,
+  });
 
   return (
     <div className="space-y-6">
@@ -207,16 +241,18 @@ export default function PrestamoDetailPage() {
             </div>
           </div>
 
-          {(canRefinance || canCancel) && (
-            <div
-              className="dash-rise flex gap-3 lg:flex-col"
-              style={{ animationDelay: "240ms" }}
-            >
-              {canEdit && <EditPrestamoButton prestamo={prestamo} />}
-              {canRefinance && <RefinanciarButton prestamoId={prestamo.id} />}
-              {canCancel && <CancelarButton prestamoId={prestamo.id} />}
-            </div>
-          )}
+          <div
+            className="dash-rise flex flex-wrap gap-3 lg:flex-col"
+            style={{ animationDelay: "240ms" }}
+          >
+            <Button variant="outline" onClick={() => setReceiptOpen(true)} className="gap-1.5">
+              <Share2 className="h-4 w-4" />
+              Compartir resumen
+            </Button>
+            {canEdit && <EditPrestamoButton prestamo={prestamo} />}
+            {canRefinance && <RefinanciarButton prestamoId={prestamo.id} />}
+            {canCancel && <CancelarButton prestamoId={prestamo.id} />}
+          </div>
           {!canEdit && canRefinance && cuotasPagadas > 0 && (
             <p className="text-xs text-muted-foreground">
               La edición completa solo está disponible antes del primer pago.
@@ -224,6 +260,13 @@ export default function PrestamoDetailPage() {
           )}
         </div>
       </div>
+
+      <ReceiptDialog
+        open={receiptOpen}
+        onClose={() => setReceiptOpen(false)}
+        data={receiptData}
+        filename={`resumen-prestamo-${id.slice(-6)}.png`}
+      />
     </div>
   );
 }

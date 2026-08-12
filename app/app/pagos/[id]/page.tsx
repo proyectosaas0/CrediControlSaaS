@@ -15,6 +15,7 @@ import {
   CreditCard,
   FileText,
   AlertCircle,
+  Share2,
 } from "lucide-react";
 import { usePago } from "@/hooks/queries/use-pagos";
 import { useAuth } from "@/providers/auth-provider";
@@ -25,7 +26,20 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/components/ui/cn";
 import { formatCop } from "@/lib/domain/money";
+import { fetchApi } from "@/hooks/queries/fetch-api";
+import { buildPagoReceiptData } from "@/lib/domain/receipts";
+import type { ReceiptData } from "@/lib/domain/receipt-canvas";
+import { ReceiptDialog } from "@/components/domain/receipt-dialog";
 import { toast } from "sonner";
+
+type ComprobanteResponse = {
+  message: string;
+  cliente: string | null;
+  cobrador: string | null;
+  negocio: string | null;
+  saldo: number | null;
+  cuota: number | null;
+};
 
 const MEDIOS_PAGO = [
   { value: "efectivo", label: "Efectivo" },
@@ -53,8 +67,37 @@ export default function PagoDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptData, setReceiptData] = useState<ReceiptData | null>(null);
+  const [loadingReceipt, setLoadingReceipt] = useState(false);
 
   const isAdmin = role === "admin" || role === "super_admin";
+
+  async function handleShareReceipt() {
+    if (!pago) return;
+    setLoadingReceipt(true);
+    try {
+      const data = await fetchApi<ComprobanteResponse>(`/api/pagos/${id}/comprobante`);
+      setReceiptData(
+        buildPagoReceiptData({
+          negocio: data.negocio ?? "CrediControl",
+          cliente: data.cliente ?? pago.clientes?.nombre ?? "Cliente",
+          cobrador: data.cobrador ?? pago.cobrador_nombre ?? "Cobrador",
+          monto: pago.monto,
+          medioPago: pago.medio_pago,
+          tipo: pago.tipo,
+          cuota: data.cuota,
+          saldo: data.saldo,
+          fecha: new Date(pago.created_at).toLocaleString("es-CO"),
+        }),
+      );
+      setReceiptOpen(true);
+    } catch {
+      toast.error("No se pudo generar el comprobante");
+    } finally {
+      setLoadingReceipt(false);
+    }
+  }
 
   async function handleDelete() {
     setDeleting(true);
@@ -148,32 +191,40 @@ export default function PagoDetailPage() {
             <p className="mt-1.5 text-sm text-muted-foreground">{fecha}</p>
           </div>
 
-          {(isAdmin || canAnular) && (
-            <div className="flex shrink-0 items-center gap-2">
-              {isAdmin && !isAnulado && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setEditOpen(true)}
-                  className="gap-1.5"
-                >
-                  <Pencil className="h-3.5 w-3.5" />
-                  Editar
-                </Button>
-              )}
-              {canAnular && (
-                <Button
-                  size="sm"
-                  variant="danger"
-                  onClick={() => setDeleteOpen(true)}
-                  className="gap-1.5"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  Anular
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              loading={loadingReceipt}
+              onClick={handleShareReceipt}
+              className="gap-1.5"
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              Compartir
+            </Button>
+            {isAdmin && !isAnulado && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setEditOpen(true)}
+                className="gap-1.5"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+                Editar
+              </Button>
+            )}
+            {canAnular && (
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => setDeleteOpen(true)}
+                className="gap-1.5"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Anular
+              </Button>
+            )}
+          </div>
         </div>
       </Card>
 
@@ -255,6 +306,13 @@ export default function PagoDetailPage() {
           </div>
         </div>
       </Dialog>
+
+      <ReceiptDialog
+        open={receiptOpen}
+        onClose={() => setReceiptOpen(false)}
+        data={receiptData}
+        filename={`comprobante-pago-${id.slice(-6)}.png`}
+      />
     </div>
   );
 }

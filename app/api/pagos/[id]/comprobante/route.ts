@@ -41,5 +41,13 @@ export async function GET(_request: Request, context: RouteContext) {
     ubicacion: pago.lat && pago.lng ? `${pago.lat},${pago.lng}` : undefined,
   });
 
-  return apiOk({ message, pago });
+  return apiOk({
+    message,
+    pago,
+    cliente: cliente?.nombre ?? null,
+    cobrador: cobrador?.nombre_completo ?? null,
+    negocio: org?.nombre_negocio ?? null,
+    saldo: saldo?.saldo_pendiente ?? null,
+    cuota: cuota?.numero_cuota ?? null,
+  });
 }
