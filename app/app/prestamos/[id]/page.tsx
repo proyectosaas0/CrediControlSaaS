@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, ArrowLeft, RefreshCcw, Share2, XCircle } from "lucide-react";
 import { postApi, ApiError } from "@/hooks/queries/fetch-api";
-import { cancelarPrestamoSchema, DIA_COBRO_LABELS, type CancelarPrestamoData } from "@/lib/schemas/admin";
+import { cancelarPrestamoSchema, diaCobroLabel, type CancelarPrestamoData } from "@/lib/schemas/admin";
 import { buildLoanSchedule, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
 import { usePrestamo, type Prestamo } from "@/hooks/queries/use-prestamos";
@@ -77,9 +77,10 @@ export default function PrestamoDetailPage() {
     estado: prestamo.estado,
     motivoCancelacion: prestamo.motivo_cancelacion,
     proximaCuota: prestamo.estado === "activo" || prestamo.estado === "en_mora" ? proximaCuota : null,
-    diaCobroLabel: prestamo.dia_cobro
-      ? (DIA_COBRO_LABELS[prestamo.dia_cobro as keyof typeof DIA_COBRO_LABELS] ?? prestamo.dia_cobro)
-      : null,
+    diaCobroLabel:
+      prestamo.dia_cobro && prestamo.dia_cobro.length > 0
+        ? prestamo.dia_cobro.map(diaCobroLabel).join(", ")
+        : null,
   });
 
   return (
@@ -201,11 +202,11 @@ export default function PrestamoDetailPage() {
                   {prestamo.fecha_fin ?? "—"}
                 </dd>
               </div>
-              {prestamo.dia_cobro && (
+              {prestamo.dia_cobro && prestamo.dia_cobro.length > 0 && (
                 <div>
                   <dt className="text-xs text-muted-foreground">Día de cobro</dt>
                   <dd className="mt-0.5 font-medium text-foreground">
-                    {DIA_COBRO_LABELS[prestamo.dia_cobro as keyof typeof DIA_COBRO_LABELS] ?? prestamo.dia_cobro}
+                    {prestamo.dia_cobro.map(diaCobroLabel).join(", ")}
                   </dd>
                 </div>
               )}

@@ -28,7 +28,7 @@ export type Prestamo = {
   created_at: string;
   motivo_cancelacion: string | null;
   cancelado_at: string | null;
-  dia_cobro: string | null;
+  dia_cobro: string[] | null;
   clientes: { nombre: string } | null;
   prestamo_saldos: PrestamoSaldo[] | null;
 };

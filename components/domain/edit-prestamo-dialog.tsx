@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Pencil } from "lucide-react";
-import { editarPrestamoSchema, DIAS_COBRO, DIA_COBRO_LABELS, type EditarPrestamoData } from "@/lib/schemas/admin";
+import { editarPrestamoSchema, type EditarPrestamoData } from "@/lib/schemas/admin";
 import { buildLoanSchedule, calculateLoanTotals, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
 import { useClientes } from "@/hooks/queries/use-clientes";
@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { DiaCobroPicker } from "@/components/domain/dia-cobro-picker";
 import { toast } from "sonner";
 
 const MODELO_OPTIONS = [
@@ -82,7 +83,7 @@ function EditPrestamoDialog({
       excluirSabados: prestamo.excluir_sabados,
       excluirDomingos: prestamo.excluir_domingos,
       cobradorId: prestamo.cobrador_id ?? "",
-      diaCobro: (prestamo.dia_cobro ?? "") as EditarPrestamoData["diaCobro"],
+      diaCobro: prestamo.dia_cobro ?? [],
     },
   });
 
@@ -98,7 +99,7 @@ function EditPrestamoDialog({
       excluirSabados: prestamo.excluir_sabados,
       excluirDomingos: prestamo.excluir_domingos,
       cobradorId: prestamo.cobrador_id ?? "",
-      diaCobro: (prestamo.dia_cobro ?? "") as EditarPrestamoData["diaCobro"],
+      diaCobro: prestamo.dia_cobro ?? [],
     });
   }, [open, prestamo, reset]);
 
@@ -156,6 +157,7 @@ function EditPrestamoDialog({
         body: JSON.stringify({
           ...data,
           cobradorId: data.cobradorId || null,
+          diaCobro: data.diaCobro && data.diaCobro.length > 0 ? data.diaCobro : null,
         }),
       });
       if (!res.ok) {
@@ -188,11 +190,6 @@ function EditPrestamoDialog({
       value: cobrador.id,
       label: cobrador.nombre_completo,
     })),
-  ];
-
-  const diaCobroOptions = [
-    { value: "", label: "Diario (todos los días)" },
-    ...DIAS_COBRO.map((d) => ({ value: d, label: DIA_COBRO_LABELS[d] })),
   ];
 
   return (
@@ -269,12 +266,12 @@ function EditPrestamoDialog({
           {...register("cobradorId")}
         />
 
-        <Select
-          label="Día de cobro"
-          options={diaCobroOptions}
-          placeholder="Diario (todos los días)"
-          error={errors.diaCobro?.message}
-          {...register("diaCobro")}
+        <Controller
+          control={control}
+          name="diaCobro"
+          render={({ field }) => (
+            <DiaCobroPicker value={field.value ?? []} onChange={field.onChange} />
+          )}
         />
 
         <div className="flex items-center gap-4">

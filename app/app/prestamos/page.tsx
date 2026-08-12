@@ -16,7 +16,7 @@ import {
   staggerDelay,
 } from "@/components/ui/page-header";
 import { formatCop } from "@/lib/domain/money";
-import { DIA_COBRO_LABELS } from "@/lib/schemas/admin";
+import { diaCobroLabel } from "@/lib/schemas/admin";
 
 type EstadoFilter =
   | "todos"
@@ -192,10 +192,10 @@ function PrestamoCard({ prestamo, index }: { prestamo: Prestamo; index: number }
           <LoanStatusBadge estado={prestamo.estado} />
         </div>
 
-        {prestamo.dia_cobro && (
+        {prestamo.dia_cobro && prestamo.dia_cobro.length > 0 && (
           <span className="mt-1.5 inline-flex w-fit items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
             <Calendar className="h-3 w-3" />
-            {DIA_COBRO_LABELS[prestamo.dia_cobro as keyof typeof DIA_COBRO_LABELS] ?? prestamo.dia_cobro}
+            {prestamo.dia_cobro.map(diaCobroLabel).join(", ")}
           </span>
         )}
 

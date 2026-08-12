@@ -5,13 +5,13 @@ import { paginationParams, parseJson } from "@/lib/api/validation";
 import { buildLoanSchedule, calculateLoanTotals } from "@/lib/domain/loans";
 import { createAdminClient } from "@/lib/server/admin-supabase";
 import { createClient } from "@/lib/supabase/server";
-import { DIAS_COBRO } from "@/lib/schemas/admin";
+import { diaCobroValue } from "@/lib/schemas/admin";
 
 const createPrestamoSchema = z.object({
   capital: z.number().positive(),
   clienteId: z.string().uuid(),
   cobradorId: z.string().uuid().nullable().optional(),
-  diaCobro: z.enum(DIAS_COBRO).nullable().optional(),
+  diaCobro: z.array(diaCobroValue).nullable().optional(),
   excluirDomingos: z.boolean().default(false),
   excluirSabados: z.boolean().default(false),
   fechaInicio: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

@@ -3,13 +3,12 @@
 import { useState, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useForm, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   prestamoStep1Schema,
   prestamoStep2Schema,
-  DIAS_COBRO,
-  DIA_COBRO_LABELS,
+  diaCobroLabel,
   type PrestamoStep1Data,
   type PrestamoStep2Data,
 } from "@/lib/schemas/admin";
@@ -23,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DiaCobroPicker } from "@/components/domain/dia-cobro-picker";
 import { toast } from "sonner";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 
@@ -65,7 +65,7 @@ export default function NuevoPrestamoPage() {
           plazoDias: step2Data.plazoDias,
           fechaInicio: step2Data.fechaInicio,
           cobradorId: step2Data.cobradorId || null,
-          diaCobro: step2Data.diaCobro || null,
+          diaCobro: step2Data.diaCobro && step2Data.diaCobro.length > 0 ? step2Data.diaCobro : null,
           excluirSabados: step2Data.excluirSabados,
           excluirDomingos: step2Data.excluirDomingos,
         }),
@@ -249,7 +249,7 @@ function Step2({
       excluirSabados: false,
       excluirDomingos: false,
       cobradorId: lockedCobrador?.id ?? "",
-      diaCobro: "",
+      diaCobro: [],
     },
   });
 
@@ -281,11 +281,6 @@ function Step2({
       value: c.id,
       label: c.nombre_completo,
     })),
-  ];
-
-  const diaCobroOptions = [
-    { value: "", label: "Diario (todos los días)" },
-    ...DIAS_COBRO.map((d) => ({ value: d, label: DIA_COBRO_LABELS[d] })),
   ];
 
   return (
@@ -348,16 +343,17 @@ function Step2({
         />
       )}
 
-      <Select
-        label="Día de cobro"
-        options={diaCobroOptions}
-        placeholder="Diario (todos los días)"
-        error={errors.diaCobro?.message}
-        {...register("diaCobro")}
+      <Controller
+        control={control}
+        name="diaCobro"
+        render={({ field }) => (
+          <DiaCobroPicker value={field.value ?? []} onChange={field.onChange} />
+        )}
       />
       <p className="-mt-2 text-xs text-muted-foreground">
-        Solo informativo, para clientes que pagan un día fijo a la semana (ej. Elvira paga
-        solo los miércoles). No cambia el cronograma de cuotas.
+        Solo informativo, para clientes que pagan día(s) fijos (ej. Elvira paga solo los
+        miércoles, o clientes que pagan quincenal el 15 y el 30). No cambia el cronograma
+        de cuotas.
       </p>
 
       <div className="flex items-center gap-4">
@@ -473,11 +469,11 @@ function Step3({
               <span className="text-foreground">{cobrador.nombre_completo}</span>
             </div>
           )}
-          {data.diaCobro && (
+          {data.diaCobro && data.diaCobro.length > 0 && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">Día de cobro</span>
               <span className="text-foreground">
-                {DIA_COBRO_LABELS[data.diaCobro as keyof typeof DIA_COBRO_LABELS]}
+                {data.diaCobro.map(diaCobroLabel).join(", ")}
               </span>
             </div>
           )}

@@ -47,6 +47,20 @@ export const DIA_COBRO_LABELS: Record<(typeof DIAS_COBRO)[number], string> = {
   domingo: "Domingo",
 };
 
+// A dia_cobro value is either a weekday name (cobro semanal) or a
+// day-of-month number as a string, e.g. "15" (cobro quincenal/mensual).
+export const diaCobroValue = z.union([
+  z.enum(DIAS_COBRO),
+  z.string().regex(/^([1-9]|[12][0-9]|3[01])$/, "Día del mes inválido"),
+]);
+
+export function diaCobroLabel(value: string): string {
+  if ((DIAS_COBRO as readonly string[]).includes(value)) {
+    return DIA_COBRO_LABELS[value as (typeof DIAS_COBRO)[number]];
+  }
+  return `Día ${value}`;
+}
+
 export const prestamoStep2Schema = z.object({
   capital: z
     .number({ error: "Ingresa un monto valido" })
@@ -67,7 +81,7 @@ export const prestamoStep2Schema = z.object({
   excluirSabados: z.boolean(),
   excluirDomingos: z.boolean(),
   cobradorId: z.union([z.string().uuid(), z.literal(""), z.null()]).optional(),
-  diaCobro: z.union([z.enum(DIAS_COBRO), z.literal(""), z.null()]).optional(),
+  diaCobro: z.array(diaCobroValue).nullable().optional(),
 });
 
 export type PrestamoStep2Data = z.infer<typeof prestamoStep2Schema>;
@@ -93,7 +107,7 @@ export const editarPrestamoSchema = z.object({
   excluirSabados: z.boolean(),
   excluirDomingos: z.boolean(),
   cobradorId: z.union([z.string().uuid(), z.literal(""), z.null()]).optional(),
-  diaCobro: z.union([z.enum(DIAS_COBRO), z.literal(""), z.null()]).optional(),
+  diaCobro: z.array(diaCobroValue).nullable().optional(),
 });
 
 export type EditarPrestamoData = z.infer<typeof editarPrestamoSchema>;
