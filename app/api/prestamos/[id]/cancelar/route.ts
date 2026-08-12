@@ -14,7 +14,15 @@ export async function POST(request: Request, context: RouteContext) {
   if (parsed.response) return parsed.response;
   const { id } = await context.params;
   const supabase = await createClient();
-  let query = supabase.from("prestamos").update({ estado: "cancelado" }).eq("id", id).select("*");
+  let query = supabase
+    .from("prestamos")
+    .update({
+      estado: "cancelado",
+      motivo_cancelacion: parsed.data!.motivo,
+      cancelado_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .select("*");
   if (actor!.organizationId) query = query.eq("organization_id", actor!.organizationId);
   const { data, error } = await query.maybeSingle();
   if (error) return apiError("INTERNAL_ERROR", error.message, 500);

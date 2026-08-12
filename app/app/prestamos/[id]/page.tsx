@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, RefreshCcw, XCircle } from "lucide-react";
+import { AlertCircle, ArrowLeft, RefreshCcw, XCircle } from "lucide-react";
 import { postApi, ApiError } from "@/hooks/queries/fetch-api";
 import { cancelarPrestamoSchema, type CancelarPrestamoData } from "@/lib/schemas/admin";
 import { buildLoanSchedule, type LoanModel } from "@/lib/domain/loans";
@@ -70,6 +70,26 @@ export default function PrestamoDetailPage() {
         </div>
         <LoanStatusBadge estado={prestamo.estado} />
       </div>
+
+      {prestamo.estado === "cancelado" && (
+        <Card
+          padding="md"
+          className="dash-rise flex items-start gap-3 border-danger/20 bg-danger/[0.04] p-4"
+          style={{ animationDelay: "60ms" }}
+        >
+          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-danger" />
+          <div className="text-sm">
+            <p className="font-semibold text-foreground">
+              Préstamo cancelado
+              {prestamo.cancelado_at &&
+                ` · ${new Date(prestamo.cancelado_at).toLocaleDateString("es-CO")}`}
+            </p>
+            <p className="mt-1 text-muted-foreground">
+              {prestamo.motivo_cancelacion ?? "Sin motivo registrado."}
+            </p>
+          </div>
+        </Card>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[1fr_260px] lg:items-start">
         {/* Left: info + cronograma */}
