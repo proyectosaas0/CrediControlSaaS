@@ -9,7 +9,7 @@ export class ApiError extends Error {
   }
 }
 
-export type PaginationMeta = { count: number; page: number; pageSize: number };
+export type PaginationMeta = { count: number; page: number; pageSize: number; totalCapital?: number };
 
 function buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>) {
   const url = new URL(path, typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");

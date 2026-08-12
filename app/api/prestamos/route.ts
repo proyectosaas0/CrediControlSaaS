@@ -48,8 +48,20 @@ export async function GET(request: Request) {
   const cobradorId = url.searchParams.get("cobrador_id");
   if (cobradorId) query = query.eq("cobrador_id", cobradorId);
 
-  const { count, data, error } = await query;
+  let totalCapitalQuery = supabase.from("prestamos").select("capital");
+  if (actor!.organizationId) totalCapitalQuery = totalCapitalQuery.eq("organization_id", actor!.organizationId);
+  if (actor!.role === "cobrador") totalCapitalQuery = totalCapitalQuery.eq("cobrador_id", actor!.userId);
+  if (estado.success) totalCapitalQuery = totalCapitalQuery.eq("estado", estado.data);
+  if (clienteId) totalCapitalQuery = totalCapitalQuery.eq("cliente_id", clienteId);
+  if (cobradorId) totalCapitalQuery = totalCapitalQuery.eq("cobrador_id", cobradorId);
+
+  const [{ count, data, error }, { data: allCapitalData, error: totalCapitalError }] = await Promise.all([
+    query,
+    totalCapitalQuery,
+  ]);
   if (error) return apiError("INTERNAL_ERROR", error.message, 500);
+  if (totalCapitalError) return apiError("INTERNAL_ERROR", totalCapitalError.message, 500);
+  const totalCapital = (allCapitalData ?? []).reduce((sum, p) => sum + p.capital, 0);
 
   const prestamos = data ?? [];
   const prestamoIds = prestamos.map((p) => p.id);
@@ -90,7 +102,7 @@ export async function GET(request: Request) {
     };
   });
 
-  return apiOk(enriched, { count: count ?? 0, page, pageSize });
+  return apiOk(enriched, { count: count ?? 0, page, pageSize, totalCapital });
 }
 
 export async function POST(request: Request) {

@@ -49,6 +49,7 @@ export default function PrestamosPage() {
   } = usePrestamosInfinite();
   const prestamos = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
   const totalCount = data?.pages[0]?.meta.count ?? prestamos.length;
+  const totalCapitalAll = data?.pages[0]?.meta.totalCapital ?? 0;
 
   const filtered = useMemo(() => {
     let list: Prestamo[] = prestamos;
@@ -67,8 +68,9 @@ export default function PrestamosPage() {
     return list;
   }, [prestamos, search, filter]);
 
-  const totalCapital = filtered.reduce((sum, p) => sum + p.capital, 0);
-  const displayCount = filter === "todos" && !search ? totalCount : filtered.length;
+  const isUnfiltered = filter === "todos" && !search;
+  const totalCapital = isUnfiltered ? totalCapitalAll : filtered.reduce((sum, p) => sum + p.capital, 0);
+  const displayCount = isUnfiltered ? totalCount : filtered.length;
 
   return (
     <div className="space-y-5">
