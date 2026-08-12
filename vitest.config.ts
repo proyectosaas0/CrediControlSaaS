@@ -11,6 +11,7 @@ export default defineConfig({
     testTimeout: 20000,
     hookTimeout: 20000,
     fileParallelism: false,
+    include: ["tests/**/*.{test,spec}.{ts,tsx}"],
   },
   resolve: {
     alias: {
