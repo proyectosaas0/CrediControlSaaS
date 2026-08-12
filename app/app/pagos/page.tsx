@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Banknote, Plus, Calendar, CreditCard } from "lucide-react";
-import { usePagos, useCronogramaPrestamo, type Pago } from "@/hooks/queries/use-pagos";
+import { Banknote, Plus, Calendar, CreditCard, Loader2 } from "lucide-react";
+import { usePagosInfinite, useCronogramaPrestamo, type Pago } from "@/hooks/queries/use-pagos";
 import { useClientes } from "@/hooks/queries/use-clientes";
 import { usePrestamos } from "@/hooks/queries/use-prestamos";
 import { useAuth } from "@/providers/auth-provider";
@@ -95,7 +95,16 @@ export default function PagosPage() {
   const [createOpen, setCreateOpen] = useState(false);
   const { role } = useAuth();
   const queryClient = useQueryClient();
-  const { data: pagos = [], isPending, error, refetch } = usePagos();
+  const {
+    data,
+    isPending,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = usePagosInfinite();
+  const pagos = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
 
   const canRegistrarPago = role === "admin" || role === "super_admin" || role === "cobrador";
 
@@ -224,6 +233,25 @@ export default function PagosPage() {
               </div>
             </div>
           ))}
+          {hasNextPage && (
+            <div className="flex flex-col items-center gap-1.5 pt-2">
+              {search && (
+                <p className="text-xs text-muted-foreground">
+                  ¿No encontrás lo que buscás? Cargá más para ampliar la búsqueda.
+                </p>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="gap-1.5"
+              >
+                {isFetchingNextPage && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Cargar más pagos
+              </Button>
+            </div>
+          )}
         </div>
       )}
 
@@ -263,9 +291,9 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
   const [nota, setNota] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const { data: clientes = [], isPending: loadingClientes } = useClientes();
+  const { data: clientes = [], isPending: loadingClientes } = useClientes({ pageSize: 300 });
   const { data: prestamos = [] } = usePrestamos(
-    clienteId ? { clienteId, estado: "activo" } : undefined,
+    clienteId ? { clienteId, estado: "activo", pageSize: 300 } : undefined,
   );
   const { data: cuotas = [] } = useCronogramaPrestamo(prestamoId || null);
 

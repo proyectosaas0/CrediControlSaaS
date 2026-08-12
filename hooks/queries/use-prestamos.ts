@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchApi } from "./fetch-api";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { fetchApi, fetchApiPaginated } from "./fetch-api";
 
 export type PrestamoSaldo = {
   id: string;
@@ -35,6 +35,7 @@ export type Prestamo = {
 export function usePrestamos(params?: {
   estado?: string;
   page?: number;
+  pageSize?: number;
   clienteId?: string;
   cobradorId?: string;
 }) {
@@ -44,9 +45,27 @@ export function usePrestamos(params?: {
       fetchApi<Prestamo[]>("/api/prestamos", {
         estado: params?.estado,
         page: params?.page,
+        pageSize: params?.pageSize,
         cliente_id: params?.clienteId,
         cobrador_id: params?.cobradorId,
       }),
+  });
+}
+
+const PRESTAMOS_PAGE_SIZE = 30;
+
+export function usePrestamosInfinite(params?: { estado?: string }) {
+  return useInfiniteQuery({
+    queryKey: ["prestamos", "infinite", params],
+    queryFn: ({ pageParam }) =>
+      fetchApiPaginated<Prestamo[]>("/api/prestamos", {
+        estado: params?.estado,
+        page: pageParam,
+        pageSize: PRESTAMOS_PAGE_SIZE,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      allPages.length * PRESTAMOS_PAGE_SIZE < lastPage.meta.count ? allPages.length + 1 : undefined,
   });
 }
 

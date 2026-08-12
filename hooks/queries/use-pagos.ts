@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchApi } from "./fetch-api";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { fetchApi, fetchApiPaginated } from "./fetch-api";
 
 export type Pago = {
   id: string;
@@ -50,6 +50,23 @@ export function usePagos(params?: { prestamoId?: string; page?: number }) {
         prestamoId: params?.prestamoId,
         page: params?.page,
       }),
+  });
+}
+
+const PAGOS_PAGE_SIZE = 30;
+
+export function usePagosInfinite(params?: { prestamoId?: string }) {
+  return useInfiniteQuery({
+    queryKey: ["pagos", "infinite", params],
+    queryFn: ({ pageParam }) =>
+      fetchApiPaginated<Pago[]>("/api/pagos", {
+        prestamoId: params?.prestamoId,
+        page: pageParam,
+        pageSize: PAGOS_PAGE_SIZE,
+      }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage, allPages) =>
+      allPages.length * PAGOS_PAGE_SIZE < lastPage.meta.count ? allPages.length + 1 : undefined,
   });
 }
 

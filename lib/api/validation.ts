@@ -15,12 +15,12 @@ export async function parseJson<T>(request: Request, schema: ZodSchema<T>) {
   return { data: parsed.data, response: null };
 }
 
-export function paginationParams(searchParams: URLSearchParams, defaultPageSize = 20) {
+export function paginationParams(searchParams: URLSearchParams, defaultPageSize = 50) {
   const page = Number(searchParams.get("page") ?? "1");
   const pageSize = Number(searchParams.get("pageSize") ?? String(defaultPageSize));
 
   return {
     page: Number.isInteger(page) && page > 0 ? page : 1,
-    pageSize: Number.isInteger(pageSize) && pageSize > 0 && pageSize <= 100 ? pageSize : defaultPageSize,
+    pageSize: Number.isInteger(pageSize) && pageSize > 0 && pageSize <= 300 ? pageSize : defaultPageSize,
   };
 }

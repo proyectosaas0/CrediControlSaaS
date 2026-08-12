@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Plus, FileText } from "lucide-react";
-import { usePrestamos, type Prestamo } from "@/hooks/queries/use-prestamos";
+import { Plus, FileText, Loader2 } from "lucide-react";
+import { usePrestamosInfinite, type Prestamo } from "@/hooks/queries/use-prestamos";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Button } from "@/components/ui/button";
 import { SkeletonList } from "@/components/ui/skeleton";
@@ -38,7 +38,16 @@ export default function PrestamosPage() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<EstadoFilter>("todos");
 
-  const { data: prestamos = [], isPending, error, refetch } = usePrestamos();
+  const {
+    data,
+    isPending,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = usePrestamosInfinite();
+  const prestamos = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
 
   const filtered = useMemo(() => {
     let list: Prestamo[] = prestamos;
@@ -128,11 +137,32 @@ export default function PrestamosPage() {
           }
         />
       ) : (
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((prestamo, i) => (
-            <PrestamoCard key={prestamo.id} prestamo={prestamo} index={i} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((prestamo, i) => (
+              <PrestamoCard key={prestamo.id} prestamo={prestamo} index={i} />
+            ))}
+          </div>
+          {hasNextPage && (
+            <div className="flex flex-col items-center gap-1.5 pt-2">
+              {(search || filter !== "todos") && (
+                <p className="text-xs text-muted-foreground">
+                  ¿No encontrás lo que buscás? Cargá más para ampliar la búsqueda.
+                </p>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="gap-1.5"
+              >
+                {isFetchingNextPage && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Cargar más préstamos
+              </Button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

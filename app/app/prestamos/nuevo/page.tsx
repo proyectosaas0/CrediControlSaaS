@@ -45,7 +45,7 @@ export default function NuevoPrestamoPage() {
   const [step2Data, setStep2Data] = useState<PrestamoStep2Data | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: clientes = [] } = useClientes({ activo: true });
+  const { data: clientes = [] } = useClientes({ activo: true, pageSize: 300 });
   const { data: cobradores = [] } = useCobradores({ activo: true });
 
   const handleConfirm = useCallback(async () => {

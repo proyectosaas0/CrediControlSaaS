@@ -60,7 +60,7 @@ function EditPrestamoDialog({
   onClose: () => void;
 }) {
   const queryClient = useQueryClient();
-  const { data: clientes = [] } = useClientes({ activo: true });
+  const { data: clientes = [] } = useClientes({ activo: true, pageSize: 300 });
   const { data: cobradores = [] } = useCobradores({ activo: true });
   const [saving, setSaving] = useState(false);
 

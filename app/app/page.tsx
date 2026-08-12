@@ -55,10 +55,7 @@ function AdminDashboard({ userName }: { userName: string }) {
   const { data: rutaItems, isLoading: loadingRuta } = useRutaHoy();
   const { data: recaudoSemana } = useRecaudoDiario();
 
-  const carteraActiva =
-    prestamos
-      ?.filter((p) => p.estado === "activo")
-      .reduce((acc, p) => acc + p.capital, 0) ?? 0;
+  const carteraActiva = resumen?.capitalActivo ?? 0;
 
   const pendingCobros =
     rutaItems?.filter(

@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react";
 import Link from "next/link";
-import { Plus, Phone, Users, MapPin, ArrowUpRight } from "lucide-react";
-import { useClientes, type Cliente } from "@/hooks/queries/use-clientes";
+import { Plus, Phone, Users, MapPin, ArrowUpRight, Loader2 } from "lucide-react";
+import { useClientesInfinite, type Cliente } from "@/hooks/queries/use-clientes";
 import { useAuth } from "@/providers/auth-provider";
 import { ScoreBadge } from "@/components/domain/score-badge";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,17 @@ export default function ClientesPage() {
   const [filter, setFilter] = useState<FilterPill>("todos");
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const { data: clientes = [], isPending, error, refetch } = useClientes();
+  const {
+    data,
+    isPending,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useClientesInfinite();
+  const clientes = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
+  const totalCount = data?.pages[0]?.meta.count ?? clientes.length;
 
   const filtered = useMemo(() => {
     let list: Cliente[] = clientes;
@@ -76,7 +86,7 @@ export default function ClientesPage() {
         subtitle={
           isPending
             ? "Cargando cartera de clientes…"
-            : `${clientes.length} cliente${clientes.length !== 1 ? "s" : ""} en tu cartera`
+            : `${totalCount} cliente${totalCount !== 1 ? "s" : ""} en tu cartera`
         }
         actions={
           canCreate && (
@@ -127,11 +137,32 @@ export default function ClientesPage() {
           }
         />
       ) : (
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((cliente, i) => (
-            <ClienteCard key={cliente.id} cliente={cliente} index={i} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((cliente, i) => (
+              <ClienteCard key={cliente.id} cliente={cliente} index={i} />
+            ))}
+          </div>
+          {hasNextPage && (
+            <div className="flex flex-col items-center gap-1.5 pt-2">
+              {search && (
+                <p className="text-xs text-muted-foreground">
+                  ¿No encontrás a quién buscás? Cargá más para ampliar la búsqueda.
+                </p>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="gap-1.5"
+              >
+                {isFetchingNextPage && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                Cargar más clientes
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       <Dialog
