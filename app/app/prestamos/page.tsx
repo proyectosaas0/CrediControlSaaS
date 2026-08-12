@@ -48,6 +48,7 @@ export default function PrestamosPage() {
     isFetchingNextPage,
   } = usePrestamosInfinite();
   const prestamos = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
+  const totalCount = data?.pages[0]?.meta.count ?? prestamos.length;
 
   const filtered = useMemo(() => {
     let list: Prestamo[] = prestamos;
@@ -67,6 +68,7 @@ export default function PrestamosPage() {
   }, [prestamos, search, filter]);
 
   const totalCapital = filtered.reduce((sum, p) => sum + p.capital, 0);
+  const displayCount = filter === "todos" && !search ? totalCount : filtered.length;
 
   return (
     <div className="space-y-5">
@@ -78,7 +80,7 @@ export default function PrestamosPage() {
             "Cargando préstamos…"
           ) : (
             <>
-              {filtered.length} préstamo{filtered.length !== 1 ? "s" : ""} ·
+              {displayCount} préstamo{displayCount !== 1 ? "s" : ""} ·
               capital{" "}
               <span className="font-semibold text-foreground tabular-nums">
                 {formatCop(totalCapital)}

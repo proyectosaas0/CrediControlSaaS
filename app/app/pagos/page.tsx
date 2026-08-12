@@ -105,6 +105,7 @@ export default function PagosPage() {
     isFetchingNextPage,
   } = usePagosInfinite();
   const pagos = useMemo(() => data?.pages.flatMap((p) => p.data) ?? [], [data]);
+  const totalCount = data?.pages[0]?.meta.count ?? pagos.length;
 
   const canRegistrarPago = role === "admin" || role === "super_admin" || role === "cobrador";
 
@@ -118,6 +119,7 @@ export default function PagosPage() {
   });
 
   const totalMonto = filtered.reduce((sum, p) => sum + p.monto, 0);
+  const displayCount = search ? filtered.length : totalCount;
   const groups = groupPagosByDate(filtered);
 
   return (
@@ -130,7 +132,7 @@ export default function PagosPage() {
             "Cargando pagos…"
           ) : (
             <>
-              {filtered.length} pago{filtered.length !== 1 ? "s" : ""} · total{" "}
+              {displayCount} pago{displayCount !== 1 ? "s" : ""} · total{" "}
               <span className="font-semibold text-foreground tabular-nums">
                 {formatCop(totalMonto)}
               </span>
