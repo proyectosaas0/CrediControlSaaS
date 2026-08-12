@@ -42,7 +42,7 @@ function toRouteItem(cuota: CuotaRuta): RouteItem {
     montoPagado: cuota.monto_pagado > 0 ? cuota.monto_pagado : null,
     medioPago: null,
     cuotaNumero: cuota.numero_cuota,
-    cuotaTotal: 0,
+    cuotaTotal: cuota.prestamos.plazo_dias,
     saldoPendiente: cuota.monto_esperado - cuota.monto_pagado,
     estado: cuota.estado as "pendiente" | "pagado" | "parcial" | "mora" | "no_encontrado",
   };
@@ -82,6 +82,7 @@ function CobradorRutaView() {
   const totalPagado = items.reduce((sum, item) => sum + (item.montoPagado ?? 0), 0);
   const totalPendiente = items.reduce((sum, item) => sum + Math.max(item.saldoPendiente, 0), 0);
   const avance = items.length > 0 ? Math.round(((items.length - pendientes.length) / items.length) * 100) : 0;
+  const progresoMonetario = totalEsperado > 0 ? Math.round((totalPagado / totalEsperado) * 100) : 0;
 
   const filterOptions = FILTER_OPTIONS.map((option) => ({
     ...option,
@@ -161,6 +162,30 @@ function CobradorRutaView() {
           </div>
         }
       />
+
+      <div
+        className="dash-rise rounded-2xl border border-border bg-card p-4 backdrop-blur-sm"
+        style={{ animationDelay: "20ms" }}
+      >
+        <div className="flex items-baseline justify-between gap-3 text-xs">
+          <span className="text-muted-foreground">
+            Recaudado{" "}
+            <span className="font-semibold text-foreground tabular-nums">
+              {formatCop(totalPagado)}
+            </span>{" "}
+            de {formatCop(totalEsperado)}
+          </span>
+          <span className="font-display text-sm font-bold text-primary tabular-nums">
+            {progresoMonetario}%
+          </span>
+        </div>
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+          <div
+            className="dash-fill h-full rounded-full bg-gradient-to-r from-primary to-violet-400"
+            style={{ width: `${progresoMonetario}%` }}
+          />
+        </div>
+      </div>
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <PlatformStat

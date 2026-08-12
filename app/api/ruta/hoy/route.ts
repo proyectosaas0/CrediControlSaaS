@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   let query = supabase
     .from("cronograma_pagos")
     .select(
-      "id, prestamo_id, organization_id, cobrador_id, fecha_esperada, monto_esperado, monto_pagado, estado, numero_cuota, prestamos!inner(capital, cliente_id, clientes!inner(nombre, telefono, direccion, barrio))"
+      "id, prestamo_id, organization_id, cobrador_id, fecha_esperada, monto_esperado, monto_pagado, estado, numero_cuota, prestamos!inner(capital, plazo_dias, cliente_id, clientes!inner(nombre, telefono, direccion, barrio))"
     )
     .eq("organization_id", actor!.organizationId)
     .eq("fecha_esperada", fecha)

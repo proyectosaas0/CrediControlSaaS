@@ -27,6 +27,7 @@ type RouteCardProps = RouteItem & {
 export function RouteCard({
   clienteNombre,
   barrio,
+  direccion,
   montoEsperado,
   montoPagado,
   cuotaNumero,
@@ -38,21 +39,28 @@ export function RouteCard({
   onSelectChange,
 }: RouteCardProps) {
   const config = STATUS_CONFIG[estado];
+  const isInteractive = estado !== "pagado" && estado !== "no_encontrado";
+  const ubicacion = barrio || direccion;
 
   return (
     <div
-      role="button"
-      tabIndex={0}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
+      role={isInteractive ? "button" : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      onClick={isInteractive ? onClick : undefined}
+      onKeyDown={
+        isInteractive
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onClick();
+              }
+            }
+          : undefined
+      }
       className={cn(
-        "group w-full cursor-pointer rounded-2xl border p-4 text-left transition-all duration-200 active:scale-[0.99]",
-        "bg-card/90 shadow-sm shadow-black/5 backdrop-blur-sm hover:-translate-y-0.5 hover:shadow-lg",
+        "group w-full rounded-2xl border p-4 text-left transition-all duration-200",
+        "bg-card/90 shadow-sm shadow-black/5 backdrop-blur-sm",
+        isInteractive && "cursor-pointer active:scale-[0.99] hover:-translate-y-0.5 hover:shadow-lg",
         estado === "pendiente" && "border-warning/25 hover:border-warning/40 bg-warning/[0.04]",
         estado === "pagado" && "border-success/25 bg-success/[0.04]",
         estado === "parcial" && "border-info/25 hover:border-info/40 bg-info/[0.04]",
@@ -90,10 +98,12 @@ export function RouteCard({
                 {clienteNombre}
               </span>
             </div>
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <MapPin className="h-3 w-3 shrink-0" />
-              <span className="truncate">{barrio || "Sin barrio"}</span>
-            </div>
+            {ubicacion && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <MapPin className="h-3 w-3 shrink-0" />
+                <span className="truncate">{ubicacion}</span>
+              </div>
+            )}
           </div>
         </div>
 

@@ -13,6 +13,7 @@ export type CuotaRuta = {
   numero_cuota: number;
   prestamos: {
     capital: number;
+    plazo_dias: number;
     cliente_id: string;
     clientes: {
       nombre: string;
