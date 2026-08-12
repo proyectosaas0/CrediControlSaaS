@@ -45,7 +45,7 @@ export function ClientForm({ onSuccess, onCancel }: ClientFormProps) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <Input label="Nombre" placeholder="Maria Garcia" error={errors.nombre?.message} required {...register("nombre")} />
       <Input label="Cedula" placeholder="12345678" error={errors.cedula?.message} {...register("cedula")} />
-      <Input label="Telefono" placeholder="+573001111111" error={errors.telefono?.message} required {...register("telefono")} />
+      <Input label="Telefono" placeholder="+573001111111" error={errors.telefono?.message} {...register("telefono")} />
       <Input label="Direccion" placeholder="Cra 5 #10-20" error={errors.direccion?.message} {...register("direccion")} />
       <Input label="Barrio" placeholder="Barrio Centro" error={errors.barrio?.message} {...register("barrio")} />
       <Input label="Notas" placeholder="Notas sobre el cliente..." error={errors.notas?.message} {...register("notas")} />

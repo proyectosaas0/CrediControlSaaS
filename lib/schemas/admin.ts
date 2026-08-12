@@ -6,8 +6,10 @@ export const clienteSchema = z.object({
   telefono: z
     .string()
     .trim()
-    .min(1, "El telefono es obligatorio")
-    .regex(/^\+?[\d\s-]{7,15}$/, "Telefono invalido"),
+    .optional()
+    .refine((val) => !val || /^\+?[\d\s-]{7,15}$/.test(val), {
+      message: "Telefono invalido",
+    }),
   direccion: z.string().trim().optional(),
   barrio: z.string().trim().optional(),
   notas: z.string().trim().optional(),

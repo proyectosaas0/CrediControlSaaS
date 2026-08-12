@@ -280,7 +280,7 @@ function EditClienteForm({ cliente, onSuccess, onCancel }: EditClienteFormProps)
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <Input label="Nombre" error={errors.nombre?.message} required {...register("nombre")} />
       <Input label="Cedula" error={errors.cedula?.message} {...register("cedula")} />
-      <Input label="Telefono" error={errors.telefono?.message} required {...register("telefono")} />
+      <Input label="Telefono" error={errors.telefono?.message} {...register("telefono")} />
       <Input label="Direccion" error={errors.direccion?.message} {...register("direccion")} />
       <Input label="Barrio" error={errors.barrio?.message} {...register("barrio")} />
       <Input label="Notas" error={errors.notas?.message} {...register("notas")} />
