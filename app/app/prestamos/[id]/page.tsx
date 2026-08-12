@@ -8,9 +8,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, ArrowLeft, RefreshCcw, Share2, XCircle } from "lucide-react";
 import { postApi, ApiError } from "@/hooks/queries/fetch-api";
 import { cancelarPrestamoSchema, diaCobroLabel, type CancelarPrestamoData } from "@/lib/schemas/admin";
-import { buildLoanSchedule, type LoanModel } from "@/lib/domain/loans";
 import { formatCop } from "@/lib/domain/money";
-import { usePrestamo, type Prestamo } from "@/hooks/queries/use-prestamos";
+import { usePrestamo } from "@/hooks/queries/use-prestamos";
+import { useCronogramaPrestamo, type CuotaCronograma } from "@/hooks/queries/use-pagos";
 import { useAuthMe } from "@/hooks/queries/use-auth-me";
 import { EditPrestamoButton } from "@/components/domain/edit-prestamo-dialog";
 import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
@@ -32,6 +32,7 @@ export default function PrestamoDetailPage() {
 
   const { data: prestamo, isLoading, error } = usePrestamo(id);
   const { data: me } = useAuthMe();
+  const { data: cuotas = [] } = useCronogramaPrestamo(id);
   const [receiptOpen, setReceiptOpen] = useState(false);
 
   if (isLoading) return <SkeletonList count={5} />;
@@ -50,20 +51,10 @@ export default function PrestamoDetailPage() {
 
   const progress = cuotasTotales > 0 ? Math.round((cuotasPagadas / cuotasTotales) * 100) : 0;
 
-  const proximaCuota = (() => {
-    if (!prestamo.fecha_inicio) return null;
-    const schedule = buildLoanSchedule({
-      capital: prestamo.capital,
-      excluirDomingos: prestamo.excluir_domingos,
-      excluirSabados: prestamo.excluir_sabados,
-      fechaInicio: prestamo.fecha_inicio,
-      modelo: prestamo.modelo_interes as LoanModel,
-      plazoDias: prestamo.plazo_dias,
-      tasaMensual: prestamo.tasa_mensual,
-    });
-    const next = schedule[cuotasPagadas];
-    return next ? { fecha: next.fechaEsperada, monto: next.montoEsperado } : null;
-  })();
+  const proximaCuotaReal = cuotas.find((c) => c.estado === "pendiente" || c.estado === "parcial");
+  const proximaCuota = proximaCuotaReal
+    ? { fecha: proximaCuotaReal.fecha_esperada, monto: proximaCuotaReal.monto_esperado - proximaCuotaReal.monto_pagado }
+    : null;
 
   const receiptData = buildPrestamoSummaryData({
     negocio: me?.organization?.nombre_negocio ?? "CrediControl",
@@ -214,7 +205,7 @@ export default function PrestamoDetailPage() {
           </Card>
 
           <div className="dash-rise" style={{ animationDelay: "160ms" }}>
-            <CronogramaSection prestamo={prestamo} cuotasPagadas={cuotasPagadas} />
+            <CronogramaSection cuotas={cuotas} />
           </div>
         </div>
 
@@ -277,16 +268,18 @@ export default function PrestamoDetailPage() {
   );
 }
 
-function CronogramaSection({
-  prestamo,
-  cuotasPagadas,
-}: {
-  prestamo: Prestamo;
-  cuotasPagadas: number;
-}) {
+const CUOTA_ESTADO_STYLES: Record<CuotaCronograma["estado"], string> = {
+  pagado: "bg-success/15 text-success",
+  parcial: "bg-info/15 text-info",
+  pendiente: "bg-muted text-muted-foreground",
+  vencido: "bg-danger/15 text-danger",
+  cancelado: "bg-muted text-muted-foreground line-through",
+};
+
+function CronogramaSection({ cuotas }: { cuotas: CuotaCronograma[] }) {
   const [showAll, setShowAll] = useState(false);
 
-  if (!prestamo.fecha_inicio) {
+  if (cuotas.length === 0) {
     return (
       <div>
         <SectionHead title="Cronograma de pagos" count={0} />
@@ -297,21 +290,11 @@ function CronogramaSection({
     );
   }
 
-  const schedule = buildLoanSchedule({
-    capital: prestamo.capital,
-    excluirDomingos: prestamo.excluir_domingos,
-    excluirSabados: prestamo.excluir_sabados,
-    fechaInicio: prestamo.fecha_inicio,
-    modelo: prestamo.modelo_interes as LoanModel,
-    plazoDias: prestamo.plazo_dias,
-    tasaMensual: prestamo.tasa_mensual,
-  });
-
-  const displaySchedule = showAll ? schedule : schedule.slice(0, 7);
+  const displayCuotas = showAll ? cuotas : cuotas.slice(0, 7);
 
   return (
     <div>
-      <SectionHead title="Cronograma de pagos" count={schedule.length} />
+      <SectionHead title="Cronograma de pagos" count={cuotas.length} />
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card backdrop-blur-sm">
         <div className="overflow-x-auto">
@@ -323,56 +306,57 @@ function CronogramaSection({
                 <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Cuota</th>
                 <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Capital</th>
                 <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Interés</th>
-                <th className="py-2.5 pr-4 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Saldo</th>
+                <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Saldo</th>
+                <th className="py-2.5 pr-4 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Estado</th>
               </tr>
             </thead>
             <tbody>
-              {displaySchedule.map((cuota) => {
-                const isPaid = cuota.numeroCuota <= cuotasPagadas;
-                return (
-                  <tr
-                    key={cuota.numeroCuota}
-                    className={`border-b border-border/50 transition-colors last:border-0 ${isPaid ? "bg-success/[0.06]" : "hover:bg-primary/[0.03]"}`}
-                  >
-                    <td className="py-2.5 pl-4 pr-2">
-                      <span
-                        className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums ${
-                          isPaid
-                            ? "bg-success/15 text-success"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {cuota.numeroCuota}
-                      </span>
-                    </td>
-                    <td className="py-2.5 pr-2 tabular-nums text-muted-foreground">
-                      {cuota.fechaEsperada}
-                    </td>
-                    <td className="py-2.5 pr-2 text-right font-semibold tabular-nums text-foreground">
-                      {formatCop(cuota.montoEsperado)}
-                    </td>
-                    <td className="py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
-                      {formatCop(cuota.montoCapital)}
-                    </td>
-                    <td className="py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
-                      {formatCop(cuota.montoInteres)}
-                    </td>
-                    <td className="py-2.5 pr-4 text-right tabular-nums text-muted-foreground">
-                      {formatCop(cuota.saldoEstimado)}
-                    </td>
-                  </tr>
-                );
-              })}
+              {displayCuotas.map((cuota) => (
+                <tr
+                  key={cuota.id}
+                  className={`border-b border-border/50 transition-colors last:border-0 ${cuota.estado === "pagado" ? "bg-success/[0.06]" : "hover:bg-primary/[0.03]"}`}
+                >
+                  <td className="py-2.5 pl-4 pr-2">
+                    <span
+                      className={`inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums ${CUOTA_ESTADO_STYLES[cuota.estado]}`}
+                    >
+                      {cuota.numero_cuota}
+                    </span>
+                  </td>
+                  <td className="py-2.5 pr-2 tabular-nums text-muted-foreground">
+                    {cuota.fecha_esperada}
+                  </td>
+                  <td className="py-2.5 pr-2 text-right font-semibold tabular-nums text-foreground">
+                    {formatCop(cuota.monto_esperado)}
+                  </td>
+                  <td className="py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
+                    {formatCop(cuota.monto_capital ?? 0)}
+                  </td>
+                  <td className="py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
+                    {formatCop(cuota.monto_interes ?? 0)}
+                  </td>
+                  <td className="py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
+                    {formatCop(cuota.saldo_estimado ?? 0)}
+                  </td>
+                  <td className="py-2.5 pr-4 text-right">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${CUOTA_ESTADO_STYLES[cuota.estado]}`}
+                    >
+                      {cuota.estado}
+                    </span>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
 
-        {schedule.length > 7 && (
+        {cuotas.length > 7 && (
           <button
             onClick={() => setShowAll(!showAll)}
             className="w-full border-t border-border py-2.5 text-center text-xs font-semibold text-primary transition-colors hover:bg-primary/[0.05]"
           >
-            {showAll ? "Ver menos" : `Ver todas las ${schedule.length} cuotas`}
+            {showAll ? "Ver menos" : `Ver todas las ${cuotas.length} cuotas`}
           </button>
         )}
       </div>

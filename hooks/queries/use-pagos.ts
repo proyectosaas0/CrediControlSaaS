@@ -40,6 +40,9 @@ export type CuotaCronograma = {
   monto_esperado: number;
   estado: "pendiente" | "pagado" | "parcial" | "vencido" | "cancelado";
   monto_pagado: number;
+  monto_capital: number | null;
+  monto_interes: number | null;
+  saldo_estimado: number | null;
 };
 
 export function usePagos(params?: { prestamoId?: string; page?: number }) {
