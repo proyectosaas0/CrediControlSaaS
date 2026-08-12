@@ -55,7 +55,9 @@ function AdminDashboard({ userName }: { userName: string }) {
   const { data: rutaItems, isLoading: loadingRuta } = useRutaHoy();
   const { data: recaudoSemana } = useRecaudoDiario();
 
-  const carteraActiva = resumen?.capitalActivo ?? 0;
+  const carteraActiva = resumen?.totalPendiente ?? 0;
+  const capitalPendiente = resumen?.capitalPendiente ?? 0;
+  const interesPendiente = resumen?.interesPendiente ?? 0;
 
   const pendingCobros =
     rutaItems?.filter(
@@ -137,13 +139,9 @@ function AdminDashboard({ userName }: { userName: string }) {
           <div className="grid gap-3 sm:grid-cols-3 lg:col-span-5 lg:grid-cols-1">
             <StatTile
               icon={TrendingUp}
-              label="Cartera activa"
-              value={
-                carteraActiva > 0
-                  ? formatCop(carteraActiva)
-                  : `${resumen?.prestamosActivos ?? 0}`
-              }
-              foot={`${resumen?.prestamosActivos ?? 0} préstamos vigentes`}
+              label="Cartera activa · lo que te deben"
+              value={formatCop(carteraActiva)}
+              foot={`Capital ${formatCop(capitalPendiente)} · Interés ${formatCop(interesPendiente)}`}
               accent="emerald"
               delay={120}
             />

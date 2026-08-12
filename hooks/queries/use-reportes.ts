@@ -7,7 +7,9 @@ export type ReportesResumen = {
   prestamosActivos: number;
   prestamosEnMora: number;
   recaudoTotal: number;
-  capitalActivo: number;
+  capitalPendiente: number;
+  interesPendiente: number;
+  totalPendiente: number;
 };
 
 export type RecaudoDiario = {
