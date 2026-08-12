@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { RouteCard } from "@/components/domain/route-card";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/components/ui/cn";
 import { PaymentSheet } from "@/components/domain/payment-sheet";
 import { AdminRutaView } from "@/components/domain/admin-ruta-view";
 import { EmptyState } from "@/components/feedback/empty-state";
@@ -60,11 +62,14 @@ function CobradorRutaView() {
   const { effectiveOrgId } = useAuth();
   const { data: rawItems = [], isLoading } = useRutaHoy(undefined, { enabled: !!effectiveOrgId });
   const queryClient = useQueryClient();
-  const [selectedItem, setSelectedItem] = useState<RouteItem | null>(null);
+  const [sheetItems, setSheetItems] = useState<RouteItem[]>([]);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>("todos");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const items = rawItems.map(toRouteItem);
+  const selectedItems = items.filter((i) => selectedIds.has(i.id));
+  const selectedTotal = selectedItems.reduce((sum, i) => sum + Math.max(i.saldoPendiente, 0), 0);
 
   const filteredItems =
     filter === "todos" ? items : items.filter((i) => i.estado === filter);
@@ -90,16 +95,32 @@ function CobradorRutaView() {
 
   function handleCardClick(item: RouteItem) {
     if (item.estado === "pagado" || item.estado === "no_encontrado") return;
-    setSelectedItem(item);
+    setSheetItems([item]);
     setSheetOpen(true);
   }
 
-  function handlePaymentSuccess(_id: string, _medioPago: MedioPago, _monto: number) {
-    void _id;
+  function toggleSelect(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function handleCobrarSelected() {
+    if (selectedItems.length === 0) return;
+    setSheetItems(selectedItems);
+    setSheetOpen(true);
+  }
+
+  function handlePaymentSuccess(_ids: string[], _medioPago: MedioPago, _monto: number) {
+    void _ids;
     void _medioPago;
     void _monto;
     toast.success("Pago registrado");
     void queryClient.invalidateQueries({ queryKey: ["ruta"] });
+    setSelectedIds(new Set());
     setSheetOpen(false);
   }
 
@@ -182,17 +203,39 @@ function CobradorRutaView() {
           description="No hay cobros con este filtro para hoy."
         />
       ) : (
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-2">
+        <div className={cn("grid gap-3 md:grid-cols-2 xl:grid-cols-2", selectedIds.size > 0 && "pb-20")}>
           {filteredItems.map((item, i) => (
             <div key={item.id} className="dash-rise" style={staggerDelay(i)}>
-              <RouteCard {...item} onClick={() => handleCardClick(item)} />
+              <RouteCard
+                {...item}
+                onClick={() => handleCardClick(item)}
+                selectable={item.estado !== "pagado" && item.estado !== "no_encontrado"}
+                selected={selectedIds.has(item.id)}
+                onSelectChange={() => toggleSelect(item.id)}
+              />
             </div>
           ))}
         </div>
       )}
 
+      {selectedIds.size > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] backdrop-blur-md" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
+          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                {selectedIds.size} seleccionada{selectedIds.size !== 1 ? "s" : ""}
+              </p>
+              <p className="text-xs text-muted-foreground">{formatCop(selectedTotal)}</p>
+            </div>
+            <Button size="lg" className="h-12 px-6 font-bold" onClick={handleCobrarSelected}>
+              Cobrar
+            </Button>
+          </div>
+        </div>
+      )}
+
       <PaymentSheet
-        item={selectedItem}
+        items={sheetItems}
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
         onPaymentSuccess={handlePaymentSuccess}

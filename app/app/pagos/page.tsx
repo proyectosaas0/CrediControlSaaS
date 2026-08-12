@@ -17,6 +17,7 @@ import {
 import { Dialog } from "@/components/ui/dialog";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/components/ui/cn";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ErrorState } from "@/components/ui/error-state";
@@ -245,10 +246,9 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
   const queryClient = useQueryClient();
   const [clienteId, setClienteId] = useState("");
   const [prestamoId, setPrestamoId] = useState("");
-  const [cuotaId, setCuotaId] = useState("");
+  const [cuotaIds, setCuotaIds] = useState<Set<string>>(new Set());
   const [medioPago, setMedioPago] = useState("");
   const [tipo, setTipo] = useState("cuota");
-  const [monto, setMonto] = useState("");
   const [nota, setNota] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -262,52 +262,70 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
     (c) => c.estado === "pendiente" || c.estado === "vencido" || c.estado === "parcial",
   );
 
-  const selectedCuota = cuotas.find((c) => c.id === cuotaId);
+  const selectedCuotas = pendingCuotas.filter((c) => cuotaIds.has(c.id));
+  const montoTotal = selectedCuotas.reduce((sum, c) => sum + Math.round(c.monto_esperado), 0);
 
   function handleClienteChange(id: string) {
     setClienteId(id);
     setPrestamoId("");
-    setCuotaId("");
-    setMonto("");
+    setCuotaIds(new Set());
   }
 
   function handlePrestamoChange(id: string) {
     setPrestamoId(id);
-    setCuotaId("");
-    setMonto("");
+    setCuotaIds(new Set());
   }
 
-  function handleCuotaChange(id: string) {
-    setCuotaId(id);
-    const cuota = cuotas.find((c) => c.id === id);
-    if (cuota) setMonto(String(Math.round(cuota.monto_esperado)));
+  function toggleCuota(id: string) {
+    setCuotaIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!cuotaId || !medioPago || !monto) {
+    if (selectedCuotas.length === 0 || !medioPago) {
       toast.error("Completa todos los campos obligatorios");
       return;
     }
     setSaving(true);
-    const res = await fetch("/api/pagos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        cronogramaPagoId: cuotaId,
-        medioPago,
-        monto: Number(monto),
-        tipo,
-        nota: nota || undefined,
-      }),
-    });
+    const results = await Promise.allSettled(
+      selectedCuotas.map((c) =>
+        fetch("/api/pagos", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            cronogramaPagoId: c.id,
+            medioPago,
+            monto: Math.round(c.monto_esperado),
+            tipo,
+            nota: nota || undefined,
+          }),
+        }).then(async (res) => {
+          if (!res.ok) {
+            const json = await res.json().catch(() => ({}));
+            throw new Error(json.error?.message ?? "Error al registrar pago");
+          }
+        }),
+      ),
+    );
     setSaving(false);
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      toast.error(json.error?.message ?? "Error al registrar pago");
-      return;
+
+    const failedCount = results.filter((r) => r.status === "rejected").length;
+    const succeededCount = results.length - failedCount;
+    if (failedCount > 0) {
+      toast.error(`${failedCount} de ${results.length} pagos no se pudieron registrar`);
     }
-    toast.success("Pago registrado correctamente");
+    if (succeededCount === 0) return;
+
+    toast.success(
+      succeededCount === 1
+        ? "Pago registrado correctamente"
+        : `${succeededCount} pagos registrados correctamente`,
+    );
     void queryClient.invalidateQueries({ queryKey: ["pagos"] });
     onSuccess();
   }
@@ -320,11 +338,6 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
   const prestamoOptions = prestamos.map((p) => ({
     value: p.id,
     label: `${formatCop(p.capital)} · ${p.modelo_interes.replace("_", " ")}`,
-  }));
-
-  const cuotaOptions = pendingCuotas.map((c) => ({
-    value: c.id,
-    label: `Cuota ${c.numero_cuota} · ${formatCop(c.monto_esperado)} · ${c.estado}`,
   }));
 
   return (
@@ -351,17 +364,47 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
       )}
 
       {prestamoId && (
-        <Select
-          label="Cuota *"
-          options={cuotaOptions}
-          placeholder={pendingCuotas.length === 0 ? "Sin cuotas pendientes" : "Seleccionar cuota"}
-          value={cuotaId}
-          onChange={(e) => handleCuotaChange(e.target.value)}
-          disabled={pendingCuotas.length === 0}
-        />
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-foreground">Cuotas *</label>
+          {pendingCuotas.length === 0 ? (
+            <p className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-sm text-muted-foreground">
+              Sin cuotas pendientes
+            </p>
+          ) : (
+            <div className="max-h-56 space-y-1.5 overflow-y-auto rounded-lg border border-border p-2">
+              {pendingCuotas.map((c) => {
+                const checked = cuotaIds.has(c.id);
+                return (
+                  <label
+                    key={c.id}
+                    className={cn(
+                      "flex cursor-pointer items-center justify-between gap-3 rounded-md border-2 px-3 py-2.5 transition-colors",
+                      checked
+                        ? "border-primary bg-primary/10"
+                        : "border-transparent bg-muted/30 hover:bg-muted/50",
+                    )}
+                  >
+                    <span className="flex items-center gap-2.5 text-sm text-foreground">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => toggleCuota(c.id)}
+                        className="h-5 w-5 shrink-0 rounded border-border"
+                      />
+                      Cuota {c.numero_cuota} · {c.estado}
+                    </span>
+                    <span className="shrink-0 font-medium tabular-nums text-foreground">
+                      {formatCop(c.monto_esperado)}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
 
-      {cuotaId && (
+      {cuotaIds.size > 0 && (
         <>
           <Select
             label="Tipo de pago *"
@@ -376,15 +419,14 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
             value={medioPago}
             onChange={(e) => setMedioPago(e.target.value)}
           />
-          <Input
-            label="Monto *"
-            type="number"
-            min="1"
-            step="1"
-            value={monto}
-            onChange={(e) => setMonto(e.target.value)}
-            placeholder={selectedCuota ? String(Math.round(selectedCuota.monto_esperado)) : "0"}
-          />
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-foreground">
+              Monto total ({cuotaIds.size} cuota{cuotaIds.size !== 1 ? "s" : ""})
+            </label>
+            <div className="flex h-12 min-h-12 items-center rounded-lg border border-border bg-muted/50 px-3 text-lg font-semibold text-foreground">
+              {formatCop(montoTotal)}
+            </div>
+          </div>
           <Input
             label="Nota"
             placeholder="Observaciones opcionales..."
@@ -401,10 +443,10 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
         <Button
           type="submit"
           loading={saving}
-          disabled={!cuotaId || !medioPago || !monto}
+          disabled={cuotaIds.size === 0 || !medioPago}
           className="flex-1"
         >
-          Registrar pago
+          Registrar {cuotaIds.size > 1 ? `${cuotaIds.size} pagos` : "pago"}
         </Button>
       </div>
     </form>
