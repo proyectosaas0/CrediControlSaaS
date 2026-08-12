@@ -78,6 +78,15 @@ function groupPagosByDate(pagos: Pago[]): PagoGroup[] {
     group.total += pago.monto;
   }
 
+  // Pagos are fetched newest-created_at-first, so a group dated later than
+  // today (stale/seeded test data, or just clock skew) would otherwise sort
+  // above "Hoy". Today's activity is what's actionable, so it always leads.
+  const todayIndex = groups.findIndex((g) => g.label === "Hoy");
+  if (todayIndex > 0) {
+    const [todayGroup] = groups.splice(todayIndex, 1);
+    groups.unshift(todayGroup);
+  }
+
   return groups;
 }
 
