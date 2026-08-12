@@ -246,7 +246,9 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
   const queryClient = useQueryClient();
   const [clienteId, setClienteId] = useState("");
   const [prestamoId, setPrestamoId] = useState("");
+  const [modo, setModo] = useState<"cuota" | "abono">("cuota");
   const [cuotaIds, setCuotaIds] = useState<Set<string>>(new Set());
+  const [montoAbono, setMontoAbono] = useState("");
   const [medioPago, setMedioPago] = useState("");
   const [tipo, setTipo] = useState("cuota");
   const [nota, setNota] = useState("");
@@ -265,15 +267,23 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
   const selectedCuotas = pendingCuotas.filter((c) => cuotaIds.has(c.id));
   const montoTotal = selectedCuotas.reduce((sum, c) => sum + Math.round(c.monto_esperado), 0);
 
+  const selectedPrestamo = prestamos.find((p) => p.id === prestamoId);
+  const saldoPendiente = selectedPrestamo?.prestamo_saldos?.[0]?.saldo_pendiente ?? 0;
+  const montoAbonoNumerico = montoAbono ? Number(montoAbono.replace(/\D/g, "")) : 0;
+
   function handleClienteChange(id: string) {
     setClienteId(id);
     setPrestamoId("");
     setCuotaIds(new Set());
+    setModo("cuota");
+    setMontoAbono("");
   }
 
   function handlePrestamoChange(id: string) {
     setPrestamoId(id);
     setCuotaIds(new Set());
+    setModo("cuota");
+    setMontoAbono("");
   }
 
   function toggleCuota(id: string) {
@@ -287,6 +297,36 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (modo === "abono") {
+      if (!medioPago || montoAbonoNumerico <= 0) {
+        toast.error("Completa todos los campos obligatorios");
+        return;
+      }
+      setSaving(true);
+      const res = await fetch("/api/pagos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prestamoId,
+          medioPago,
+          monto: montoAbonoNumerico,
+          tipo: "abono",
+          nota: nota || undefined,
+        }),
+      });
+      setSaving(false);
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        toast.error(json.error?.message ?? "Error al registrar el abono");
+        return;
+      }
+      toast.success("Abono registrado correctamente");
+      void queryClient.invalidateQueries({ queryKey: ["pagos"] });
+      onSuccess();
+      return;
+    }
+
     if (selectedCuotas.length === 0 || !medioPago) {
       toast.error("Completa todos los campos obligatorios");
       return;
@@ -364,6 +404,73 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
       )}
 
       {prestamoId && (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setModo("cuota")}
+            className={cn(
+              "flex-1 rounded-lg border-2 px-3 py-2 text-sm font-medium transition-colors",
+              modo === "cuota"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-muted-foreground/30",
+            )}
+          >
+            Por cuota
+          </button>
+          <button
+            type="button"
+            onClick={() => setModo("abono")}
+            className={cn(
+              "flex-1 rounded-lg border-2 px-3 py-2 text-sm font-medium transition-colors",
+              modo === "abono"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-muted-foreground/30",
+            )}
+          >
+            Abono general
+          </button>
+        </div>
+      )}
+
+      {prestamoId && modo === "abono" && (
+        <>
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-foreground">
+              Saldo pendiente del préstamo
+            </label>
+            <div className="flex h-12 min-h-12 items-center rounded-lg border border-border bg-muted/50 px-3 text-lg font-semibold text-foreground">
+              {formatCop(saldoPendiente)}
+            </div>
+          </div>
+          <Input
+            label="Monto a abonar *"
+            type="text"
+            inputMode="numeric"
+            placeholder="0"
+            value={montoAbono}
+            onChange={(e) => setMontoAbono(e.target.value.replace(/\D/g, ""))}
+          />
+          <p className="-mt-2 text-xs text-muted-foreground">
+            Se resta del saldo total del préstamo; puede ser menor a una cuota diaria. Se
+            aplica automáticamente contra las cuotas pendientes más próximas.
+          </p>
+          <Select
+            label="Método de pago *"
+            options={MEDIOS_PAGO}
+            placeholder="Seleccionar método"
+            value={medioPago}
+            onChange={(e) => setMedioPago(e.target.value)}
+          />
+          <Input
+            label="Nota"
+            placeholder="Observaciones opcionales..."
+            value={nota}
+            onChange={(e) => setNota(e.target.value)}
+          />
+        </>
+      )}
+
+      {prestamoId && modo === "cuota" && (
         <div className="space-y-1.5">
           <label className="block text-sm font-medium text-foreground">Cuotas *</label>
           {pendingCuotas.length === 0 ? (
@@ -404,7 +511,7 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
         </div>
       )}
 
-      {cuotaIds.size > 0 && (
+      {modo === "cuota" && cuotaIds.size > 0 && (
         <>
           <Select
             label="Tipo de pago *"
@@ -443,10 +550,16 @@ function RegisterPaymentForm({ onSuccess, onCancel }: RegisterPaymentFormProps) 
         <Button
           type="submit"
           loading={saving}
-          disabled={cuotaIds.size === 0 || !medioPago}
+          disabled={
+            modo === "abono"
+              ? montoAbonoNumerico <= 0 || !medioPago
+              : cuotaIds.size === 0 || !medioPago
+          }
           className="flex-1"
         >
-          Registrar {cuotaIds.size > 1 ? `${cuotaIds.size} pagos` : "pago"}
+          {modo === "abono"
+            ? "Registrar abono"
+            : `Registrar ${cuotaIds.size > 1 ? `${cuotaIds.size} pagos` : "pago"}`}
         </Button>
       </div>
     </form>
