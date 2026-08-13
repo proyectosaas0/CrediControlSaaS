@@ -59,7 +59,7 @@ export function RouteCard({
           : undefined
       }
       className={cn(
-        "group w-full rounded-2xl border p-4 text-left transition-all duration-200",
+        "group w-full rounded-2xl border p-3 text-left transition-all duration-200 sm:p-4",
         "bg-card/90 shadow-sm shadow-black/5 backdrop-blur-sm",
         isInteractive && "cursor-pointer active:scale-[0.99] hover:-translate-y-0.5 hover:shadow-lg",
         estado === "pendiente" && "border-warning/25 hover:border-warning/40 bg-warning/[0.04]",
@@ -71,8 +71,8 @@ export function RouteCard({
         "min-h-[72px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-start gap-2.5">
+      <div className="flex flex-col items-start justify-between gap-2 sm:flex-row sm:gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-2.5">
           {selectable && (
             <button
               type="button"
@@ -83,60 +83,62 @@ export function RouteCard({
               aria-pressed={selected}
               aria-label={selected ? "Quitar de la selección" : "Seleccionar para cobrar"}
               className={cn(
-                "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border-2 transition-colors",
+                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-2 transition-colors sm:h-9 sm:w-9",
                 selected
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-border bg-background hover:border-primary/40",
               )}
             >
-              {selected && <Check className="h-4 w-4" strokeWidth={3} />}
+              {selected && <Check className="h-3 w-3 shrink-0 sm:h-4 sm:w-4" strokeWidth={3} />}
             </button>
           )}
-          <div className="min-w-0 flex-1 space-y-1">
-            <div className="flex items-center gap-2">
-              <Circle className={cn("h-2.5 w-2.5 shrink-0", config.dot)} />
-              <span className="truncate text-[15px] font-semibold text-foreground">
+          <div className="min-w-0 flex-1 space-y-0.5 sm:space-y-1">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <Circle className={cn("h-2 w-2 shrink-0 sm:h-2.5 sm:w-2.5", config.dot)} />
+              <span className="truncate text-[13px] font-semibold text-foreground sm:text-[15px]">
                 {clienteNombre}
               </span>
             </div>
             {ubicacion && (
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <MapPin className="h-3 w-3 shrink-0" />
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground sm:gap-1.5 sm:text-xs">
+                <MapPin className="h-2.5 w-2.5 shrink-0 sm:h-3 sm:w-3" />
                 <span className="truncate">{ubicacion}</span>
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          <Badge variant={config.badge} className="shadow-sm">
+        <div className="flex shrink-0 flex-row items-center justify-between gap-2 self-stretch sm:flex-col sm:items-end sm:gap-1">
+          <Badge variant={config.badge} className="shadow-sm text-[10px] sm:text-xs">
             {config.label}
           </Badge>
-          <span className="text-[11px] text-muted-foreground">
+          <span className="text-[9px] text-muted-foreground whitespace-nowrap sm:text-[11px]">
             Cuota {cuotaTotal ? `${cuotaNumero}/${cuotaTotal}` : cuotaNumero}
           </span>
         </div>
       </div>
 
-      <div className="mt-3 flex items-end justify-between gap-3 border-t border-border/60 pt-3">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            Monto
-          </p>
-          <p className="mt-1 font-display text-lg font-bold tabular-nums text-foreground">
-            {formatCop(montoPagado ?? montoEsperado)}
-          </p>
+      <div className="mt-2 flex flex-col gap-2 border-t border-border/60 pt-2 sm:mt-3 sm:gap-3 sm:pt-3">
+        <div className="flex items-center justify-between gap-2 sm:flex-row sm:gap-3">
+          <div>
+            <p className="text-[9px] uppercase tracking-[0.16em] text-muted-foreground sm:text-[11px]">
+              Monto
+            </p>
+            <p className="mt-0.5 font-display text-base font-bold tabular-nums text-foreground sm:mt-1 sm:text-lg">
+              {formatCop(montoPagado ?? montoEsperado)}
+            </p>
+          </div>
+          {estado === "pagado" ? (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium text-success sm:gap-1.5 sm:text-xs">
+              <Receipt className="h-3 w-3 shrink-0 sm:h-3.5 sm:w-3.5" />
+              <span className="truncate">Ver comprobante</span>
+            </span>
+          ) : (
+            <p className="text-[10px] text-muted-foreground text-right sm:text-xs">
+              Saldo {formatCop(Math.max(montoEsperado - (montoPagado ?? 0), 0))}
+            </p>
+          )}
         </div>
-        {estado === "pagado" ? (
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success">
-            <Receipt className="h-3.5 w-3.5" />
-            Ver comprobante
-          </span>
-        ) : (
-          <p className="text-xs text-muted-foreground">
-            Saldo {formatCop(Math.max(montoEsperado - (montoPagado ?? 0), 0))}
-          </p>
-        )}
       </div>
     </div>
   );
