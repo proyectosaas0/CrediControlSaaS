@@ -311,19 +311,19 @@ function CobradorRutaView() {
 
       {selectedIds.size > 0 && (
         <div
-          className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-2 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] backdrop-blur-md sm:p-3"
-          style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))", paddingTop: "calc(0.5rem + max(0.5rem, env(safe-area-inset-top)))" }}
+          className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-card/98 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] backdrop-blur-md sm:p-4"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
         >
-          <div className="mx-auto flex max-w-3xl flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-semibold text-foreground sm:text-sm">
+          <div className="mx-auto flex w-full max-w-3xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+            <div className="min-w-0 flex-shrink-0">
+              <p className="text-sm font-semibold text-foreground sm:text-base">
                 {selectedIds.size} seleccionada{selectedIds.size !== 1 ? "s" : ""}
               </p>
-              <p className="text-[11px] text-muted-foreground sm:text-xs">{formatCop(selectedTotal)}</p>
+              <p className="text-xs text-muted-foreground">{formatCop(selectedTotal)}</p>
             </div>
             <Button
               size="lg"
-              className="w-full font-bold h-14 sm:w-auto sm:h-12 sm:px-6 text-base sm:text-base"
+              className="w-full min-h-14 font-bold sm:w-auto sm:min-h-12 sm:px-8"
               onClick={handleCobrarSelected}
             >
               Cobrar
