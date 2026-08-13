@@ -2,7 +2,7 @@
 
 import { cn } from "@/components/ui/cn";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Circle, Check } from "lucide-react";
+import { MapPin, Circle, Check, Receipt } from "lucide-react";
 import { formatCop } from "@/lib/domain/money";
 import type { RouteItem, RouteItemStatus } from "@/lib/mock/ruta";
 
@@ -39,7 +39,8 @@ export function RouteCard({
   onSelectChange,
 }: RouteCardProps) {
   const config = STATUS_CONFIG[estado];
-  const isInteractive = estado !== "pagado" && estado !== "no_encontrado";
+  // "pagado" sigue siendo interactiva: abre el comprobante en vez de cobrar.
+  const isInteractive = estado !== "no_encontrado";
   const ubicacion = barrio || direccion;
 
   return (
@@ -62,7 +63,7 @@ export function RouteCard({
         "bg-card/90 shadow-sm shadow-black/5 backdrop-blur-sm",
         isInteractive && "cursor-pointer active:scale-[0.99] hover:-translate-y-0.5 hover:shadow-lg",
         estado === "pendiente" && "border-warning/25 hover:border-warning/40 bg-warning/[0.04]",
-        estado === "pagado" && "border-success/25 bg-success/[0.04]",
+        estado === "pagado" && "border-success/25 hover:border-success/40 bg-success/[0.04]",
         estado === "parcial" && "border-info/25 hover:border-info/40 bg-info/[0.04]",
         estado === "mora" && "border-danger/25 hover:border-danger/40 bg-danger/[0.04]",
         estado === "no_encontrado" && "border-border bg-muted/40",
@@ -126,9 +127,16 @@ export function RouteCard({
             {formatCop(montoPagado ?? montoEsperado)}
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">
-          Saldo {formatCop(Math.max(montoEsperado - (montoPagado ?? 0), 0))}
-        </p>
+        {estado === "pagado" ? (
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success">
+            <Receipt className="h-3.5 w-3.5" />
+            Ver comprobante
+          </span>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Saldo {formatCop(Math.max(montoEsperado - (montoPagado ?? 0), 0))}
+          </p>
+        )}
       </div>
     </div>
   );

@@ -6,15 +6,20 @@ import { RouteCard } from "@/components/domain/route-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
-import { PaymentSheet } from "@/components/domain/payment-sheet";
+import { PaymentSheet, type ReceiptRequest } from "@/components/domain/payment-sheet";
+import { ReceiptDialog } from "@/components/domain/receipt-dialog";
 import { AdminRutaView } from "@/components/domain/admin-ruta-view";
 import { EmptyState } from "@/components/feedback/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { PlatformStat } from "@/components/ui/platform-stat";
 import { useAuth } from "@/providers/auth-provider";
 import { useRutaHoy, type CuotaRuta } from "@/hooks/queries/use-ruta";
+import { useAuthMe } from "@/hooks/queries/use-auth-me";
+import { useWhatsApp } from "@/hooks/use-whatsapp";
+import { buildPagoReceiptData } from "@/lib/domain/receipts";
+import type { ReceiptData } from "@/lib/domain/receipt-canvas";
 import { formatCop } from "@/lib/domain/money";
-import { type MedioPago } from "@/lib/mock/ruta-types";
+import { MEDIOS_PAGO, type MedioPago } from "@/lib/mock/ruta-types";
 import type { RouteItem } from "@/lib/mock/ruta";
 import { Clock3, CreditCard, MapPin, Wallet, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
@@ -66,6 +71,13 @@ function CobradorRutaView() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>("todos");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [receipt, setReceipt] = useState<{
+    data: ReceiptData;
+    whatsappLink: string;
+    filename: string;
+  } | null>(null);
+  const { data: me } = useAuthMe();
+  const { buildLink } = useWhatsApp();
 
   const items = rawItems.map(toRouteItem);
   const selectedItems = items.filter((i) => selectedIds.has(i.id));
@@ -94,8 +106,61 @@ function CobradorRutaView() {
           : items.filter((item) => item.estado === option.value).length,
   }));
 
+  function openReceipt({ item, medioPago, monto, tipo, saldo }: ReceiptRequest) {
+    const medioLabel = MEDIOS_PAGO.find((m) => m.value === medioPago)?.label ?? medioPago;
+    const negocio = me?.organization?.nombre_negocio ?? "";
+    const cobrador = me?.profile?.nombre_completo ?? "";
+    const fecha = new Date().toLocaleString("es-CO");
+    const cuotaLabel = item.cuotaTotal
+      ? `${item.cuotaNumero}/${item.cuotaTotal}`
+      : `${item.cuotaNumero}`;
+
+    setSheetOpen(false);
+    setReceipt({
+      data: buildPagoReceiptData({
+        negocio,
+        cliente: item.clienteNombre,
+        cobrador,
+        monto,
+        medioPago: medioLabel,
+        tipo,
+        cuota: item.cuotaNumero,
+        saldo,
+        fecha,
+      }),
+      whatsappLink: item.clienteTelefono
+        ? buildLink({
+            telefono: item.clienteTelefono,
+            negocio,
+            cliente: item.clienteNombre,
+            monto,
+            medioPago: medioLabel,
+            cuota: cuotaLabel,
+            saldo,
+            cobrador,
+            fecha,
+          })
+        : "",
+      filename: `comprobante-${item.id.slice(-6)}.png`,
+    });
+  }
+
   function handleCardClick(item: RouteItem) {
-    if (item.estado === "pagado" || item.estado === "no_encontrado") return;
+    if (item.estado === "no_encontrado") return;
+
+    // Una cuota ya pagada no se vuelve a cobrar: se reabre su comprobante.
+    if (item.estado === "pagado") {
+      const monto = item.montoPagado ?? item.montoEsperado;
+      openReceipt({
+        item,
+        medioPago: item.medioPago ?? "efectivo",
+        monto,
+        tipo: monto < item.montoEsperado ? "parcial" : "cuota",
+        saldo: Math.max(item.saldoPendiente, 0),
+      });
+      return;
+    }
+
     setSheetItems([item]);
     setSheetOpen(true);
   }
@@ -266,6 +331,15 @@ function CobradorRutaView() {
         onClose={() => setSheetOpen(false)}
         onPaymentSuccess={handlePaymentSuccess}
         onMarkNotFound={handleMarkNotFound}
+        onSendReceipt={openReceipt}
+      />
+
+      <ReceiptDialog
+        open={receipt !== null}
+        onClose={() => setReceipt(null)}
+        data={receipt?.data ?? null}
+        filename={receipt?.filename ?? "comprobante.png"}
+        whatsappLink={receipt?.whatsappLink || null}
       />
     </div>
   );

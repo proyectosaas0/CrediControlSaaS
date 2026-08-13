@@ -2,16 +2,23 @@
 
 import { useState } from "react";
 import { Sheet } from "@/components/ui/sheet";
-import { Button, buttonClasses } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/components/ui/cn";
 import { formatCop } from "@/lib/domain/money";
 import { MEDIOS_PAGO, type MedioPago } from "@/lib/mock/ruta-types";
 import type { RouteItem } from "@/lib/mock/ruta";
 import { CheckCircle2, Loader2, MessageSquare, UserX } from "lucide-react";
-import { useWhatsApp } from "@/hooks/use-whatsapp";
-import { useAuthMe } from "@/hooks/queries/use-auth-me";
 import { postApi } from "@/hooks/queries/fetch-api";
 import { toast } from "sonner";
+
+export type ReceiptRequest = {
+  item: RouteItem;
+  medioPago: MedioPago;
+  monto: number;
+  tipo: string;
+  /** Saldo del préstamo después de este pago. */
+  saldo: number;
+};
 
 type PaymentSheetProps = {
   items: RouteItem[];
@@ -19,6 +26,8 @@ type PaymentSheetProps = {
   onClose: () => void;
   onPaymentSuccess: (itemIds: string[], medioPago: MedioPago, monto: number) => void;
   onMarkNotFound: (itemId: string) => void;
+  /** Abre el comprobante del pago recién registrado (solo pagos individuales). */
+  onSendReceipt: (request: ReceiptRequest) => void;
 };
 
 type PaymentStep = "form" | "success";
@@ -29,6 +38,7 @@ export function PaymentSheet({
   onClose,
   onPaymentSuccess,
   onMarkNotFound,
+  onSendReceipt,
 }: PaymentSheetProps) {
   const [medioPago, setMedioPago] = useState<MedioPago | null>(null);
   const [monto, setMonto] = useState<string>("");
@@ -37,8 +47,6 @@ export function PaymentSheet({
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState<PaymentStep>("form");
   const [paidCount, setPaidCount] = useState(0);
-  const { buildLink } = useWhatsApp();
-  const { data: me } = useAuthMe();
 
   if (items.length === 0) return null;
 
@@ -53,6 +61,13 @@ export function PaymentSheet({
       ? Number(monto.replace(/\D/g, ""))
       : item.montoEsperado;
   const isFormValid = medioPago !== null && montoNumerico > 0;
+  const tipoPago = isAbono
+    ? "abono"
+    : isPartial
+      ? "parcial"
+      : item.estado === "mora"
+        ? "mora"
+        : "cuota";
 
   function handleMedioPagoSelect(mp: MedioPago) {
     setMedioPago((prev) => (prev === mp ? null : mp));
@@ -94,7 +109,7 @@ export function PaymentSheet({
           cronogramaPagoId: item.id,
           medioPago,
           monto: montoNumerico,
-          tipo: isAbono ? "abono" : isPartial ? "parcial" : item.estado === "mora" ? "mora" : "cuota",
+          tipo: tipoPago,
         });
         onPaymentSuccess([item.id], medioPago, montoNumerico);
         setPaidCount(1);
@@ -123,21 +138,6 @@ export function PaymentSheet({
       setSubmitting(false);
     }
   }
-
-  const whatsappLink =
-    step === "success" && !isBatch
-      ? buildLink({
-          telefono: item.clienteTelefono,
-          negocio: me?.organization?.nombre_negocio ?? "",
-          cliente: item.clienteNombre,
-          monto: montoNumerico,
-          medioPago: MEDIOS_PAGO.find((m) => m.value === medioPago)?.label ?? "",
-          cuota: cuotaLabel,
-          saldo: item.saldoPendiente - montoNumerico,
-          cobrador: me?.profile?.nombre_completo ?? "",
-          fecha: new Date().toLocaleString("es-CO"),
-        })
-      : "";
 
   return (
     <Sheet
@@ -326,19 +326,24 @@ export function PaymentSheet({
             </p>
           </div>
 
-          {!isBatch && (
-            <a
-              href={whatsappLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                buttonClasses("success", "lg"),
-                "w-full text-base font-bold",
-              )}
+          {!isBatch && medioPago && (
+            <Button
+              variant="success"
+              size="lg"
+              className="w-full text-base font-bold"
+              onClick={() =>
+                onSendReceipt({
+                  item,
+                  medioPago,
+                  monto: montoNumerico,
+                  tipo: tipoPago,
+                  saldo: Math.max(item.saldoPendiente - montoNumerico, 0),
+                })
+              }
             >
               <MessageSquare className="h-5 w-5" />
-              Enviar comprobante WhatsApp
-            </a>
+              Enviar comprobante
+            </Button>
           )}
 
           <Button
