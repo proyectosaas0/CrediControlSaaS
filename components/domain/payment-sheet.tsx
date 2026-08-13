@@ -33,6 +33,7 @@ export function PaymentSheet({
   const [medioPago, setMedioPago] = useState<MedioPago | null>(null);
   const [monto, setMonto] = useState<string>("");
   const [isPartial, setIsPartial] = useState(false);
+  const [isAbono, setIsAbono] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState<PaymentStep>("form");
   const [paidCount, setPaidCount] = useState(0);
@@ -57,6 +58,7 @@ export function PaymentSheet({
     setMedioPago(null);
     setMonto("");
     setIsPartial(false);
+    setIsAbono(false);
     setSubmitting(false);
     setStep("form");
     setPaidCount(0);
@@ -102,7 +104,7 @@ export function PaymentSheet({
           cronogramaPagoId: item.id,
           medioPago,
           monto: montoNumerico,
-          tipo: isPartial ? "parcial" : item.estado === "mora" ? "mora" : "cuota",
+          tipo: isAbono ? "abono" : isPartial ? "parcial" : item.estado === "mora" ? "mora" : "cuota",
         });
         onPaymentSuccess([item.id], medioPago, montoNumerico);
         setPaidCount(1);
@@ -161,7 +163,7 @@ export function PaymentSheet({
       }
     >
       {step === "form" ? (
-        <div className="space-y-4 pb-6" onTransitionEnd={handleOpen}>
+        <div className="space-y-4 pb-6">
           {isBatch && (
             <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border bg-muted/30 p-2">
               {items.map((it) => (
@@ -197,16 +199,25 @@ export function PaymentSheet({
               </div>
             )}
             {!isBatch && (
-              <button
-                type="button"
-                onClick={() => {
-                  setIsPartial((prev) => !prev);
-                  setMonto("");
-                }}
-                className="text-xs text-primary hover:underline"
-              >
-                {isPartial ? "Usar monto completo" : "Pago parcial"}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsPartial((prev) => !prev);
+                    setMonto("");
+                  }}
+                  className="text-xs text-primary hover:underline"
+                >
+                  {isPartial ? "Usar monto completo" : "Pago parcial"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsAbono((prev) => !prev)}
+                  className="text-xs text-primary hover:underline"
+                >
+                  {isAbono ? "Pago a cuota" : "Abono a capital"}
+                </button>
+              </div>
             )}
           </div>
 
