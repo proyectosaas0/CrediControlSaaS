@@ -137,28 +137,28 @@ export default function PrestamoDetailPage() {
             style={{ animationDelay: "80ms" }}
           >
             {/* Cifras clave */}
-            <div className="grid grid-cols-3 divide-x divide-border rounded-xl border border-border bg-primary/[0.04]">
-              <div className="px-3 py-3 text-center sm:px-4">
+            <div className="grid grid-cols-1 divide-y divide-border rounded-xl border border-border bg-primary/[0.04] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              <div className="px-4 py-3 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                   Cuota diaria
                 </p>
-                <p className="mt-1 truncate font-display text-base font-bold tabular-nums text-primary sm:text-lg">
+                <p className="mt-1 break-words font-display text-base font-bold tabular-nums text-primary sm:text-lg">
                   {formatCop(prestamo.cuota_diaria ?? 0)}
                 </p>
               </div>
-              <div className="px-3 py-3 text-center sm:px-4">
+              <div className="px-4 py-3 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                   Total a pagar
                 </p>
-                <p className="mt-1 truncate font-display text-base font-bold tabular-nums text-foreground sm:text-lg">
+                <p className="mt-1 break-words font-display text-base font-bold tabular-nums text-foreground sm:text-lg">
                   {formatCop(prestamo.total_pagar ?? 0)}
                 </p>
               </div>
-              <div className="px-3 py-3 text-center sm:px-4">
+              <div className="px-4 py-3 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
                   Saldo pendiente
                 </p>
-                <p className="mt-1 truncate font-display text-base font-bold tabular-nums text-danger sm:text-lg">
+                <p className="mt-1 break-words font-display text-base font-bold tabular-nums text-danger sm:text-lg">
                   {formatCop(saldoPendiente)}
                 </p>
               </div>
@@ -313,8 +313,8 @@ function CronogramaSection({ cuotas }: { cuotas: CuotaCronograma[] }) {
                 <th className="py-2.5 pl-4 pr-2 text-left text-[10px] font-bold uppercase tracking-[0.14em]">#</th>
                 <th className="py-2.5 pr-2 text-left text-[10px] font-bold uppercase tracking-[0.14em]">Fecha</th>
                 <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Cuota</th>
-                <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Capital</th>
-                <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Interés</th>
+                <th className="hidden py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em] sm:table-cell">Capital</th>
+                <th className="hidden py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em] sm:table-cell">Interés</th>
                 <th className="py-2.5 pr-2 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Saldo</th>
                 <th className="py-2.5 pr-4 text-right text-[10px] font-bold uppercase tracking-[0.14em]">Estado</th>
               </tr>
@@ -332,19 +332,19 @@ function CronogramaSection({ cuotas }: { cuotas: CuotaCronograma[] }) {
                       {cuota.numero_cuota}
                     </span>
                   </td>
-                  <td className="py-2.5 pr-2 tabular-nums text-muted-foreground">
+                  <td className="whitespace-nowrap py-2.5 pr-2 tabular-nums text-muted-foreground">
                     {cuota.fecha_esperada}
                   </td>
-                  <td className="py-2.5 pr-2 text-right font-semibold tabular-nums text-foreground">
+                  <td className="whitespace-nowrap py-2.5 pr-2 text-right font-semibold tabular-nums text-foreground">
                     {formatCop(cuota.monto_esperado)}
                   </td>
-                  <td className="py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
+                  <td className="hidden whitespace-nowrap py-2.5 pr-2 text-right tabular-nums text-muted-foreground sm:table-cell">
                     {formatCop(cuota.monto_capital ?? 0)}
                   </td>
-                  <td className="py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
+                  <td className="hidden whitespace-nowrap py-2.5 pr-2 text-right tabular-nums text-muted-foreground sm:table-cell">
                     {formatCop(cuota.monto_interes ?? 0)}
                   </td>
-                  <td className="py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
+                  <td className="whitespace-nowrap py-2.5 pr-2 text-right tabular-nums text-muted-foreground">
                     {formatCop(cuota.saldo_estimado ?? 0)}
                   </td>
                   <td className="py-2.5 pr-4 text-right">
