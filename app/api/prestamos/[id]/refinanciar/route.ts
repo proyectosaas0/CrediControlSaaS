@@ -37,6 +37,7 @@ export async function POST(request: Request, context: RouteContext) {
     cobrador_id: previous.cobrador_id,
     created_by: actor!.userId,
     cuota_diaria: totals.cuotaDiaria,
+    dia_cobro: previous.dia_cobro,
     dias_habiles: schedule.length,
     excluir_domingos: input.excluirDomingos,
     excluir_sabados: input.excluirSabados,
