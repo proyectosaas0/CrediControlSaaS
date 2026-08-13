@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Phone,
   DollarSign,
@@ -14,6 +15,7 @@ import {
   Clock,
 } from "lucide-react";
 import { useMoraList, type MoraRegistro } from "@/hooks/queries/use-mora";
+import { useAuth } from "@/providers/auth-provider";
 import { formatCop } from "@/lib/domain/money";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -210,6 +212,7 @@ function MoraStat({
 }
 
 function MoraCard({ mora, index }: { mora: MoraRegistro; index: number }) {
+  const { role } = useAuth();
   const diasMora = mora.dias_mora ?? 0;
   const montoPendiente = (mora.monto_mora ?? 0) - mora.monto_pagado_mora;
 
@@ -272,8 +275,8 @@ function MoraCard({ mora, index }: { mora: MoraRegistro; index: number }) {
 
       {mora.estado === "activa" && (
         <div className="mt-3.5 flex gap-2 border-t border-dashed border-border pt-3">
-          <PagarMoraButton mora={mora} />
-          <CondonarMoraButton mora={mora} />
+          {role !== "cobrador" && <PagarMoraButton mora={mora} />}
+          {role !== "cobrador" && <CondonarMoraButton mora={mora} />}
           <WhatsAppButton
             telefono={mora.prestamos.clientes.telefono ?? ""}
             cliente={mora.prestamos.clientes.nombre}
@@ -290,6 +293,7 @@ const pagarMoraSchema = z.object({
 
 function PagarMoraButton({ mora }: { mora: MoraRegistro }) {
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -300,9 +304,27 @@ function PagarMoraButton({ mora }: { mora: MoraRegistro }) {
     defaultValues: { monto: (mora.monto_mora ?? 0) - mora.monto_pagado_mora },
   });
 
-  function onSubmit() {
-    toast.success("Pago de mora registrado");
-    setOpen(false);
+  async function onSubmit(data: { monto: number }) {
+    try {
+      const res = await fetch(`/api/mora/${mora.id}/pago`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ monto: data.monto }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+          (body as { error?: { message?: string }; message?: string }).error?.message ??
+            (body as { message?: string }).message ??
+            "No se pudo registrar el pago de mora",
+        );
+      }
+      toast.success("Pago de mora registrado");
+      await queryClient.invalidateQueries({ queryKey: ["mora"] });
+      setOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo registrar el pago");
+    }
   }
 
   return (
@@ -340,6 +362,7 @@ const condonarSchema = z.object({
 
 function CondonarMoraButton({ mora }: { mora: MoraRegistro }) {
   const [open, setOpen] = useState(false);
+  const queryClient = useQueryClient();
 
   const {
     register,
@@ -349,11 +372,27 @@ function CondonarMoraButton({ mora }: { mora: MoraRegistro }) {
     resolver: zodResolver(condonarSchema),
   });
 
-  function onSubmit() {
-    // TODO: Reemplazar por POST /api/mora/[id]/condonar
-    console.log("Condonar mora:", mora.id);
-    toast.success("Mora condonada correctamente");
-    setOpen(false);
+  async function onSubmit(data: { motivo: string }) {
+    try {
+      const res = await fetch(`/api/mora/${mora.id}/condonar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ motivo: data.motivo }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+          (body as { error?: { message?: string }; message?: string }).error?.message ??
+            (body as { message?: string }).message ??
+            "No se pudo condonar la mora",
+        );
+      }
+      toast.success("Mora condonada correctamente");
+      await queryClient.invalidateQueries({ queryKey: ["mora"] });
+      setOpen(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo condonar la mora");
+    }
   }
 
   return (
