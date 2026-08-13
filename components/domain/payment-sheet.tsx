@@ -54,7 +54,7 @@ export function PaymentSheet({
   const item = items[0];
   const cuotaLabel = item.cuotaTotal ? `${item.cuotaNumero}/${item.cuotaTotal}` : `${item.cuotaNumero}`;
 
-  const batchTotal = items.reduce((sum, i) => sum + i.montoEsperado, 0);
+  const batchTotal = items.reduce((sum, i) => sum + Math.max(i.saldoPendiente, 0), 0);
   const montoNumerico = isBatch
     ? batchTotal
     : monto
@@ -80,14 +80,15 @@ export function PaymentSheet({
     try {
       if (isBatch) {
         const results = await Promise.allSettled(
-          items.map((it) =>
-            postApi("/api/pagos", {
+          items.map((it) => {
+            const saldoPendiente = Math.max(it.saldoPendiente, 0);
+            return postApi("/api/pagos", {
               cronogramaPagoId: it.id,
               medioPago,
-              monto: it.montoEsperado,
+              monto: saldoPendiente,
               tipo: it.estado === "mora" ? "mora" : "cuota",
-            }),
-          ),
+            });
+          }),
         );
         const succeededIds = items
           .filter((_, idx) => results[idx].status === "fulfilled")
@@ -96,14 +97,13 @@ export function PaymentSheet({
 
         if (succeededIds.length > 0) {
           onPaymentSuccess(succeededIds, medioPago, montoNumerico);
+          setPaidCount(succeededIds.length);
+          setStep("success");
         }
         if (failedCount > 0) {
           toast.error(`${failedCount} de ${items.length} pagos no se pudieron registrar`);
         }
         if (succeededIds.length === 0) return;
-
-        setPaidCount(succeededIds.length);
-        setStep("success");
       } else {
         await postApi("/api/pagos", {
           cronogramaPagoId: item.id,
