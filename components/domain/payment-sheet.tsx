@@ -54,16 +54,6 @@ export function PaymentSheet({
       : item.montoEsperado;
   const isFormValid = medioPago !== null && montoNumerico > 0;
 
-  function handleOpen() {
-    setMedioPago(null);
-    setMonto("");
-    setIsPartial(false);
-    setIsAbono(false);
-    setSubmitting(false);
-    setStep("form");
-    setPaidCount(0);
-  }
-
   function handleMedioPagoSelect(mp: MedioPago) {
     setMedioPago((prev) => (prev === mp ? null : mp));
   }
