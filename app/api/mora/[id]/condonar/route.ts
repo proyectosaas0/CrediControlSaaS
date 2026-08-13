@@ -1,3 +1,6 @@
+// NOTE: This endpoint expects mora_registros to have condonado_at, condonado_por, motivo_condonacion columns.
+// Verify in Supabase that migration 20260812_mora_condonacion_audit has been applied before deploying.
+
 import { z } from "zod";
 import { requireApiActor } from "@/lib/api/auth";
 import { apiError, apiOk } from "@/lib/api/errors";

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, ArrowLeft, RefreshCcw, Share2, XCircle } from "lucide-react";
 import { postApi, ApiError } from "@/hooks/queries/fetch-api";
@@ -17,13 +17,21 @@ import { LoanStatusBadge } from "@/components/domain/loan-status-badge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Dialog } from "@/components/ui/dialog";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { ErrorState } from "@/components/ui/error-state";
 import { SectionHead } from "@/components/ui/page-header";
 import { buildPrestamoSummaryData } from "@/lib/domain/receipts";
 import { ReceiptDialog } from "@/components/domain/receipt-dialog";
+import { useAuth } from "@/providers/auth-provider";
 import { toast } from "sonner";
+
+const MODELO_OPTIONS = [
+  { value: "cuota_fija", label: "Cuota fija" },
+  { value: "solo_interes", label: "Solo interes" },
+  { value: "sobre_saldo", label: "Sobre saldo" },
+];
 
 export default function PrestamoDetailPage() {
   const params = useParams();
@@ -32,6 +40,7 @@ export default function PrestamoDetailPage() {
 
   const { data: prestamo, isLoading, error } = usePrestamo(id);
   const { data: me } = useAuthMe();
+  const { role } = useAuth();
   const { data: cuotas = [] } = useCronogramaPrestamo(id);
   const [receiptOpen, setReceiptOpen] = useState(false);
 
@@ -252,8 +261,8 @@ export default function PrestamoDetailPage() {
               Compartir resumen
             </Button>
             {canRefinance && <EditPrestamoButton prestamo={prestamo} />}
-            {canRefinance && <RefinanciarButton prestamo={prestamo} />}
-            {canCancel && <CancelarButton prestamoId={prestamo.id} />}
+            {canRefinance && role !== "cobrador" && <RefinanciarButton prestamo={prestamo} />}
+            {canCancel && role !== "cobrador" && <CancelarButton prestamoId={prestamo.id} />}
           </div>
         </div>
       </div>
@@ -373,6 +382,7 @@ function RefinanciarButton({ prestamo }: { prestamo: Prestamo }) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors },
   } = useForm<PrestamoStep2Data>({
     resolver: zodResolver(prestamoStep2Schema),
@@ -386,6 +396,8 @@ function RefinanciarButton({ prestamo }: { prestamo: Prestamo }) {
       excluirDomingos: prestamo.excluir_domingos,
     },
   });
+
+  const modeloInteres = useWatch({ control, name: "modeloInteres" });
 
   async function onSubmit(data: PrestamoStep2Data) {
     setSaving(true);
@@ -452,14 +464,14 @@ function RefinanciarButton({ prestamo }: { prestamo: Prestamo }) {
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Input label="Capital" type="number" error={errors.capital?.message} {...register("capital", { valueAsNumber: true })} />
-            <select
+            <Select
+              label="Modelo de interés"
+              options={MODELO_OPTIONS}
+              placeholder="Selecciona un modelo"
+              error={errors.modeloInteres?.message}
+              value={modeloInteres ?? ""}
               {...register("modeloInteres")}
-              className="rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="cuota_fija">Cuota fija</option>
-              <option value="solo_interes">Solo interés</option>
-              <option value="sobre_saldo">Sobre saldo</option>
-            </select>
+            />
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Input label="Tasa mensual (%)" type="number" step="0.1" error={errors.tasaMensual?.message} {...register("tasaMensual", { valueAsNumber: true })} />
