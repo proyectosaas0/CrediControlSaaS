@@ -7,9 +7,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AlertCircle, ArrowLeft, RefreshCcw, Share2, XCircle } from "lucide-react";
 import { postApi, ApiError } from "@/hooks/queries/fetch-api";
-import { cancelarPrestamoSchema, diaCobroLabel, type CancelarPrestamoData } from "@/lib/schemas/admin";
+import { cancelarPrestamoSchema, diaCobroLabel, type CancelarPrestamoData, prestamoStep2Schema, type PrestamoStep2Data } from "@/lib/schemas/admin";
 import { formatCop } from "@/lib/domain/money";
-import { usePrestamo } from "@/hooks/queries/use-prestamos";
+import { usePrestamo, type Prestamo } from "@/hooks/queries/use-prestamos";
 import { useCronogramaPrestamo, type CuotaCronograma } from "@/hooks/queries/use-pagos";
 import { useAuthMe } from "@/hooks/queries/use-auth-me";
 import { EditPrestamoButton } from "@/components/domain/edit-prestamo-dialog";
@@ -252,7 +252,7 @@ export default function PrestamoDetailPage() {
               Compartir resumen
             </Button>
             {canRefinance && <EditPrestamoButton prestamo={prestamo} />}
-            {canRefinance && <RefinanciarButton prestamoId={prestamo.id} />}
+            {canRefinance && <RefinanciarButton prestamo={prestamo} />}
             {canCancel && <CancelarButton prestamoId={prestamo.id} />}
           </div>
         </div>
@@ -364,17 +364,68 @@ function CronogramaSection({ cuotas }: { cuotas: CuotaCronograma[] }) {
   );
 }
 
-function RefinanciarButton({ }: { prestamoId: string }) {
+function RefinanciarButton({ prestamo }: { prestamo: Prestamo }) {
   const [open, setOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<PrestamoStep2Data>({
+    resolver: zodResolver(prestamoStep2Schema),
+    defaultValues: {
+      capital: prestamo.capital,
+      modeloInteres: prestamo.modelo_interes,
+      tasaMensual: prestamo.tasa_mensual,
+      plazoDias: prestamo.plazo_dias,
+      fechaInicio: new Date().toISOString().slice(0, 10),
+      excluirSabados: prestamo.excluir_sabados,
+      excluirDomingos: prestamo.excluir_domingos,
+    },
+  });
+
+  async function onSubmit(data: PrestamoStep2Data) {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/prestamos/${prestamo.id}/refinanciar`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          capital: data.capital,
+          modeloInteres: data.modeloInteres,
+          tasaMensual: data.tasaMensual,
+          plazoDias: data.plazoDias,
+          fechaInicio: data.fechaInicio,
+          excluirSabados: data.excluirSabados,
+          excluirDomingos: data.excluirDomingos,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+          (body as { error?: { message?: string }; message?: string }).error?.message ??
+            (body as { message?: string }).message ??
+            "No se pudo refinanciar el préstamo",
+        );
+      }
+      const created = (await res.json()) as { data?: { id?: string } };
+      toast.success("Préstamo refinanciado correctamente");
+      await queryClient.invalidateQueries({ queryKey: ["prestamos"] });
+      setOpen(false);
+      if (created.data?.id) router.push(`/app/prestamos/${created.data.id}`);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo refinanciar");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => setOpen(true)}
-        className="flex-1"
-      >
+      <Button variant="outline" size="sm" onClick={() => setOpen(true)} className="flex-1">
         <RefreshCcw className="mr-2 h-4 w-4" />
         Refinanciar
       </Button>
@@ -382,38 +433,50 @@ function RefinanciarButton({ }: { prestamoId: string }) {
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
-        title="Refinanciar prestamo"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            Se creara un nuevo prestamo con las nuevas condiciones. El prestamo
-            actual cambiara a estado &ldquo;Refinanciado&rdquo;.
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Configura las nuevas condiciones en el wizard de nuevo prestamo.
-          </p>
+        title="Refinanciar préstamo"
+        footer={
           <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-              className="flex-1"
-            >
+            <Button type="button" variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancelar
             </Button>
-            <Button
-              type="button"
-              onClick={() => {
-                // TODO: Reemplazar por navegación a wizard con datos del prestamo actual
-                setOpen(false);
-                toast.info("Refinanciamiento — pendiente de integracion con API");
-              }}
-              className="flex-1"
-            >
-              Continuar
+            <Button type="submit" form="refinanciar-form" loading={saving} className="flex-1">
+              Refinanciar
             </Button>
           </div>
-        </div>
+        }
+      >
+        <form id="refinanciar-form" onSubmit={handleSubmit(onSubmit)} className="space-y-4 py-1">
+          <p className="text-sm text-muted-foreground">
+            Se creará un préstamo nuevo con estas condiciones. El actual pasará a
+            estado &ldquo;Refinanciado&rdquo;.
+          </p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Input label="Capital" type="number" error={errors.capital?.message} {...register("capital", { valueAsNumber: true })} />
+            <select
+              {...register("modeloInteres")}
+              className="rounded-md border border-border bg-card px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              <option value="cuota_fija">Cuota fija</option>
+              <option value="solo_interes">Solo interés</option>
+              <option value="sobre_saldo">Sobre saldo</option>
+            </select>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Input label="Tasa mensual (%)" type="number" step="0.1" error={errors.tasaMensual?.message} {...register("tasaMensual", { valueAsNumber: true })} />
+            <Input label="Plazo (días)" type="number" error={errors.plazoDias?.message} {...register("plazoDias", { valueAsNumber: true })} />
+          </div>
+          <Input label="Fecha de inicio" type="date" error={errors.fechaInicio?.message} {...register("fechaInicio")} />
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" {...register("excluirSabados")} className="h-4 w-4 rounded border-border" />
+              Excluir sábados
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" {...register("excluirDomingos")} className="h-4 w-4 rounded border-border" />
+              Excluir domingos
+            </label>
+          </div>
+        </form>
       </Dialog>
     </>
   );
