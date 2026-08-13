@@ -269,6 +269,9 @@ export type Database = {
           id: string
           monto_mora: number | null
           monto_pagado_mora: number
+          condonado_at: string | null
+          condonado_por: string | null
+          motivo_condonacion: string | null
           organization_id: string
           prestamo_id: string
         }
@@ -279,6 +282,9 @@ export type Database = {
           id?: string
           monto_mora?: number | null
           monto_pagado_mora?: number
+          condonado_at?: string | null
+          condonado_por?: string | null
+          motivo_condonacion?: string | null
           organization_id: string
           prestamo_id: string
         }
@@ -289,6 +295,9 @@ export type Database = {
           id?: string
           monto_mora?: number | null
           monto_pagado_mora?: number
+          condonado_at?: string | null
+          condonado_por?: string | null
+          motivo_condonacion?: string | null
           organization_id?: string
           prestamo_id?: string
         }
