@@ -294,7 +294,7 @@ function CobradorRutaView() {
           description="No hay cobros con este filtro para hoy."
         />
       ) : (
-        <div className={cn("grid gap-3 md:grid-cols-2 xl:grid-cols-2", selectedIds.size > 0 && "pb-20")}>
+        <div className={cn("grid gap-3 md:grid-cols-2 xl:grid-cols-2", selectedIds.size > 0 && "pb-32 sm:pb-28")}>
           {filteredItems.map((item, i) => (
             <div key={item.id} className="dash-rise" style={staggerDelay(i)}>
               <RouteCard
@@ -310,15 +310,22 @@ function CobradorRutaView() {
       )}
 
       {selectedIds.size > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-3 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] backdrop-blur-md" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}>
-          <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
-            <div>
-              <p className="text-sm font-semibold text-foreground">
+        <div
+          className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-card/95 p-2 shadow-[0_-4px_20px_rgba(0,0,0,0.12)] backdrop-blur-md sm:p-3"
+          style={{ paddingBottom: "calc(0.5rem + env(safe-area-inset-bottom))", paddingTop: "calc(0.5rem + max(0.5rem, env(safe-area-inset-top)))" }}
+        >
+          <div className="mx-auto flex max-w-3xl flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold text-foreground sm:text-sm">
                 {selectedIds.size} seleccionada{selectedIds.size !== 1 ? "s" : ""}
               </p>
-              <p className="text-xs text-muted-foreground">{formatCop(selectedTotal)}</p>
+              <p className="text-[11px] text-muted-foreground sm:text-xs">{formatCop(selectedTotal)}</p>
             </div>
-            <Button size="lg" className="h-12 px-6 font-bold" onClick={handleCobrarSelected}>
+            <Button
+              size="lg"
+              className="w-full font-bold h-14 sm:w-auto sm:h-12 sm:px-6 text-base sm:text-base"
+              onClick={handleCobrarSelected}
+            >
               Cobrar
             </Button>
           </div>
