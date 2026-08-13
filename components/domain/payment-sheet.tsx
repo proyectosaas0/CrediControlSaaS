@@ -153,22 +153,27 @@ export function PaymentSheet({
       }
     >
       {step === "form" ? (
-        <div className="space-y-4 pb-6">
+        <div className="space-y-5 pb-6">
           {isBatch && (
-            <div className="max-h-40 space-y-1.5 overflow-y-auto rounded-lg border border-border bg-muted/30 p-2">
-              {items.map((it) => (
-                <div key={it.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="truncate text-foreground">{it.clienteNombre}</span>
-                  <span className="shrink-0 font-medium tabular-nums text-muted-foreground">
-                    {formatCop(it.montoEsperado)}
-                  </span>
-                </div>
-              ))}
+            <div className="space-y-2">
+              <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Clientes seleccionados
+              </label>
+              <div className="max-h-48 space-y-2 overflow-y-auto rounded-xl border-2 border-border/60 bg-gradient-to-b from-muted/20 to-background p-3">
+                {items.map((it) => (
+                  <div key={it.id} className="flex items-center justify-between gap-2 rounded-lg bg-background/50 px-3 py-2.5 border border-border/40 hover:bg-muted/30 transition-all">
+                    <span className="truncate text-sm font-medium text-foreground">{it.clienteNombre}</span>
+                    <span className="shrink-0 font-bold tabular-nums text-primary/80">
+                      {formatCop(it.montoEsperado)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
-          <div className="space-y-1.5">
-            <label className="block text-sm font-medium text-foreground">
+          <div className="space-y-3">
+            <label className="block text-sm font-semibold text-foreground">
               Monto {isBatch ? "total" : ""}
             </label>
             {!isBatch && isPartial ? (
@@ -181,58 +186,85 @@ export function PaymentSheet({
                   setMonto(raw ? String(Number(raw)) : "");
                 }}
                 placeholder={String(item.montoEsperado)}
-                className="flex h-12 min-h-12 w-full rounded-lg border border-border bg-background px-3 py-2 text-lg font-semibold text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex h-14 w-full rounded-lg border-2 border-border bg-background px-4 py-3 text-xl font-bold text-foreground placeholder:text-muted-foreground/60 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:border-primary"
               />
             ) : (
-              <div className="flex h-12 min-h-12 items-center rounded-lg border border-border bg-muted/50 px-3 text-lg font-semibold text-foreground">
+              <div className="flex h-14 items-center rounded-lg border-2 border-border bg-gradient-to-br from-muted/40 to-muted/20 px-4 text-xl font-bold text-foreground transition-all">
                 {formatCop(montoNumerico)}
               </div>
             )}
             {!isBatch && (
-              <div className="flex gap-3">
+              <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={() => {
                     setIsPartial((prev) => !prev);
                     setMonto("");
                   }}
-                  className="text-xs text-primary hover:underline"
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                    isPartial
+                      ? "bg-primary/10 text-primary"
+                      : "text-primary/70 hover:text-primary hover:bg-primary/5",
+                  )}
                 >
-                  {isPartial ? "Usar monto completo" : "Pago parcial"}
+                  {isPartial ? "✓ Pago parcial" : "Pago parcial"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsAbono((prev) => !prev)}
-                  className="text-xs text-primary hover:underline"
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                    isAbono
+                      ? "bg-primary/10 text-primary"
+                      : "text-primary/70 hover:text-primary hover:bg-primary/5",
+                  )}
                 >
-                  {isAbono ? "Pago a cuota" : "Abono a capital"}
+                  {isAbono ? "✓ Abono a capital" : "Abono a capital"}
                 </button>
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-foreground">
-              Medio de pago
+          <div className="space-y-3 pt-2">
+            <label className="block text-sm font-semibold text-foreground">
+              Método de pago
             </label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {MEDIOS_PAGO.map((mp) => (
                 <button
                   key={mp.value}
                   type="button"
                   onClick={() => handleMedioPagoSelect(mp.value)}
                   className={cn(
-                    "flex flex-col items-center gap-1 rounded-xl border-2 py-3 text-center transition-colors min-h-[60px]",
+                    "relative flex flex-col items-center justify-center gap-2.5 rounded-2xl border-2 px-3 py-4 transition-all duration-200 min-h-[90px] sm:min-h-[100px]",
+                    "hover:scale-105 active:scale-95",
                     medioPago === mp.value
-                      ? "border-primary bg-primary/10"
-                      : "border-border bg-background hover:border-muted-foreground/30",
+                      ? "border-primary bg-primary/12 shadow-md shadow-primary/20"
+                      : "border-border/60 bg-background hover:border-primary/40 hover:bg-muted/30",
                   )}
                 >
+                  {medioPago === mp.value && (
+                    <div className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-primary flex items-center justify-center">
+                      <span className="text-white text-xs font-bold">✓</span>
+                    </div>
+                  )}
                   {(() => {
                     const Icon = mp.icon;
-                    return <Icon className="h-6 w-6" aria-hidden="true" />;
+                    return (
+                      <Icon
+                        className={cn(
+                          "h-7 w-7 transition-all",
+                          medioPago === mp.value ? "text-primary" : "text-muted-foreground",
+                        )}
+                        aria-hidden="true"
+                      />
+                    );
                   })()}
-                  <span className="text-xs font-medium text-foreground">
+                  <span className={cn(
+                    "text-center text-sm font-semibold transition-all leading-tight",
+                    medioPago === mp.value ? "text-foreground" : "text-muted-foreground",
+                  )}>
                     {mp.label}
                   </span>
                 </button>
@@ -240,44 +272,52 @@ export function PaymentSheet({
             </div>
           </div>
 
-          <Button
-            variant="success"
-            size="lg"
-            className="h-14 w-full text-base font-bold"
-            disabled={!isFormValid || submitting}
-            onClick={handleRegisterPayment}
-          >
-            {submitting ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <CheckCircle2 className="h-5 w-5" />
-            )}
-            {isBatch ? `Registrar ${items.length} pagos` : "Registrar pago"}
-          </Button>
-
-          {!isBatch && (
-            <button
-              type="button"
-              onClick={handleNotFound}
-              disabled={submitting}
-              className="flex w-full items-center justify-center gap-2 rounded-lg border border-border py-3 text-sm text-muted-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring min-h-11"
+          <div className="flex flex-col gap-3 pt-2">
+            <Button
+              variant="success"
+              size="lg"
+              className={cn(
+                "h-14 w-full text-base font-bold shadow-lg transition-all",
+                isFormValid && !submitting ? "hover:shadow-xl hover:scale-[1.02] active:scale-95" : "",
+              )}
+              disabled={!isFormValid || submitting}
+              onClick={handleRegisterPayment}
             >
-              <UserX className="h-4 w-4" />
-              Cliente no encontrado
-            </button>
-          )}
+              {submitting ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-5 w-5" />
+              )}
+              {isBatch ? `Registrar ${items.length} pagos` : "Registrar pago"}
+            </Button>
+
+            {!isBatch && (
+              <button
+                type="button"
+                onClick={handleNotFound}
+                disabled={submitting}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-border py-3 text-sm font-medium text-muted-foreground transition-all hover:border-destructive/50 hover:bg-destructive/5 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-destructive/50 min-h-11 disabled:opacity-50"
+              >
+                <UserX className="h-4 w-4" />
+                Cliente no encontrado
+              </button>
+            )}
+          </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-4 pb-8 pt-2">
-          <div className="flex h-20 w-20 items-center justify-center rounded-full bg-success/15">
-            <CheckCircle2 className="h-10 w-10 text-success" />
+        <div className="flex flex-col items-center gap-6 pb-8 pt-6">
+          <div className="flex h-24 w-24 items-center justify-center rounded-full bg-success/15 shadow-lg shadow-success/20 ring-4 ring-success/10">
+            <CheckCircle2 className="h-12 w-12 text-success animate-in fade-in zoom-in duration-300" />
           </div>
 
-          <div className="text-center">
-            <p className="text-lg font-bold text-foreground">
-              {formatCop(montoNumerico)} registrados
+          <div className="text-center space-y-2">
+            <p className="text-2xl font-bold text-foreground">
+              ¡Pago registrado!
             </p>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-3xl font-black text-primary">
+              {formatCop(montoNumerico)}
+            </p>
+            <p className="text-sm text-muted-foreground/80">
               {isBatch
                 ? `${paidCount} cliente${paidCount !== 1 ? "s" : ""} · ${MEDIOS_PAGO.find((m) => m.value === medioPago)?.label}`
                 : `${item.clienteNombre} · ${MEDIOS_PAGO.find((m) => m.value === medioPago)?.label} · Cuota ${cuotaLabel}`}
