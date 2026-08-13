@@ -1,10 +1,11 @@
 "use client";
 
-import { useForm, useWatch } from "react-hook-form";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { Building2, Palette, MessageSquare, Percent, Clock } from "lucide-react";
+import { Building2, Palette, MessageSquare, Clock } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuthMe } from "@/hooks/queries/use-auth-me";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { SkeletonList } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/components/ui/cn";
+import { organizacionSettingsSchema, type OrganizacionSettingsData } from "@/lib/schemas/admin";
 import { toast } from "sonner";
 
 function ConfigCardTitle({
@@ -35,53 +37,29 @@ function ConfigCardTitle({
   );
 }
 
-const configuracionSchema = z.object({
-  nombreNegocio: z.string().trim().min(1, "El nombre del negocio es obligatorio"),
-  ciudad: z.string().trim().optional(),
-  telefono: z.string().trim().optional(),
-  moraTipo: z.enum(["porcentaje", "monto_fijo"]),
-  moraValor: z.number().min(0, "El valor no puede ser negativo"),
-  diasGracia: z.number().int().min(0, "Los dias de gracia no pueden ser negativos"),
-  tasaInteresDefault: z.number().min(0, "La tasa no puede ser negativa").max(100, "La tasa maxima es 100%"),
-  cobrarSabados: z.boolean(),
-  cobrarDomingos: z.boolean(),
-  geolocalizacionRequerida: z.boolean(),
-  moneda: z.enum(["COP", "USD"]),
-  horarioInicio: z.string(),
-  horarioFin: z.string(),
-  whatsappTemplate: z.string().trim(),
-  colorPrimario: z.string().min(1, "Selecciona un color"),
-});
-
-type ConfiguracionFormData = z.infer<typeof configuracionSchema>;
-
 export default function ConfiguracionPage() {
   const { data: me, isLoading } = useAuthMe();
   const org = me?.organization;
+  const queryClient = useQueryClient();
+  const [submitting, setSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
-    control,
     reset,
-    formState: { isSubmitting },
-  } = useForm<ConfiguracionFormData>({
-    resolver: zodResolver(configuracionSchema),
+  } = useForm<OrganizacionSettingsData>({
+    resolver: zodResolver(organizacionSettingsSchema),
     defaultValues: {
-      nombreNegocio: org?.nombre_negocio ?? "",
-      ciudad: org?.ciudad ?? "",
-      telefono: org?.telefono ?? "",
-      moraTipo: "porcentaje",
-      moraValor: 5,
-      diasGracia: 3,
-      tasaInteresDefault: 10,
+      nombreNegocio: "",
+      ciudad: "",
+      telefono: "",
+      horarioInicio: "",
+      horarioFin: "",
+      moneda: "COP",
       cobrarSabados: true,
       cobrarDomingos: false,
       geolocalizacionRequerida: false,
-      moneda: "COP",
-      horarioInicio: "07:00",
-      horarioFin: "18:00",
-      whatsappTemplate: "Hola {cliente}, tu pago de {monto} ha sido registrado.",
+      whatsappTemplate: "",
       colorPrimario: "#1d4ed8",
     },
   });
@@ -92,26 +70,41 @@ export default function ConfiguracionPage() {
         nombreNegocio: org.nombre_negocio ?? "",
         ciudad: org.ciudad ?? "",
         telefono: org.telefono ?? "",
-        moraTipo: "porcentaje",
-        moraValor: 5,
-        diasGracia: 3,
-        tasaInteresDefault: 10,
-        cobrarSabados: true,
-        cobrarDomingos: false,
-        geolocalizacionRequerida: false,
-        moneda: "COP",
-        horarioInicio: "07:00",
-        horarioFin: "18:00",
-        whatsappTemplate: "Hola {cliente}, tu pago de {monto} ha sido registrado.",
-        colorPrimario: "#1d4ed8",
+        horarioInicio: org.horario_inicio ?? "",
+        horarioFin: org.horario_fin ?? "",
+        moneda: (org.moneda as "COP" | "USD") ?? "COP",
+        cobrarSabados: org.cobrar_sabados,
+        cobrarDomingos: org.cobrar_domingos,
+        geolocalizacionRequerida: org.geolocalizacion_requerida,
+        whatsappTemplate: org.whatsapp_template ?? "",
+        colorPrimario: org.color_primario ?? "#1d4ed8",
       });
     }
   }, [org, reset]);
 
-  const moraTipo = useWatch({ control, name: "moraTipo" });
-
-  function onSubmit() {
-    toast.success("Configuracion guardada correctamente");
+  async function onSubmit(data: OrganizacionSettingsData) {
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/organizacion", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        const message =
+          (body as { error?: { message?: string }; message?: string }).error?.message ??
+          (body as { message?: string }).message ??
+          "No se pudo guardar la configuracion";
+        throw new Error(message);
+      }
+      toast.success("Configuracion guardada correctamente");
+      await queryClient.invalidateQueries({ queryKey: ["auth", "me"] });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "No se pudo guardar la configuracion");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (isLoading) return <SkeletonList count={6} />;
@@ -123,16 +116,13 @@ export default function ConfiguracionPage() {
         title="Configuración"
         subtitle="Personaliza la operación de tu negocio"
         actions={
-          <Button size="sm" type="submit" form="form-configuracion" loading={isSubmitting}>
+          <Button size="sm" type="submit" form="form-configuracion" loading={submitting}>
             Guardar cambios
           </Button>
         }
       />
 
       <form id="form-configuracion" onSubmit={handleSubmit(onSubmit)} className="space-y-6 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6">
-        {/* Col 1: Negocio + Mora */}
-        <div className="space-y-6">
-
         {/* Informacion del negocio */}
         <Card padding="md" className="dash-rise" style={{ animationDelay: "60ms" }}>
           <ConfigCardTitle icon={Building2} chip="bg-primary/15 text-primary">
@@ -159,73 +149,12 @@ export default function ConfiguracionPage() {
           </div>
         </Card>
 
-        {/* Politica de mora */}
-        <Card padding="md" className="dash-rise" style={{ animationDelay: "120ms" }}>
-          <ConfigCardTitle icon={Percent} chip="bg-warning/15 text-warning">
-            Política de mora
-          </ConfigCardTitle>
-          <div className="space-y-3">
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-1.5">
-                Tipo de mora
-              </label>
-              <div className="flex gap-2">
-                <label className="flex-1">
-                  <input
-                    type="radio"
-                    value="porcentaje"
-                    className="sr-only peer"
-                    {...register("moraTipo")}
-                  />
-                  <span className="flex items-center justify-center h-10 rounded-lg border border-border bg-background text-sm peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring cursor-pointer transition-colors">
-                    Porcentaje (%)
-                  </span>
-                </label>
-                <label className="flex-1">
-                  <input
-                    type="radio"
-                    value="monto_fijo"
-                    className="sr-only peer"
-                    {...register("moraTipo")}
-                  />
-                  <span className="flex items-center justify-center h-10 rounded-lg border border-border bg-background text-sm peer-checked:border-primary peer-checked:bg-primary/10 peer-checked:text-primary peer-focus-visible:ring-2 peer-focus-visible:ring-ring cursor-pointer transition-colors">
-                    Monto fijo ($)
-                  </span>
-                </label>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label={moraTipo === "porcentaje" ? "Valor de mora (%)" : "Valor de mora ($)"}
-                type="number"
-                {...register("moraValor", { valueAsNumber: true })}
-              />
-              <Input
-                label="Dias de gracia"
-                type="number"
-                {...register("diasGracia", { valueAsNumber: true })}
-              />
-            </div>
-          </div>
-        </Card>
-
-        </div>{/* end col 1 */}
-
-        {/* Col 2: Preferencias + Apariencia */}
-        <div className="space-y-6">
-
         {/* Preferencias operativas */}
-        <Card padding="md" className="dash-rise" style={{ animationDelay: "180ms" }}>
+        <Card padding="md" className="dash-rise" style={{ animationDelay: "120ms" }}>
           <ConfigCardTitle icon={Clock} chip="bg-info/15 text-info">
             Preferencias operativas
           </ConfigCardTitle>
           <div className="space-y-3">
-            <Input
-              label="Tasa de interes predeterminada (%)"
-              type="number"
-              step="0.1"
-              {...register("tasaInteresDefault", { valueAsNumber: true })}
-            />
             <div className="grid grid-cols-2 gap-3">
               <Input
                 label="Horario inicio"
@@ -301,11 +230,8 @@ export default function ConfiguracionPage() {
           </div>
         </Card>
 
-        </div>{/* end col 2 */}
-
-        {/* WhatsApp — full width */}
         {/* Plantilla WhatsApp */}
-        <Card padding="md" className="dash-rise lg:col-span-2" style={{ animationDelay: "240ms" }}>
+        <Card padding="md" className="dash-rise lg:col-span-2" style={{ animationDelay: "180ms" }}>
           <ConfigCardTitle icon={MessageSquare} chip="bg-success/15 text-success">
             Plantilla WhatsApp
           </ConfigCardTitle>
@@ -322,7 +248,7 @@ export default function ConfiguracionPage() {
         </Card>
 
         {/* Apariencia */}
-        <Card padding="md" className="dash-rise" style={{ animationDelay: "300ms" }}>
+        <Card padding="md" className="dash-rise" style={{ animationDelay: "240ms" }}>
           <ConfigCardTitle icon={Palette} chip="bg-primary/15 text-primary">
             Apariencia
           </ConfigCardTitle>

@@ -26,6 +26,14 @@ export type AuthMeResponse = {
     estado_suscripcion: string;
     trial_hasta: string | null;
     created_at: string;
+    horario_inicio: string | null;
+    horario_fin: string | null;
+    moneda: string;
+    cobrar_sabados: boolean;
+    cobrar_domingos: boolean;
+    geolocalizacion_requerida: boolean;
+    whatsapp_template: string | null;
+    color_primario: string | null;
   } | null;
 };
 

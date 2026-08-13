@@ -18,7 +18,9 @@ export async function GET() {
   const { data: organization, error: organizationError } = actor!.organizationId
     ? await supabase
         .from("organizations")
-        .select("id, nombre_negocio, logo_url, ciudad, telefono, plan, estado_suscripcion, trial_hasta, created_at")
+        .select(
+          "id, nombre_negocio, logo_url, ciudad, telefono, plan, estado_suscripcion, trial_hasta, created_at, horario_inicio, horario_fin, moneda, cobrar_sabados, cobrar_domingos, geolocalizacion_requerida, whatsapp_template, color_primario",
+        )
         .eq("id", actor!.organizationId)
         .maybeSingle()
     : { data: null, error: null };

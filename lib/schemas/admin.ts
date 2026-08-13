@@ -129,3 +129,31 @@ export const cancelarPrestamoSchema = z.object({
 });
 
 export type CancelarPrestamoData = z.infer<typeof cancelarPrestamoSchema>;
+
+const horaSchema = z
+  .string()
+  .trim()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Hora invalida (HH:MM)")
+  .optional()
+  .or(z.literal(""));
+
+export const organizacionSettingsSchema = z.object({
+  nombreNegocio: z.string().trim().min(1, "El nombre del negocio es obligatorio"),
+  ciudad: z.string().trim().optional().or(z.literal("")),
+  telefono: z.string().trim().optional().or(z.literal("")),
+  horarioInicio: horaSchema,
+  horarioFin: horaSchema,
+  moneda: z.enum(["COP", "USD"]),
+  cobrarSabados: z.boolean(),
+  cobrarDomingos: z.boolean(),
+  geolocalizacionRequerida: z.boolean(),
+  whatsappTemplate: z.string().trim().optional().or(z.literal("")),
+  colorPrimario: z
+    .string()
+    .trim()
+    .regex(/^#[0-9a-fA-F]{6}$/, "Selecciona un color valido")
+    .optional()
+    .or(z.literal("")),
+});
+
+export type OrganizacionSettingsData = z.infer<typeof organizacionSettingsSchema>;

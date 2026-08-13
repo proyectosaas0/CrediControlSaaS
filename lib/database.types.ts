@@ -372,36 +372,60 @@ export type Database = {
       organizations: {
         Row: {
           ciudad: string | null
+          cobrar_domingos: boolean
+          cobrar_sabados: boolean
+          color_primario: string | null
           created_at: string
           estado_suscripcion: Database["public"]["Enums"]["estado_suscripcion"]
+          geolocalizacion_requerida: boolean
+          horario_fin: string | null
+          horario_inicio: string | null
           id: string
           logo_url: string | null
+          moneda: string
           nombre_negocio: string
           plan: string | null
           telefono: string | null
           trial_hasta: string | null
+          whatsapp_template: string | null
         }
         Insert: {
           ciudad?: string | null
+          cobrar_domingos?: boolean
+          cobrar_sabados?: boolean
+          color_primario?: string | null
           created_at?: string
           estado_suscripcion?: Database["public"]["Enums"]["estado_suscripcion"]
+          geolocalizacion_requerida?: boolean
+          horario_fin?: string | null
+          horario_inicio?: string | null
           id?: string
           logo_url?: string | null
+          moneda?: string
           nombre_negocio: string
           plan?: string | null
           telefono?: string | null
           trial_hasta?: string | null
+          whatsapp_template?: string | null
         }
         Update: {
           ciudad?: string | null
+          cobrar_domingos?: boolean
+          cobrar_sabados?: boolean
+          color_primario?: string | null
           created_at?: string
           estado_suscripcion?: Database["public"]["Enums"]["estado_suscripcion"]
+          geolocalizacion_requerida?: boolean
+          horario_fin?: string | null
+          horario_inicio?: string | null
           id?: string
           logo_url?: string | null
+          moneda?: string
           nombre_negocio?: string
           plan?: string | null
           telefono?: string | null
           trial_hasta?: string | null
+          whatsapp_template?: string | null
         }
         Relationships: []
       }
