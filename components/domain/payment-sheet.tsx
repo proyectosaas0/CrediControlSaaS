@@ -194,7 +194,7 @@ export function PaymentSheet({
               </div>
             )}
             {!isBatch && (
-              <div className="flex gap-2 pt-1">
+              <div className="flex flex-wrap gap-2 pt-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -202,25 +202,27 @@ export function PaymentSheet({
                     setMonto("");
                   }}
                   className={cn(
-                    "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 border-2",
                     isPartial
-                      ? "bg-primary/10 text-primary"
-                      : "text-primary/70 hover:text-primary hover:bg-primary/5",
+                      ? "border-primary bg-primary/15 text-primary shadow-md shadow-primary/20 scale-105"
+                      : "border-border/50 bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-primary/8 hover:text-primary/80",
                   )}
                 >
-                  {isPartial ? "✓ Pago parcial" : "Pago parcial"}
+                  {isPartial && <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white text-xs font-bold">✓</span>}
+                  Pago parcial
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsAbono((prev) => !prev)}
                   className={cn(
-                    "rounded-md px-3 py-1.5 text-xs font-medium transition-all",
+                    "inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200 border-2",
                     isAbono
-                      ? "bg-primary/10 text-primary"
-                      : "text-primary/70 hover:text-primary hover:bg-primary/5",
+                      ? "border-primary bg-primary/15 text-primary shadow-md shadow-primary/20 scale-105"
+                      : "border-border/50 bg-muted/40 text-muted-foreground hover:border-primary/50 hover:bg-primary/8 hover:text-primary/80",
                   )}
                 >
-                  {isAbono ? "✓ Abono a capital" : "Abono a capital"}
+                  {isAbono && <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white text-xs font-bold">✓</span>}
+                  Abono a capital
                 </button>
               </div>
             )}
